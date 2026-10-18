@@ -17,9 +17,11 @@ BEGIN
 
     -- Validate chuyến đi
     IF NOT EXISTS (
-        SELECT 1 FROM dbo.vw_ChiTietChuyenDi
-        WHERE trip_id = @trip_id AND status = 'SCHEDULED'
-          AND departure_time > SYSDATETIME() AND bus_status = 'ACTIVE'
+        SELECT 1
+        FROM trips t
+        JOIN buses b ON b.bus_id = t.bus_id
+        WHERE t.trip_id = @trip_id AND t.status = 'SCHEDULED'
+          AND t.departure_time > SYSDATETIME() AND b.status = 'ACTIVE'
     )
         THROW 50060, N'Chuyến đi không khả dụng', 1;
 
@@ -111,6 +113,9 @@ BEGIN
             IF NOT EXISTS (SELECT 1 FROM bookings WHERE booking_code = @booking_code) BREAK;
             SET @tries = @tries + 1;
         END
+
+        IF @tries = 5
+            THROW 50031, N'Tranh chấp giữ chỗ, vui lòng thử lại', 1;
 
         DECLARE @expired_at DATETIME2 = DATEADD(MINUTE, 15, SYSDATETIME());
 
