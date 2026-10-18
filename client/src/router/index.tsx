@@ -5,6 +5,7 @@ import HomePage from '../pages/HomePage'
 import SearchResultsPage from '../pages/SearchResultsPage'
 import PaymentPage from '../pages/PaymentPage'
 import { LoginPage } from '../pages/LoginPage'
+import { RegisterPage } from '../pages/RegisterPage'
 import { AdminDashboardPage } from '../pages/AdminDashboardPage'
 import { UnauthorizedPage } from '../pages/UnauthorizedPage'
 import { ProtectedRoute } from '../components/ProtectedRoute'
@@ -18,6 +19,7 @@ export const AppRoutes: React.FC = () => {
 				<Route path="/search" element={<SearchResultsPage />} />
 				<Route path="/payment" element={<PaymentPage />} />
 				<Route path="/login" element={<LoginPage />} />
+				<Route path="/register" element={<RegisterPage />} />
 				<Route path="/unauthorized" element={<UnauthorizedPage />} />
 
 				{/* Admin Protected Routes: Chỉ cho phép role ADMIN */}
