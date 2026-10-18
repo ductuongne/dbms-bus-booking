@@ -18,3 +18,20 @@ CREATE INDEX idx_tickets_code ON tickets(ticket_code);
 
 -- Bảng Payments
 CREATE INDEX idx_payments_booking_id ON payments(booking_id);
+GO
+
+-- Bảng Seats
+CREATE INDEX idx_seats_bus_id ON seats(bus_id);
+GO
+
+-- Concurrency & Business Indexes (GĐ1)
+CREATE UNIQUE INDEX uq_tickets_trip_seat_active ON tickets(trip_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED');
+GO
+CREATE INDEX idx_bookings_pending_expired ON bookings(expired_at) WHERE status = 'PENDING';
+GO
+CREATE INDEX idx_trips_search ON trips(departure_time, status) INCLUDE (route_id, bus_id, price);
+GO
+CREATE INDEX idx_trips_bus_time ON trips(bus_id, departure_time, arrival_time);
+GO
+CREATE INDEX idx_trips_driver_time ON trips(driver_id, departure_time, arrival_time);
+GO

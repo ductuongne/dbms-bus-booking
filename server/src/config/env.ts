@@ -11,31 +11,58 @@ interface DatabaseConfig {
 	encrypt: boolean
 }
 
-interface EnvConfig {
+export interface EnvConfig {
+	PORT: number
 	port: number
 	jwtSecret: string
+	CLIENT_URL: string
 	clientUrl: string
+	DB_USER: string
+	DB_PASSWORD: string
+	DB_SERVER: string
+	DB_NAME: string
+	DB_PORT: number
+	DB_ENCRYPT: boolean
+	CRON_ENABLED: boolean
 	db: DatabaseConfig
 }
 
-function getRequiredEnv(key: string): string {
-	const value = process.env[key]
+function getRequiredEnv(name: string): string {
+	const value = process.env[name]
 	if (!value || value.trim() === '') {
-		throw new Error(`Missing env var: ${key}`)
+		throw new Error(`Missing required environment variable: ${name}`)
 	}
 	return value
 }
 
+const dbUser = getRequiredEnv('DB_USER')
+const dbPassword = getRequiredEnv('DB_PASSWORD')
+const dbServer = getRequiredEnv('DB_SERVER')
+const dbName = getRequiredEnv('DB_NAME')
+const dbPort = Number(process.env.DB_PORT ?? 1433)
+const dbEncrypt = process.env.DB_ENCRYPT === 'true'
+const port = Number(process.env.PORT ?? 3000)
+const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:5173'
+
 export const env: EnvConfig = {
-	port: Number(process.env.PORT ?? 3000),
-	jwtSecret: getRequiredEnv('JWT_SECRET'),
-	clientUrl: process.env.CLIENT_URL ?? 'http://localhost:5173',
+	PORT: port,
+	port: port,
+	jwtSecret: process.env.JWT_SECRET ?? 'jwt_bus_booking_super_secret_key',
+	CLIENT_URL: clientUrl,
+	clientUrl: clientUrl,
+	DB_USER: dbUser,
+	DB_PASSWORD: dbPassword,
+	DB_SERVER: dbServer,
+	DB_NAME: dbName,
+	DB_PORT: dbPort,
+	DB_ENCRYPT: dbEncrypt,
+	CRON_ENABLED: process.env.CRON_ENABLED !== 'false',
 	db: {
-		server: getRequiredEnv('DB_SERVER'),
-		database: getRequiredEnv('DB_NAME'),
-		user: getRequiredEnv('DB_USER'),
-		password: getRequiredEnv('DB_PASSWORD'),
-		port: Number(process.env.DB_PORT ?? 1433),
-		encrypt: process.env.DB_ENCRYPT === 'true',
+		server: dbServer,
+		database: dbName,
+		user: dbUser,
+		password: dbPassword,
+		port: dbPort,
+		encrypt: dbEncrypt,
 	},
 }
