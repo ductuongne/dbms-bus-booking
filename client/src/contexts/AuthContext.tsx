@@ -1,66 +1,41 @@
 import React, {
-	createContext,
 	useCallback,
 	useEffect,
 	useMemo,
 	useState,
 } from 'react'
-import { jwtDecode } from 'jwt-decode'
-import type { AuthUser, DecodedToken, UserRole } from '../types/auth'
+import type { AuthUser } from '../types/auth'
 import { TOKEN_STORAGE_KEY } from '../lib/api'
-
-export interface AuthContextType {
-	user: AuthUser | null
-	token: string | null
-	role: UserRole | null
-	isAuthenticated: boolean
-	isInitialized: boolean
-	login: (token: string, explicitUser?: AuthUser) => void
-	logout: () => void
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export function decodeTokenSafely(token: string): DecodedToken | null {
-	try {
-		const decoded = jwtDecode<DecodedToken>(token)
-		// exp tính theo giây, so sánh với Date.now() tính theo mili-giây
-		if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-			localStorage.removeItem(TOKEN_STORAGE_KEY)
-			return null
-		}
-		return decoded
-	} catch {
-		localStorage.removeItem(TOKEN_STORAGE_KEY)
-		return null
-	}
-}
+import {
+	AuthContext,
+	decodeTokenSafely,
+	type AuthContextType,
+} from './auth.context'
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	const [token, setToken] = useState<string | null>(null)
-	const [user, setUser] = useState<AuthUser | null>(null)
-	const [isInitialized, setIsInitialized] = useState<boolean>(false)
-
-	// Hydrate State khi Mount (F5): Đọc token bền vững, giải mã tức thì
-	useEffect(() => {
+	// Khởi tạo lazy state tức thời từ localStorage khi Mount (F5) không gây cascading re-renders
+	const [token, setToken] = useState<string | null>(() => {
 		const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY)
-		if (storedToken) {
-			const decoded = decodeTokenSafely(storedToken)
-			if (decoded) {
-				setToken(storedToken)
-				setUser({
+		if (!storedToken) return null
+		const decoded = decodeTokenSafely(storedToken)
+		return decoded ? storedToken : null
+	})
+
+	const [user, setUser] = useState<AuthUser | null>(() => {
+		const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+		if (!storedToken) return null
+		const decoded = decodeTokenSafely(storedToken)
+		return decoded
+			? {
 					userId: decoded.userId,
 					role: decoded.role,
-				})
-			} else {
-				setToken(null)
-				setUser(null)
-			}
-		}
-		setIsInitialized(true)
-	}, [])
+				}
+			: null
+	})
+
+	const [isInitialized] = useState<boolean>(true)
 
 	// Đăng nhập: Lưu token vào storage, giải mã và cập nhật state
 	const login = useCallback((newToken: string, explicitUser?: AuthUser) => {
