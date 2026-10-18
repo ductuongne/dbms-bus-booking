@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import express from 'express'
 import { publicRouter } from './modules/auth/auth.routes.js'
 import { privateRouter } from './modules/auth/private.routes.js'
+import { adminRouter } from './modules/admin/admin.routes.js'
 import { verifyJWT } from './middlewares/auth.middleware.js'
 import { errorHandler } from './middlewares/error-handler.js'
 
@@ -23,6 +24,9 @@ app.use('/api/public', publicRouter)
 
 // Dual-routing: Private (bắt buộc JWT)
 app.use('/api/private', verifyJWT, privateRouter)
+
+// Admin Management Router (bảo vệ bởi verifyJWT + checkRole(['ADMIN']))
+app.use('/api/private/admin', adminRouter)
 
 // Error Handler: PHẢI đặt CUỐI CÙNG sau tất cả routes
 app.use(errorHandler)
