@@ -11,7 +11,7 @@ import {
   Mail,
   ArrowRight,
 } from 'lucide-react';
-import type { TripCardView, SeatItemView, BookingCheckoutView } from '../types';
+import type { TripCardView, SeatItemView, BookingCheckoutView, StopPointView } from '../types';
 import { getMockSeatLayoutByTripId } from '../mocks/mockData';
 import { VIETQR_CONFIG } from '../constants';
 
