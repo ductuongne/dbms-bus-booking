@@ -6,7 +6,7 @@ import SearchResultsPage from '../pages/SearchResultsPage'
 import PaymentPage from '../pages/PaymentPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
-import { AdminDashboardPage } from '../pages/AdminDashboardPage'
+import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
 import { UnauthorizedPage } from '../pages/UnauthorizedPage'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 
