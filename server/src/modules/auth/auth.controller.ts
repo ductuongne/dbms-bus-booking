@@ -1,4 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
+import { AppError } from '../../utils/app-error.js'
 import { authService } from './auth.service.js'
 import type { LoginDto, RegisterDto } from './auth.schema.js'
 
@@ -43,8 +44,33 @@ export const login: RequestHandler = async (
 	}
 }
 
+export const me: RequestHandler = (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): void => {
+	try {
+		const user = req.user
+		if (user === undefined) {
+			next(new AppError(401, 'Vui lòng đăng nhập để truy cập!'))
+			return
+		}
+
+		res.status(200).json({
+			success: true,
+			data: {
+				userId: user.userId,
+				role: user.role,
+			},
+		})
+	} catch (err: unknown) {
+		next(err)
+	}
+}
+
 export const authController = {
 	register,
 	login,
+	me,
 }
 
