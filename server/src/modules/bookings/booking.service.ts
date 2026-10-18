@@ -2,6 +2,8 @@ import { AppError } from '../../middlewares/error-handler'
 import {
 	type BookingRow,
 	type BookingWithTickets,
+	type CheckedInTicketRow,
+	type StaffBookingTicketRow,
 	type TicketRow,
 	bookingRepository
 } from './booking.repository'
@@ -132,6 +134,66 @@ export class BookingService {
 		)
 
 		return { message: 'Hủy giữ chỗ thành công' }
+	}
+
+	async getBookingByCode(bookingCode: string): Promise<Record<string, unknown>> {
+		const { booking, tickets } = await bookingRepository.findBookingByCode(bookingCode)
+		if (!booking) {
+			throw new AppError(404, 'Booking không tồn tại')
+		}
+
+		return {
+			booking: {
+				booking_id: booking.booking_id,
+				booking_code: booking.booking_code,
+				customer_id: booking.customer_id,
+				channel: booking.channel,
+				created_at: formatLocalDateTime(booking.created_at),
+				expired_at: formatLocalDateTime(booking.expired_at),
+				total_amount: Number(booking.total_amount),
+				status: booking.status
+			},
+			tickets: tickets.map((t: StaffBookingTicketRow) => ({
+				ticket_id: t.ticket_id,
+				ticket_code: t.ticket_code,
+				seat_id: t.seat_id,
+				seat_number: t.seat_number,
+				passenger_name: t.passenger_name,
+				passenger_phone: t.passenger_phone,
+				price: Number(t.price),
+				status: t.status
+			}))
+		}
+	}
+
+	async getTripTickets(tripId: string, status?: string): Promise<Record<string, unknown>[]> {
+		const tickets = await bookingRepository.getTripTickets(tripId, status)
+		if (tickets === null) {
+			throw new AppError(404, 'Chuyến không tồn tại')
+		}
+
+		return tickets.map((t: StaffBookingTicketRow) => ({
+			ticket_id: t.ticket_id,
+			ticket_code: t.ticket_code,
+			seat_id: t.seat_id,
+			seat_number: t.seat_number,
+			passenger_name: t.passenger_name,
+			passenger_phone: t.passenger_phone,
+			price: Number(t.price),
+			status: t.status
+		}))
+	}
+
+	async checkInTicket(ticketCode: string): Promise<Record<string, unknown>> {
+		const row: CheckedInTicketRow = await bookingRepository.checkInTicket(ticketCode)
+		return {
+			ticket_id: row.ticket_id,
+			ticket_code: row.ticket_code,
+			seat_id: row.seat_id,
+			passenger_name: row.passenger_name,
+			passenger_phone: row.passenger_phone,
+			status: row.status
+		}
 	}
 }
 

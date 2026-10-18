@@ -25,6 +25,11 @@ const SQL_ERROR_MAP: Record<number, { statusCode: number; defaultMessage: string
 	50060: { statusCode: 422, defaultMessage: 'Chuyến đi không khả dụng' },
 	50061: { statusCode: 400, defaultMessage: 'Dữ liệu đặt vé không hợp lệ' },
 	50062: { statusCode: 422, defaultMessage: 'Khách hàng không tồn tại' },
+	50070: { statusCode: 404, defaultMessage: 'Chuyến không tồn tại' },
+	50071: { statusCode: 409, defaultMessage: 'Trạng thái chuyến không cho phép thao tác' },
+	50072: { statusCode: 409, defaultMessage: 'Chuyến đã có vé, không đổi xe/giờ được' },
+	50073: { statusCode: 409, defaultMessage: 'Không thể check-in vé' },
+	50074: { statusCode: 404, defaultMessage: 'Mã vé không tồn tại' },
 	1205: { statusCode: 503, defaultMessage: 'Hệ thống đang bận, vui lòng thử lại sau' }
 }
 

@@ -32,9 +32,29 @@ export const bookingIdParamsSchema = z.object({
 	bookingId: z.string().min(1, 'bookingId là bắt buộc')
 })
 
+export const bookingCodeParamsSchema = z.object({
+	bookingCode: z.string().trim().min(1, 'bookingCode là bắt buộc')
+})
+
+export const tripTicketsParamsSchema = z.object({
+	tripId: z.string().trim().min(1, 'tripId là bắt buộc')
+})
+
+export const tripTicketsQuerySchema = z.object({
+	status: z.enum(['PENDING', 'CONFIRMED', 'CHECKED_IN', 'CANCELLED', 'EXPIRED']).optional()
+})
+
+export const checkInTicketBodySchema = z.object({
+	ticket_code: z.string().trim().min(1, 'ticket_code là bắt buộc')
+})
+
 export type PassengerInput = z.infer<typeof passengerSchema>
 export type HoldBookingBody = z.infer<typeof holdBookingBodySchema>
 export type ConfirmBookingBody = z.infer<typeof confirmBookingBodySchema>
 export type CancelBookingBody = z.infer<typeof cancelBookingBodySchema>
 export type BookingIdParams = z.infer<typeof bookingIdParamsSchema>
+export type BookingCodeParams = z.infer<typeof bookingCodeParamsSchema>
+export type TripTicketsParams = z.infer<typeof tripTicketsParamsSchema>
+export type TripTicketsQuery = z.infer<typeof tripTicketsQuerySchema>
+export type CheckInTicketBody = z.infer<typeof checkInTicketBodySchema>
 

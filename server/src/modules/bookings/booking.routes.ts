@@ -3,10 +3,14 @@ import { bookingRateLimiter } from '../../middlewares/rate-limit'
 import { validateRequest } from '../../middlewares/validate'
 import { bookingController } from './booking.controller'
 import {
+	bookingCodeParamsSchema,
 	bookingIdParamsSchema,
 	cancelBookingBodySchema,
+	checkInTicketBodySchema,
 	confirmBookingBodySchema,
-	holdBookingBodySchema
+	holdBookingBodySchema,
+	tripTicketsParamsSchema,
+	tripTicketsQuerySchema
 } from './booking.schema'
 
 const router = Router()
@@ -30,6 +34,25 @@ router.post(
 	bookingRateLimiter,
 	validateRequest({ params: bookingIdParamsSchema, body: cancelBookingBodySchema }),
 	bookingController.cancelBooking.bind(bookingController)
+)
+
+// TODO(auth): authorize('STAFF', 'ADMIN', 'DRIVER')
+router.get(
+	'/lookup/:bookingCode',
+	validateRequest({ params: bookingCodeParamsSchema }),
+	bookingController.getBookingByCode.bind(bookingController)
+)
+
+router.get(
+	'/trips/:tripId/tickets',
+	validateRequest({ params: tripTicketsParamsSchema, query: tripTicketsQuerySchema }),
+	bookingController.getTripTickets.bind(bookingController)
+)
+
+router.post(
+	'/check-in',
+	validateRequest({ body: checkInTicketBodySchema }),
+	bookingController.checkInTicket.bind(bookingController)
 )
 
 export default router

@@ -1,6 +1,50 @@
 import { sql } from '../../config/db'
 import { executeQuery, executeSP } from '../../database/query'
-import type { SearchTripsQuery } from './trip.schema'
+import type { AdminTripsQuery, SearchTripsQuery } from './trip.schema'
+export interface AdminTripListRow {
+	trip_id: string
+	route_id: string
+	bus_id: string
+	driver_id: string
+	departure_time: Date
+	arrival_time: Date
+	price: number
+	status: string
+	total_seats: number
+	booked_seats: number
+	pending_seats: number
+	totalCount: number
+}
+export interface DriverTripRow {
+	trip_id: string
+	route_id: string
+	bus_id: string
+	driver_id: string
+	departure_time: Date
+	arrival_time: Date
+	price: number
+	status: string
+	departure_station: string
+	arrival_station: string
+	departure_province: string
+	arrival_province: string
+	bus_type: string
+}
+export interface CreateTripInput {
+	route_id: string
+	bus_id: string
+	driver_id: string
+	departure_time: Date
+	arrival_time: Date
+	price: number
+}
+export interface UpdateTripInput {
+	bus_id?: string | undefined
+	driver_id?: string | undefined
+	departure_time?: Date | undefined
+	arrival_time?: Date | undefined
+	price?: number | undefined
+}
 
 export interface TripSearchResultRow {
 	trip_id: string
@@ -67,6 +111,107 @@ export class TripRepository {
 			'SELECT * FROM dbo.fn_LaySoDoGhe(@tripId) ORDER BY seat_number',
 			{ tripId: { type: sql.VarChar(50), value: tripId } }
 		)
+	}
+	async createTrip(input: CreateTripInput): Promise<TripRow> {
+		const result = await executeSP<TripRow>('sp_TaoChuyen', {
+			route_id: { type: sql.VarChar(50), value: input.route_id },
+			bus_id: { type: sql.VarChar(50), value: input.bus_id },
+			driver_id: { type: sql.VarChar(50), value: input.driver_id },
+			departure_time: { type: sql.DateTime2, value: input.departure_time },
+			arrival_time: { type: sql.DateTime2, value: input.arrival_time },
+			price: { type: sql.Decimal(12, 2), value: input.price },
+			trip_id: { type: sql.VarChar(50), value: null, output: true }
+		})
+		return result.recordset[0]!
+	}
+	async getAdminTrips(filters: AdminTripsQuery): Promise<AdminTripListRow[]> {
+		const query = `
+			SELECT
+				t.trip_id,
+				t.route_id,
+				t.bus_id,
+				t.driver_id,
+				t.departure_time,
+				t.arrival_time,
+				t.price,
+				t.status,
+				(SELECT COUNT(*) FROM seats s WHERE s.bus_id = t.bus_id) AS total_seats,
+				(SELECT COUNT(DISTINCT tk.seat_id)
+				 FROM tickets tk
+				 WHERE tk.trip_id = t.trip_id AND tk.status = 'CONFIRMED'
+				) AS booked_seats,
+				(SELECT COUNT(DISTINCT tk.seat_id)
+				 FROM tickets tk
+				 JOIN bookings b ON b.booking_id = tk.booking_id
+				 WHERE tk.trip_id = t.trip_id AND tk.status = 'PENDING' AND b.expired_at > SYSDATETIME()
+				) AS pending_seats,
+				COUNT(*) OVER() AS totalCount
+			FROM trips t
+			WHERE (@date IS NULL OR CAST(t.departure_time AS DATE) = @date)
+			  AND (@status IS NULL OR t.status = @status)
+			  AND (@routeId IS NULL OR t.route_id = @routeId)
+			ORDER BY t.departure_time ASC, t.trip_id ASC
+			OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;
+		`
+		return executeQuery<AdminTripListRow>(query, {
+			date: { type: sql.VarChar(10), value: filters.date ?? null },
+			status: { type: sql.VarChar(20), value: filters.status ?? null },
+			routeId: { type: sql.VarChar(50), value: filters.routeId ?? null },
+			offset: { type: sql.Int, value: (filters.page - 1) * filters.limit },
+			limit: { type: sql.Int, value: filters.limit }
+		})
+	}
+	async updateTrip(tripId: string, input: UpdateTripInput): Promise<TripRow> {
+		const result = await executeSP<TripRow>('sp_SuaChuyen', {
+			trip_id: { type: sql.VarChar(50), value: tripId },
+			bus_id: { type: sql.VarChar(50), value: input.bus_id ?? null },
+			driver_id: { type: sql.VarChar(50), value: input.driver_id ?? null },
+			departure_time: { type: sql.DateTime2, value: input.departure_time ?? null },
+			arrival_time: { type: sql.DateTime2, value: input.arrival_time ?? null },
+			price: { type: sql.Decimal(12, 2), value: input.price ?? null }
+		})
+		return result.recordset[0]!
+	}
+	async cancelTrip(tripId: string): Promise<{ cancelled_bookings: number; cancelled_tickets: number }> {
+		const result = await executeSP<{ cancelled_bookings: number; cancelled_tickets: number }>('sp_HuyChuyen', {
+			trip_id: { type: sql.VarChar(50), value: tripId }
+		})
+		return result.recordset[0] ?? { cancelled_bookings: 0, cancelled_tickets: 0 }
+	}
+	async changeTripStatus(tripId: string, newStatus: string): Promise<TripRow> {
+		const result = await executeSP<TripRow>('sp_DoiTrangThaiChuyen', {
+			trip_id: { type: sql.VarChar(50), value: tripId },
+			new_status: { type: sql.VarChar(20), value: newStatus }
+		})
+		return result.recordset[0]!
+	}
+	async getDriverTrips(userId: string, date?: string): Promise<DriverTripRow[]> {
+		const query = `
+			SELECT
+				t.trip_id,
+				t.route_id,
+				t.bus_id,
+				t.driver_id,
+				t.departure_time,
+				t.arrival_time,
+				t.price,
+				t.status,
+				v.departure_station,
+				v.arrival_station,
+				v.departure_province,
+				v.arrival_province,
+				v.bus_type
+			FROM trips t
+			JOIN drivers d ON d.driver_id = t.driver_id
+			JOIN dbo.vw_ChiTietChuyenDi v ON v.trip_id = t.trip_id
+			WHERE d.user_id = @userId
+			  AND (@date IS NULL OR CAST(t.departure_time AS DATE) = @date)
+			ORDER BY t.departure_time ASC;
+		`
+		return executeQuery<DriverTripRow>(query, {
+			userId: { type: sql.VarChar(50), value: userId },
+			date: { type: sql.VarChar(10), value: date ?? null }
+		})
 	}
 }
 
