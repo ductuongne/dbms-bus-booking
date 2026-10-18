@@ -8,3 +8,10 @@ export const registerSchema = z.object({
 })
 
 export type RegisterDto = z.infer<typeof registerSchema>
+
+export const loginSchema = z.object({
+	phone: z.string().regex(/^(0[3|5|7|8|9])+([0-9]{8})$/, 'Số điện thoại không hợp lệ'),
+	password: z.string().min(1, 'Mật khẩu không được để trống'),
+})
+
+export type LoginDto = z.infer<typeof loginSchema>
