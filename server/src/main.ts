@@ -1,19 +1,25 @@
 import cors from 'cors'
-import dotenv from 'dotenv'
 import express from 'express'
-
-dotenv.config()
+import { env } from './config/env'
+import { startBookingCron } from './jobs/booking.cron'
+import { errorHandler } from './middlewares/error-handler'
+import appRouter from './modules/index'
 
 const app = express()
-const port = Number(process.env.PORT ?? 3000)
 
-app.use(cors({ origin: process.env.CLIENT_URL ?? 'http://localhost:5173' }))
+app.use(cors({ origin: env.CLIENT_URL }))
 app.use(express.json())
 
 app.get('/api/health', (_request, response) => {
 	response.json({ status: 'ok', service: 'bus-management-api' })
 })
 
-app.listen(port, () => {
-	console.log(`API listening on http://localhost:${port}`)
+app.use('/api', appRouter)
+
+app.use(errorHandler)
+
+app.listen(env.PORT, () => {
+	console.log(`API listening on http://localhost:${env.PORT}`)
+	startBookingCron()
 })
+

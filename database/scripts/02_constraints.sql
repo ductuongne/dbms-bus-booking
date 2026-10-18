@@ -77,15 +77,13 @@ GO
 ALTER TABLE buses ADD CONSTRAINT chk_bus_status CHECK (status IN ('ACTIVE', 'INACTIVE'));
 GO
 
-ALTER TABLE seats ADD CONSTRAINT chk_seat_type CHECK (seat_type IN ('NORMAL', 'VIP', 'SLEEPER'));
-GO
 
 ALTER TABLE trips ADD CONSTRAINT chk_trip_status CHECK (status IN ('SCHEDULED', 'DEPARTED', 'COMPLETED', 'CANCELLED'));
 GO
 
 ALTER TABLE bookings ADD CONSTRAINT chk_booking_channel CHECK (channel IN ('ONLINE', 'COUNTER'));
 GO
-ALTER TABLE bookings ADD CONSTRAINT chk_booking_status CHECK (status IN ('PENDING', 'CONFIRMED', 'CANCELLED'));
+ALTER TABLE bookings ADD CONSTRAINT chk_booking_status CHECK (status IN ('PENDING', 'CONFIRMED', 'EXPIRED', 'CANCELLED'));
 GO
 
 ALTER TABLE payments ADD CONSTRAINT chk_payment_method CHECK (method IN ('CASH', 'BANK_TRANSFER'));
@@ -93,5 +91,10 @@ GO
 ALTER TABLE payments ADD CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED'));
 GO
 
-ALTER TABLE tickets ADD CONSTRAINT chk_ticket_status CHECK (status IN ('BOOKED', 'CHECKED_IN', 'CANCELLED'));
+ALTER TABLE tickets ADD CONSTRAINT chk_ticket_status CHECK (status IN ('PENDING', 'CONFIRMED', 'EXPIRED', 'CANCELLED', 'CHECKED_IN'));
+GO
+ALTER TABLE tickets ADD CONSTRAINT chk_tickets_price CHECK (price >= 0);
+GO
+
+ALTER TABLE trips ADD CONSTRAINT chk_trips_time CHECK (arrival_time > departure_time);
 GO
