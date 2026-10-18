@@ -1,1 +1,4 @@
-// Axios instance cấu hình base URL cho API calls
+import { api } from '../lib/api'
+
+export { api }
+export default api
