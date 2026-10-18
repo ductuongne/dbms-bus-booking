@@ -1,0 +1,337 @@
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+
+-- 1. sp_GiuCho
+CREATE OR ALTER PROCEDURE dbo.sp_GiuCho
+    @booking_id VARCHAR(50) OUTPUT,
+    @customer_id VARCHAR(50) = NULL,
+    @trip_id VARCHAR(50),
+    @passengers NVARCHAR(MAX),
+    @channel VARCHAR(20) = 'ONLINE'
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- Validate chuyến đi
+    IF NOT EXISTS (
+        SELECT 1 FROM trips t JOIN buses b ON b.bus_id = t.bus_id
+        WHERE t.trip_id = @trip_id AND t.status = 'SCHEDULED'
+          AND t.departure_time > SYSDATETIME() AND b.status = 'ACTIVE'
+    )
+        THROW 50060, N'Chuyến đi không khả dụng', 1;
+
+    -- Validate channel
+    IF @channel NOT IN ('ONLINE', 'COUNTER')
+        THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+    -- Parse JSON hành khách
+    IF @passengers IS NULL OR ISJSON(@passengers) <> 1
+        THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+    DECLARE @P TABLE (seat_id VARCHAR(50), name NVARCHAR(100), phone VARCHAR(20));
+
+    INSERT INTO @P (seat_id, name, phone)
+    SELECT LTRIM(RTRIM(seat_id)), LTRIM(RTRIM(name)), LTRIM(RTRIM(phone))
+    FROM OPENJSON(@passengers)
+    WITH (seat_id VARCHAR(50) '$.seat_id', name NVARCHAR(100) '$.name', phone VARCHAR(20) '$.phone');
+
+    DECLARE @SeatCount INT = (SELECT COUNT(*) FROM @P);
+    DECLARE @DistinctCount INT = (SELECT COUNT(DISTINCT seat_id) FROM @P);
+
+    IF @SeatCount < 1 OR @SeatCount > 5 OR @SeatCount <> @DistinctCount
+        THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+    IF EXISTS (SELECT 1 FROM @P WHERE seat_id IS NULL OR seat_id = '' OR name IS NULL OR name = '' OR phone IS NULL OR phone = '')
+        THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+    -- Kiểm tra ghế thuộc xe của chuyến
+    DECLARE @BusId VARCHAR(50);
+    SELECT @BusId = bus_id FROM trips WHERE trip_id = @trip_id;
+
+    IF EXISTS (
+        SELECT 1 FROM @P p
+        WHERE NOT EXISTS (SELECT 1 FROM seats s WHERE s.seat_id = p.seat_id AND s.bus_id = @BusId)
+    )
+        THROW 50010, N'Chuyến hoặc ghế không tồn tại', 1;
+
+    -- Kiểm tra khách hàng
+    IF @customer_id IS NULL
+    BEGIN
+        SELECT TOP 1 @customer_id = user_id FROM users WHERE role = 'GUEST' ORDER BY user_id;
+        IF @customer_id IS NULL THROW 50062, N'Khách hàng không tồn tại', 1;
+    END
+    ELSE
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM users WHERE user_id = @customer_id)
+            THROW 50062, N'Khách hàng không tồn tại', 1;
+    END
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Giải phóng ghế hết hạn của đúng các ghế đang xin (bookings -> tickets)
+        DECLARE @Stale TABLE (booking_id VARCHAR(50));
+        INSERT INTO @Stale (booking_id)
+        SELECT DISTINCT b.booking_id
+        FROM tickets t JOIN bookings b ON b.booking_id = t.booking_id
+        WHERE t.trip_id = @trip_id AND t.seat_id IN (SELECT seat_id FROM @P)
+          AND t.status = 'PENDING' AND b.status = 'PENDING' AND b.expired_at <= SYSDATETIME();
+
+        UPDATE bookings SET status = 'EXPIRED'
+        WHERE booking_id IN (SELECT booking_id FROM @Stale)
+          AND status = 'PENDING' AND expired_at <= SYSDATETIME();
+
+        UPDATE tickets SET status = 'EXPIRED'
+        WHERE booking_id IN (SELECT booking_id FROM @Stale) AND status = 'PENDING';
+
+        -- Khóa chống phantom và kiểm tra ghế bận
+        IF EXISTS (
+            SELECT 1 FROM tickets WITH (UPDLOCK, HOLDLOCK)
+            WHERE trip_id = @trip_id AND seat_id IN (SELECT seat_id FROM @P)
+              AND status IN ('PENDING', 'CONFIRMED')
+        )
+            THROW 50030, N'Ghế đã được giữ hoặc đã bán', 1;
+
+        -- Tính tổng tiền
+        DECLARE @TotalAmount DECIMAL(12,2) = 0;
+        SELECT @TotalAmount = SUM(dbo.fn_TinhGiaVe(@trip_id, seat_id)) FROM @P;
+        IF @TotalAmount IS NULL THROW 50010, N'Chuyến hoặc ghế không tồn tại', 1;
+
+        -- Sinh booking_id và booking_code
+        SET @booking_id = 'BKG-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8));
+
+        DECLARE @booking_code VARCHAR(20);
+        DECLARE @tries INT = 0;
+        WHILE @tries < 5
+        BEGIN
+            SET @booking_code = UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8));
+            IF NOT EXISTS (SELECT 1 FROM bookings WHERE booking_code = @booking_code) BREAK;
+            SET @tries = @tries + 1;
+        END
+
+        DECLARE @expired_at DATETIME2 = DATEADD(MINUTE, 15, SYSDATETIME());
+
+        INSERT INTO bookings (booking_id, booking_code, customer_id, channel, created_at, expired_at, total_amount, status)
+        VALUES (@booking_id, @booking_code, @customer_id, @channel, SYSDATETIME(), @expired_at, @TotalAmount, 'PENDING');
+
+        INSERT INTO tickets (ticket_id, ticket_code, booking_id, trip_id, seat_id, passenger_name, passenger_phone, price, status)
+        SELECT 
+            'TCK-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8)),
+            UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8)),
+            @booking_id, @trip_id, p.seat_id, p.name, p.phone,
+            dbo.fn_TinhGiaVe(@trip_id, p.seat_id), 'PENDING'
+        FROM @P p;
+
+        COMMIT TRANSACTION;
+
+        SELECT * FROM bookings WHERE booking_id = @booking_id;
+        SELECT * FROM tickets WHERE booking_id = @booking_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        IF ERROR_NUMBER() IN (2601, 2627) AND ERROR_MESSAGE() LIKE '%uq_tickets_trip_seat_active%'
+            THROW 50031, N'Tranh chấp giữ chỗ, vui lòng thử lại', 1;
+        THROW;
+    END CATCH
+END;
+GO
+-- 2. sp_DatVe
+CREATE OR ALTER PROCEDURE dbo.sp_DatVe
+    @booking_id VARCHAR(50),
+    @booking_code VARCHAR(20),
+    @phone VARCHAR(20),
+    @payment_method VARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @CurrentStatus VARCHAR(20), @ExpiredAt DATETIME2;
+        SELECT @CurrentStatus = status, @ExpiredAt = expired_at
+        FROM bookings WITH (UPDLOCK, HOLDLOCK)
+        WHERE booking_id = @booking_id AND booking_code = @booking_code;
+
+        IF @CurrentStatus IS NULL OR NOT EXISTS (
+            SELECT 1 FROM tickets WHERE booking_id = @booking_id AND passenger_phone = @phone
+        )
+        BEGIN
+            THROW 50040, N'Booking không tồn tại hoặc thông tin xác thực không đúng', 1;
+        END
+
+        IF @CurrentStatus <> 'PENDING'
+        BEGIN
+            THROW 50041, N'Trạng thái booking không hợp lệ', 1;
+        END
+
+        IF @ExpiredAt <= SYSDATETIME()
+        BEGIN
+            UPDATE bookings SET status = 'EXPIRED' WHERE booking_id = @booking_id;
+            UPDATE tickets SET status = 'EXPIRED' WHERE booking_id = @booking_id AND status = 'PENDING';
+            COMMIT TRANSACTION;
+            THROW 50042, N'Đã hết hạn giữ chỗ', 1;
+        END
+
+        IF EXISTS (
+            SELECT 1 
+            FROM tickets tk
+            JOIN trips tr ON tr.trip_id = tk.trip_id
+            JOIN buses b ON b.bus_id = tr.bus_id
+            WHERE tk.booking_id = @booking_id
+              AND (tr.status <> 'SCHEDULED' OR tr.departure_time <= SYSDATETIME() OR b.status <> 'ACTIVE')
+        )
+        BEGIN
+            THROW 50060, N'Chuyến đi không khả dụng', 1;
+        END
+
+        UPDATE bookings SET status = 'CONFIRMED' WHERE booking_id = @booking_id;
+        UPDATE tickets SET status = 'CONFIRMED' WHERE booking_id = @booking_id AND status = 'PENDING';
+
+        IF @payment_method IS NOT NULL
+        BEGIN
+            IF @payment_method NOT IN ('CASH', 'BANK_TRANSFER')
+                THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+            INSERT INTO payments (payment_id, booking_id, method, amount, paid_at, transaction_code, status)
+            VALUES (
+                'PAY-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8)),
+                @booking_id,
+                @payment_method,
+                (SELECT total_amount FROM bookings WHERE booking_id = @booking_id),
+                NULL,
+                NULL,
+                'PENDING'
+            );
+        END
+
+        COMMIT TRANSACTION;
+
+        SELECT * FROM bookings WHERE booking_id = @booking_id;
+        SELECT * FROM tickets WHERE booking_id = @booking_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 3. sp_HuyGiuCho
+CREATE OR ALTER PROCEDURE dbo.sp_HuyGiuCho
+    @booking_id VARCHAR(50),
+    @booking_code VARCHAR(20),
+    @phone VARCHAR(20),
+    @ticket_id VARCHAR(50) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @CurrentStatus VARCHAR(20);
+        SELECT @CurrentStatus = status
+        FROM bookings WITH (UPDLOCK, HOLDLOCK)
+        WHERE booking_id = @booking_id AND booking_code = @booking_code;
+
+        IF @CurrentStatus IS NULL OR NOT EXISTS (
+            SELECT 1 FROM tickets WHERE booking_id = @booking_id AND passenger_phone = @phone
+        )
+        BEGIN
+            THROW 50040, N'Booking không tồn tại hoặc thông tin xác thực không đúng', 1;
+        END
+
+        IF @CurrentStatus <> 'PENDING'
+        BEGIN
+            THROW 50050, N'Không thể hủy booking không ở trạng thái giữ chỗ', 1;
+        END
+
+        IF @ticket_id IS NOT NULL
+        BEGIN
+            UPDATE tickets 
+            SET status = 'CANCELLED' 
+            WHERE ticket_id = @ticket_id AND booking_id = @booking_id AND status = 'PENDING';
+
+            IF @@ROWCOUNT = 0
+            BEGIN
+                THROW 50050, N'Không thể hủy booking không ở trạng thái giữ chỗ', 1;
+            END
+
+            DECLARE @RemainingCount INT, @RemainingTotal DECIMAL(12,2);
+            SELECT 
+                @RemainingCount = COUNT(*),
+                @RemainingTotal = ISNULL(SUM(price), 0)
+            FROM tickets
+            WHERE booking_id = @booking_id AND status IN ('PENDING', 'CONFIRMED');
+
+            IF @RemainingCount = 0
+            BEGIN
+                UPDATE bookings SET status = 'CANCELLED', total_amount = 0 WHERE booking_id = @booking_id;
+            END
+            ELSE
+            BEGIN
+                UPDATE bookings SET total_amount = @RemainingTotal WHERE booking_id = @booking_id;
+            END
+        END
+        ELSE
+        BEGIN
+            UPDATE bookings SET status = 'CANCELLED' WHERE booking_id = @booking_id;
+            UPDATE tickets SET status = 'CANCELLED' WHERE booking_id = @booking_id AND status = 'PENDING';
+        END
+
+        COMMIT TRANSACTION;
+
+        SELECT * FROM bookings WHERE booking_id = @booking_id;
+        SELECT * FROM tickets WHERE booking_id = @booking_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 4. sp_GiaiPhongGheHetHan
+CREATE OR ALTER PROCEDURE dbo.sp_GiaiPhongGheHetHan
+    @batchSize INT = 100
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @Expired TABLE (booking_id VARCHAR(50));
+
+        ;WITH oldest AS (
+            SELECT TOP (@batchSize) booking_id, status
+            FROM bookings WITH (UPDLOCK, READPAST)
+            WHERE status = 'PENDING' AND expired_at <= SYSDATETIME()
+            ORDER BY expired_at
+        )
+        UPDATE oldest SET status = 'EXPIRED'
+        OUTPUT inserted.booking_id INTO @Expired;
+
+        UPDATE t SET status = 'EXPIRED'
+        FROM tickets t JOIN @Expired e ON e.booking_id = t.booking_id
+        WHERE t.status = 'PENDING';
+
+        COMMIT TRANSACTION;
+
+        SELECT COUNT(*) AS released FROM @Expired;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+
