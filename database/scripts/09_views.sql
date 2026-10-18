@@ -95,3 +95,79 @@ BEGIN
     GRANT SELECT ON dbo.vw_LichPhanCongTaiXe TO Role_NhanVien;
 END
 GO
+
+-- ==============================================================================
+-- 4. vw_RouteList (Danh sách tuyến đường)
+-- ==============================================================================
+CREATE OR ALTER VIEW dbo.vw_RouteList
+AS
+    SELECT
+        r.route_id,
+        r.departure_station_id,
+        ds.name AS departure_station_name,
+        dp.province_id AS departure_province_id,
+        dp.name AS departure_province,
+        r.arrival_station_id,
+        ast.name AS arrival_station_name,
+        ap.province_id AS arrival_province_id,
+        ap.name AS arrival_province,
+        r.distance_km,
+        r.estimated_duration
+    FROM routes r
+    JOIN stations ds ON ds.station_id = r.departure_station_id
+    JOIN provinces dp ON dp.province_id = ds.province_id
+    JOIN stations ast ON ast.station_id = r.arrival_station_id
+    JOIN provinces ap ON ap.province_id = ast.province_id;
+GO
+
+-- ==============================================================================
+-- 5. vw_BusList (Danh sách phương tiện)
+-- ==============================================================================
+CREATE OR ALTER VIEW dbo.vw_BusList
+AS
+    SELECT
+        b.bus_id,
+        b.license_plate,
+        b.type_id,
+        bt.name AS bus_type_name,
+        bt.total_seats,
+        bt.floors,
+        b.status
+    FROM buses b
+    JOIN bus_types bt ON bt.type_id = b.type_id;
+GO
+
+-- ==============================================================================
+-- 6. vw_RouteStations (Điểm dừng của tuyến đường theo thứ tự)
+-- ==============================================================================
+CREATE OR ALTER VIEW dbo.vw_RouteStations
+AS
+    SELECT
+        rs.route_station_id,
+        rs.route_id,
+        rs.station_id,
+        s.name AS station_name,
+        s.address AS station_address,
+        p.province_id,
+        p.name AS province_name,
+        rs.stop_order
+    FROM route_stations rs
+    JOIN stations s ON s.station_id = rs.station_id
+    JOIN provinces p ON p.province_id = s.province_id;
+GO
+
+-- ==============================================================================
+-- 7. vw_StationList (Danh sách bến xe kèm tỉnh/thành)
+-- ==============================================================================
+CREATE OR ALTER VIEW dbo.vw_StationList
+AS
+    SELECT
+        s.station_id,
+        s.name AS station_name,
+        s.province_id,
+        p.name AS province_name,
+        s.address
+    FROM stations s
+    JOIN provinces p ON p.province_id = s.province_id;
+GO
+

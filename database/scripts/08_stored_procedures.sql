@@ -652,3 +652,395 @@ BEGIN
     END CATCH
 END;
 GO
+
+-- ==============================================================================
+-- FLEET, ROUTE & STATION MANAGEMENT STORED PROCEDURES
+-- ==============================================================================
+
+-- 11. sp_LayChiTietXe
+CREATE OR ALTER PROCEDURE dbo.sp_LayChiTietXe
+    @bus_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        b.bus_id,
+        b.license_plate,
+        b.type_id,
+        bt.name AS bus_type_name,
+        bt.total_seats,
+        bt.floors,
+        b.status
+    FROM buses b
+    JOIN bus_types bt ON bt.type_id = b.type_id
+    WHERE b.bus_id = @bus_id;
+
+    -- Trả về danh sách ghế của xe
+    SELECT 
+        s.seat_id,
+        s.seat_number,
+        s.floor,
+        s.seat_type,
+        s.bus_id
+    FROM seats s
+    WHERE s.bus_id = @bus_id
+    ORDER BY s.floor ASC, s.seat_number ASC;
+END;
+GO
+
+-- 12. sp_SuaXe
+CREATE OR ALTER PROCEDURE dbo.sp_SuaXe
+    @bus_id VARCHAR(50),
+    @license_plate VARCHAR(20),
+    @type_id VARCHAR(50),
+    @status VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @bus_id)
+        THROW 51010, N'Xe không tồn tại', 1;
+
+    IF @license_plate IS NULL OR LTRIM(RTRIM(@license_plate)) = ''
+        THROW 51011, N'Biển số xe không được để trống', 1;
+
+    IF EXISTS (SELECT 1 FROM buses WHERE license_plate = @license_plate AND bus_id <> @bus_id)
+        THROW 51012, N'Biển số xe đã được dùng bởi xe khác', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM bus_types WHERE type_id = @type_id)
+        THROW 51013, N'Loại xe không tồn tại', 1;
+
+    IF @status NOT IN ('ACTIVE', 'INACTIVE')
+        THROW 51014, N'Trạng thái không hợp lệ', 1;
+
+    UPDATE buses
+    SET license_plate = @license_plate,
+        type_id = @type_id,
+        status = @status
+    WHERE bus_id = @bus_id;
+
+    SELECT b.bus_id, b.license_plate, b.type_id, b.status
+    FROM buses b WHERE b.bus_id = @bus_id;
+END;
+GO
+
+-- 13. sp_DoiTrangThaiXe
+CREATE OR ALTER PROCEDURE dbo.sp_DoiTrangThaiXe
+    @bus_id VARCHAR(50),
+    @status VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @bus_id)
+        THROW 51010, N'Xe không tồn tại', 1;
+
+    IF @status NOT IN ('ACTIVE', 'INACTIVE')
+        THROW 51014, N'Trạng thái không hợp lệ', 1;
+
+    UPDATE buses
+    SET status = @status
+    WHERE bus_id = @bus_id;
+
+    SELECT b.bus_id, b.license_plate, b.type_id, b.status
+    FROM buses b WHERE b.bus_id = @bus_id;
+END;
+GO
+
+-- 14. sp_XoaXe
+CREATE OR ALTER PROCEDURE dbo.sp_XoaXe
+    @bus_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @bus_id)
+        THROW 51010, N'Xe không tồn tại', 1;
+
+    -- Kiểm tra xe có chuyến đi sắp tới không
+    IF EXISTS (
+        SELECT 1 FROM trips 
+        WHERE bus_id = @bus_id AND departure_time > SYSDATETIME() AND status <> 'CANCELLED'
+    )
+        THROW 51015, N'Không thể xóa xe đang có chuyến đi chưa hoàn thành', 1;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Nếu xe có chuyến đi cũ trong lịch sử, đổi trạng thái sang INACTIVE để bảo toàn toàn vẹn dữ liệu
+        IF EXISTS (SELECT 1 FROM trips WHERE bus_id = @bus_id)
+        BEGIN
+            UPDATE buses SET status = 'INACTIVE' WHERE bus_id = @bus_id;
+        END
+        ELSE
+        BEGIN
+            -- Nếu chưa từng chạy chuyến nào, xóa ghế và xóa xe
+            DELETE FROM seats WHERE bus_id = @bus_id;
+            DELETE FROM buses WHERE bus_id = @bus_id;
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 15. sp_TaoLoaiXe
+CREATE OR ALTER PROCEDURE dbo.sp_TaoLoaiXe
+    @type_id VARCHAR(50),
+    @name NVARCHAR(50),
+    @total_seats INT,
+    @floors INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @type_id IS NULL OR LTRIM(RTRIM(@type_id)) = ''
+        THROW 51020, N'Mã loại xe không được để trống', 1;
+    IF @name IS NULL OR LTRIM(RTRIM(@name)) = ''
+        THROW 51021, N'Tên loại xe không được để trống', 1;
+    IF @total_seats <= 0 OR @total_seats > 100
+        THROW 51022, N'Số ghế phải từ 1 đến 100', 1;
+    IF @floors NOT IN (1, 2)
+        THROW 51023, N'Số tầng phải là 1 hoặc 2', 1;
+
+    IF EXISTS (SELECT 1 FROM bus_types WHERE type_id = @type_id)
+        THROW 51024, N'Mã loại xe đã tồn tại', 1;
+
+    INSERT INTO bus_types (type_id, name, total_seats, floors)
+    VALUES (@type_id, @name, @total_seats, @floors);
+
+    SELECT type_id, name, total_seats, floors
+    FROM bus_types WHERE type_id = @type_id;
+END;
+GO
+
+-- 16. sp_SuaLoaiXe
+CREATE OR ALTER PROCEDURE dbo.sp_SuaLoaiXe
+    @type_id VARCHAR(50),
+    @name NVARCHAR(50),
+    @total_seats INT,
+    @floors INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM bus_types WHERE type_id = @type_id)
+        THROW 51025, N'Loại xe không tồn tại', 1;
+    IF @name IS NULL OR LTRIM(RTRIM(@name)) = ''
+        THROW 51021, N'Tên loại xe không được để trống', 1;
+    IF @total_seats <= 0 OR @total_seats > 100
+        THROW 51022, N'Số ghế phải từ 1 đến 100', 1;
+    IF @floors NOT IN (1, 2)
+        THROW 51023, N'Số tầng phải là 1 hoặc 2', 1;
+
+    UPDATE bus_types
+    SET name = @name,
+        total_seats = @total_seats,
+        floors = @floors
+    WHERE type_id = @type_id;
+
+    SELECT type_id, name, total_seats, floors
+    FROM bus_types WHERE type_id = @type_id;
+END;
+GO
+
+-- 17. sp_XoaLoaiXe
+CREATE OR ALTER PROCEDURE dbo.sp_XoaLoaiXe
+    @type_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM bus_types WHERE type_id = @type_id)
+        THROW 51025, N'Loại xe không tồn tại', 1;
+
+    IF EXISTS (SELECT 1 FROM buses WHERE type_id = @type_id)
+        THROW 51026, N'Không thể xóa loại xe đang được gắn với xe', 1;
+
+    DELETE FROM bus_types WHERE type_id = @type_id;
+END;
+GO
+
+-- 18. sp_TaoTram
+CREATE OR ALTER PROCEDURE dbo.sp_TaoTram
+    @station_id VARCHAR(50),
+    @name NVARCHAR(100),
+    @province_id VARCHAR(50),
+    @address NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @station_id IS NULL OR LTRIM(RTRIM(@station_id)) = ''
+        THROW 51030, N'Mã bến xe không được để trống', 1;
+    IF @name IS NULL OR LTRIM(RTRIM(@name)) = ''
+        THROW 51031, N'Tên bến xe không được để trống', 1;
+    IF NOT EXISTS (SELECT 1 FROM provinces WHERE province_id = @province_id)
+        THROW 51032, N'Tỉnh/thành phố không tồn tại', 1;
+    IF @address IS NULL OR LTRIM(RTRIM(@address)) = ''
+        THROW 51033, N'Địa chỉ bến xe không được để trống', 1;
+
+    IF EXISTS (SELECT 1 FROM stations WHERE station_id = @station_id)
+        THROW 51034, N'Mã bến xe đã tồn tại', 1;
+
+    INSERT INTO stations (station_id, name, province_id, address)
+    VALUES (@station_id, @name, @province_id, @address);
+
+    SELECT s.station_id, s.name, s.province_id, p.name AS province_name, s.address
+    FROM stations s
+    JOIN provinces p ON p.province_id = s.province_id
+    WHERE s.station_id = @station_id;
+END;
+GO
+
+-- 19. sp_SuaTram
+CREATE OR ALTER PROCEDURE dbo.sp_SuaTram
+    @station_id VARCHAR(50),
+    @name NVARCHAR(100),
+    @province_id VARCHAR(50),
+    @address NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM stations WHERE station_id = @station_id)
+        THROW 51035, N'Bến xe không tồn tại', 1;
+    IF @name IS NULL OR LTRIM(RTRIM(@name)) = ''
+        THROW 51031, N'Tên bến xe không được để trống', 1;
+    IF NOT EXISTS (SELECT 1 FROM provinces WHERE province_id = @province_id)
+        THROW 51032, N'Tỉnh/thành phố không tồn tại', 1;
+    IF @address IS NULL OR LTRIM(RTRIM(@address)) = ''
+        THROW 51033, N'Địa chỉ bến xe không được để trống', 1;
+
+    UPDATE stations
+    SET name = @name,
+        province_id = @province_id,
+        address = @address
+    WHERE station_id = @station_id;
+
+    SELECT s.station_id, s.name, s.province_id, p.name AS province_name, s.address
+    FROM stations s
+    JOIN provinces p ON p.province_id = s.province_id
+    WHERE s.station_id = @station_id;
+END;
+GO
+
+-- 20. sp_XoaTram
+CREATE OR ALTER PROCEDURE dbo.sp_XoaTram
+    @station_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM stations WHERE station_id = @station_id)
+        THROW 51035, N'Bến xe không tồn tại', 1;
+
+    IF EXISTS (SELECT 1 FROM routes WHERE departure_station_id = @station_id OR arrival_station_id = @station_id)
+        THROW 51036, N'Không thể xóa bến xe đang được gán vào tuyến đường', 1;
+
+    IF EXISTS (SELECT 1 FROM route_stations WHERE station_id = @station_id)
+        THROW 51037, N'Không thể xóa bến xe đang là trạm dừng trung gian', 1;
+
+    DELETE FROM stations WHERE station_id = @station_id;
+END;
+GO
+
+-- 21. sp_LayChiTietTuyen
+CREATE OR ALTER PROCEDURE dbo.sp_LayChiTietTuyen
+    @route_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Thông tin cơ bản tuyến
+    SELECT 
+        r.route_id,
+        r.departure_station_id,
+        ds.name AS departure_station_name,
+        dp.province_id AS departure_province_id,
+        dp.name AS departure_province,
+        r.arrival_station_id,
+        ast.name AS arrival_station_name,
+        ap.province_id AS arrival_province_id,
+        ap.name AS arrival_province,
+        r.distance_km,
+        r.estimated_duration
+    FROM routes r
+    JOIN stations ds ON ds.station_id = r.departure_station_id
+    JOIN provinces dp ON dp.province_id = ds.province_id
+    JOIN stations ast ON ast.station_id = r.arrival_station_id
+    JOIN provinces ap ON ap.province_id = ast.province_id
+    WHERE r.route_id = @route_id;
+
+    -- Danh sách các điểm dừng (ordered stops: bao gồm cả bến khởi hành, các điểm trung gian và bến đến)
+    SELECT 
+        rs.route_station_id,
+        rs.route_id,
+        rs.station_id,
+        s.name AS station_name,
+        s.address,
+        p.name AS province_name,
+        rs.stop_order
+    FROM route_stations rs
+    JOIN stations s ON s.station_id = rs.station_id
+    JOIN provinces p ON p.province_id = s.province_id
+    WHERE rs.route_id = @route_id
+    ORDER BY rs.stop_order ASC;
+END;
+GO
+
+-- 22. sp_XoaTuyen
+CREATE OR ALTER PROCEDURE dbo.sp_XoaTuyen
+    @route_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM routes WHERE route_id = @route_id)
+        THROW 51040, N'Tuyến đường không tồn tại', 1;
+
+    IF EXISTS (SELECT 1 FROM trips WHERE route_id = @route_id)
+        THROW 51041, N'Không thể xóa tuyến đường đã có chuyến đi', 1;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        DELETE FROM route_stations WHERE route_id = @route_id;
+        DELETE FROM routes WHERE route_id = @route_id;
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 23. sp_LaySoDoGheXe
+CREATE OR ALTER PROCEDURE dbo.sp_LaySoDoGheXe
+    @bus_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @bus_id)
+        THROW 51010, N'Xe không tồn tại', 1;
+
+    SELECT 
+        s.seat_id,
+        s.seat_number,
+        s.floor,
+        s.seat_type,
+        s.bus_id
+    FROM seats s
+    WHERE s.bus_id = @bus_id
+    ORDER BY s.floor ASC, s.seat_number ASC;
+END;
+GO
+

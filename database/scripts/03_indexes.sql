@@ -24,6 +24,18 @@ GO
 CREATE INDEX idx_seats_bus_id ON seats(bus_id);
 GO
 
+-- Bảng Stations & Routes & Buses (Fleet & Route Management)
+CREATE INDEX idx_stations_province_id ON stations(province_id);
+GO
+CREATE INDEX idx_routes_departure_station_id ON routes(departure_station_id);
+CREATE INDEX idx_routes_arrival_station_id ON routes(arrival_station_id);
+GO
+CREATE INDEX idx_buses_type_id ON buses(type_id);
+GO
+CREATE INDEX idx_route_stations_route_id ON route_stations(route_id);
+CREATE INDEX idx_route_stations_station_id ON route_stations(station_id);
+GO
+
 -- Concurrency & Business Indexes (GĐ1)
 CREATE UNIQUE INDEX uq_tickets_trip_seat_active ON tickets(trip_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED');
 GO

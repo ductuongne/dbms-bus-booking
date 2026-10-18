@@ -11,6 +11,11 @@ GO
 ALTER TABLE routes ADD CONSTRAINT fk_route_arrival FOREIGN KEY (arrival_station_id) REFERENCES stations(station_id);
 GO
 
+ALTER TABLE route_stations ADD CONSTRAINT fk_route_station_route FOREIGN KEY (route_id) REFERENCES routes(route_id);
+GO
+ALTER TABLE route_stations ADD CONSTRAINT fk_route_station_station FOREIGN KEY (station_id) REFERENCES stations(station_id);
+GO
+
 ALTER TABLE buses ADD CONSTRAINT fk_bus_type FOREIGN KEY (type_id) REFERENCES bus_types(type_id);
 GO
 
@@ -68,6 +73,9 @@ GO
 ALTER TABLE seats ADD CONSTRAINT uq_seat_number_per_bus UNIQUE (bus_id, seat_number);
 GO
 
+ALTER TABLE route_stations ADD CONSTRAINT uq_route_stop_order UNIQUE (route_id, stop_order);
+GO
+
 -- ==========================================
 -- CHECK CONSTRAINTS (ENUMS)
 -- ==========================================
@@ -75,6 +83,9 @@ ALTER TABLE users ADD CONSTRAINT chk_user_role CHECK (role IN ('CUSTOMER', 'STAF
 GO
 
 ALTER TABLE buses ADD CONSTRAINT chk_bus_status CHECK (status IN ('ACTIVE', 'INACTIVE'));
+GO
+
+ALTER TABLE seats ADD CONSTRAINT chk_seat_type CHECK (seat_type IN ('NORMAL', 'VIP', 'SLEEPER'));
 GO
 
 
