@@ -1,3 +1,8 @@
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+
 INSERT INTO provinces (province_id, name) VALUES 
 ('PRV-01', N'Hà Nội'),
 ('PRV-02', N'Hồ Chí Minh'),
@@ -12,9 +17,10 @@ INSERT INTO bus_types (type_id, name, total_seats, floors) VALUES
 GO
 
 -- Chú ý cột is_active đổi TRUE thành 1
+-- Mật khẩu mặc định cho các tài khoản mẫu là: 12345678
 INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active) VALUES 
-('USR-ADMIN-1', N'System Administrator', 'admin@example.com', '0901234567', '$2b$10$dummyHashStringHere123456', 'ADMIN', 0, 1),
-('USR-CUS-1', N'Nguyễn Văn A', 'nva@example.com', '0988000111', '$2b$10$dummyHashStringHere789012', 'CUSTOMER', 150, 1),
+('USR-ADMIN-1', N'System Administrator', 'admin@example.com', '0901234567', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'ADMIN', 0, 1),
+('USR-CUS-1', N'Nguyễn Văn A', 'nva@example.com', '0988000111', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 150, 1),
 ('USR-GUEST-1', N'Khách Vãng Lai B', 'guestb@example.com', '0933222333', NULL, 'GUEST', 0, 1);
 GO
 
@@ -29,8 +35,8 @@ GO
 
 -- Users (Drivers)
 INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active) VALUES 
-('USR-DRV-1', N'Tài xế Nguyễn Văn Một', 'driver1@example.com', '0911000001', '$2b$10$dummyHashStringHere111111', 'DRIVER', 0, 1),
-('USR-DRV-2', N'Tài xế Trần Văn Hai', 'driver2@example.com', '0911000002', '$2b$10$dummyHashStringHere222222', 'DRIVER', 0, 1);
+('USR-DRV-1', N'Tài xế Nguyễn Văn Một', 'driver1@example.com', '0911000001', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-2', N'Tài xế Trần Văn Hai', 'driver2@example.com', '0911000002', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1);
 GO
 
 -- Drivers
