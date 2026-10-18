@@ -1,6 +1,8 @@
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
+import { publicRouter } from './modules/auth/auth.routes.js'
+import { errorHandler } from './middlewares/error-handler.js'
 
 dotenv.config()
 
@@ -13,6 +15,12 @@ app.use(express.json())
 app.get('/api/health', (_request, response) => {
 	response.json({ status: 'ok', service: 'bus-management-api' })
 })
+
+// Dual-routing: Public (không cần JWT)
+app.use('/api/public', publicRouter)
+
+// Error Handler: PHẢI đặt CUỐI CÙNG sau tất cả routes
+app.use(errorHandler)
 
 app.listen(port, () => {
 	console.log(`API listening on http://localhost:${port}`)
