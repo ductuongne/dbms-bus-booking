@@ -1,6 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
 import { authService } from './auth.service.js'
-import type { RegisterDto } from './auth.schema.js'
+import type { LoginDto, RegisterDto } from './auth.schema.js'
 
 export const register: RequestHandler = async (
 	req: Request,
@@ -24,6 +24,27 @@ export const register: RequestHandler = async (
 	}
 }
 
+export const login: RequestHandler = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	try {
+		const dto = req.body as LoginDto
+		const result = await authService.login(dto)
+
+		res.status(200).json({
+			success: true,
+			message: 'Đăng nhập thành công.',
+			token: result.token,
+		})
+	} catch (err: unknown) {
+		next(err)
+	}
+}
+
 export const authController = {
 	register,
+	login,
 }
+
