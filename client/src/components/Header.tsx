@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bus, Ticket, Globe, Undo2, HelpCircle, User } from 'lucide-react';
+import { Bus, Ticket, Globe, Undo2, HelpCircle, User, Navigation, Shield } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -26,7 +26,19 @@ export const Header: React.FC = () => {
         </Link>
 
         {/* Navigation Links */}
-        <nav className="flex items-center gap-2 sm:gap-6 text-sm text-gray-700">
+        <nav className="flex items-center gap-2 sm:gap-4 text-sm text-gray-700">
+          <Link
+            to="/routes"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              currentPath.startsWith('/routes')
+                ? 'bg-rose-50 text-[#FF385C]'
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Navigation className="w-4 h-4 text-gray-500" />
+            <span>Tuyến đường</span>
+          </Link>
+
           <Link
             to="/search?from=Hà Nội&to=Ninh Bình&date=2026-10-18"
             className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
@@ -37,6 +49,18 @@ export const Header: React.FC = () => {
           >
             <Ticket className="w-4 h-4 text-gray-500" />
             <span>Tìm chuyến</span>
+          </Link>
+
+          <Link
+            to="/admin/vehicles"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              currentPath.startsWith('/admin')
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Admin</span>
           </Link>
 
           <Link
