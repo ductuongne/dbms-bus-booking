@@ -1,20 +1,23 @@
-import './App.css'
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import HomePage from './pages/HomePage';
+import SearchResultsPage from './pages/SearchResultsPage';
+import PaymentPage from './pages/PaymentPage';
 
-function App() {
+export const App: React.FC = () => {
   return (
-    <main className="shell">
-      <span className="eyebrow">BUS MANAGEMENT</span>
-      <h1>Quản lý xe khách</h1>
-      <p className="intro">Nền tảng quản lý tuyến xe, phương tiện và lịch vận hành.</p>
-      <section className="status-panel" aria-label="Trạng thái hệ thống">
-        <span className="status-dot" />
-        <div>
-          <strong>Dự án đã khởi tạo</strong>
-          <p>API và giao diện sẵn sàng để phát triển nghiệp vụ.</p>
-        </div>
-      </section>
-    </main>
-  )
-}
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
-export default App
+export default App;
