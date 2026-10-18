@@ -4,10 +4,46 @@ import jwt from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 import { AppError } from '../../utils/app-error.js'
 import { authRepository } from './auth.repository.js'
-import type { RegisterDto } from './auth.schema.js'
+import type { LoginDto, RegisterDto } from './auth.schema.js'
 
 function signJwt(payload: { userId: string; role: string }): string {
 	return jwt.sign(payload, env.jwtSecret, { expiresIn: '7d' })
+}
+
+export async function login(dto: LoginDto): Promise<{ token: string }> {
+	// BƯỚC 1: Truy vấn user theo SĐT
+	const user = await authRepository.findByPhone(dto.phone)
+
+	// ──── GUARD 1: ANTI-ENUMERATION GUARD ────
+	if (user === null) {
+		throw new AppError(401, 'Số điện thoại hoặc mật khẩu không chính xác.')
+	}
+
+	// ──── GUARD 2: GUEST ACCOUNT GUARD ────
+	if (user.role === 'GUEST' || user.password_hash === null) {
+		throw new AppError(
+			403,
+			'Tài khoản của bạn là khách vãng lai chưa có mật khẩu. Vui lòng chọn Đăng ký để thiết lập tài khoản!'
+		)
+	}
+
+	// ──── GUARD 3: ACTIVE GUARD ────
+	if (user.is_active === false || (user.is_active as unknown) === 0) {
+		throw new AppError(
+			403,
+			'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.'
+		)
+	}
+
+	// ──── GUARD 4: PASSWORD GUARD ────
+	const passwordMatch = await bcrypt.compare(dto.password, user.password_hash)
+	if (!passwordMatch) {
+		throw new AppError(401, 'Số điện thoại hoặc mật khẩu không chính xác.')
+	}
+
+	// ──── SUCCESS ────
+	const token = signJwt({ userId: user.user_id, role: user.role })
+	return { token }
 }
 
 export async function register(
@@ -66,4 +102,6 @@ export async function register(
 
 export const authService = {
 	register,
+	login,
 }
+
