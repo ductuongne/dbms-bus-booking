@@ -10,7 +10,16 @@ function signJwt(payload: { userId: string; role: string }): string {
 	return jwt.sign(payload, env.jwtSecret, { expiresIn: '7d' })
 }
 
-export async function login(dto: LoginDto): Promise<{ token: string }> {
+export async function login(dto: LoginDto): Promise<{
+	token: string
+	user: {
+		userId: string
+		fullName: string
+		phone: string
+		role: string
+		email: string
+	}
+}> {
 	// BƯỚC 1: Truy vấn user theo SĐT
 	const user = await authRepository.findByPhone(dto.phone)
 
@@ -43,7 +52,16 @@ export async function login(dto: LoginDto): Promise<{ token: string }> {
 
 	// ──── SUCCESS ────
 	const token = signJwt({ userId: user.user_id, role: user.role })
-	return { token }
+	return {
+		token,
+		user: {
+			userId: user.user_id,
+			fullName: user.full_name,
+			phone: user.phone,
+			role: user.role,
+			email: user.email,
+		},
+	}
 }
 
 export async function register(

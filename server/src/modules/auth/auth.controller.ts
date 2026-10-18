@@ -38,6 +38,11 @@ export const login: RequestHandler = async (
 			success: true,
 			message: 'Đăng nhập thành công.',
 			token: result.token,
+			user: result.user,
+			data: {
+				token: result.token,
+				user: result.user,
+			},
 		})
 	} catch (err: unknown) {
 		next(err)

@@ -70,7 +70,11 @@ export const LoginPage: React.FC = () => {
 				}
 			}
 
-			const { token, user: loggedInUser } = response.data.data
+			const token = response.data?.data?.token || response.data?.token
+			const loggedInUser = response.data?.data?.user || response.data?.user
+			if (!token) {
+				throw new Error('Không nhận được mã xác thực (token) từ máy chủ.')
+			}
 			login(token, loggedInUser)
 			navigate(redirectUrl, { replace: true })
 		} catch (err: unknown) {
@@ -80,6 +84,8 @@ export const LoginPage: React.FC = () => {
 					apiErr.message ||
 						'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản và mật khẩu.'
 				)
+			} else if (err instanceof Error) {
+				setServerError(err.message)
 			} else {
 				setServerError(
 					'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.'
