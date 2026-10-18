@@ -4,6 +4,7 @@ import express from 'express'
 import { publicRouter } from './modules/auth/auth.routes.js'
 import { privateRouter } from './modules/auth/private.routes.js'
 import { adminRouter } from './modules/admin/admin.routes.js'
+import { driverRouter } from './modules/driver/driver.routes.js'
 import { verifyJWT } from './middlewares/auth.middleware.js'
 import { errorHandler } from './middlewares/error-handler.js'
 
@@ -27,6 +28,9 @@ app.use('/api/private', verifyJWT, privateRouter)
 
 // Admin Management Router (bảo vệ bởi verifyJWT + checkRole(['ADMIN']))
 app.use('/api/private/admin', adminRouter)
+
+// Driver Portal Router (bảo vệ bởi verifyJWT + checkRole(['DRIVER']))
+app.use('/api/private/driver', driverRouter)
 
 // Error Handler: PHẢI đặt CUỐI CÙNG sau tất cả routes
 app.use(errorHandler)
