@@ -334,4 +334,94 @@ BEGIN
 END;
 GO
 
+-- 5. sp_TraCuuChuyenDi (tra cứu chuyến theo tỉnh đi/tỉnh đến/ngày, có phân trang)
+CREATE OR ALTER PROCEDURE dbo.sp_TraCuuChuyenDi
+    @fromProvinceId VARCHAR(50),
+    @toProvinceId VARCHAR(50),
+    @date VARCHAR(10),
+    @page INT = 1,
+    @limit INT = 10
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Chặn tham số phân trang âm/0 (server đã validate, nhưng SP phải tự bảo vệ)
+    IF @page < 1 SET @page = 1;
+    IF @limit < 1 SET @limit = 10;
+
+    DECLARE @day DATE = TRY_CAST(@date AS DATE);
+    IF @day IS NULL THROW 50061, N'Ngày tra cứu không hợp lệ', 1;
+
+    DECLARE @offset INT = (@page - 1) * @limit;
+
+    WITH TripSeats AS (
+        SELECT 
+            t.trip_id,
+            t.departure_time,
+            t.arrival_time,
+            t.price,
+            bt.name AS bus_type,
+            r.route_id,
+            ds.name AS departure_station,
+            ast.name AS arrival_station,
+            dp.name AS departure_province,
+            ap.name AS arrival_province,
+            (
+                (SELECT COUNT(*) FROM seats s WHERE s.bus_id = t.bus_id)
+                - (SELECT COUNT(DISTINCT tk.seat_id)
+                   FROM tickets tk JOIN bookings bk ON bk.booking_id = tk.booking_id
+                   WHERE tk.trip_id = t.trip_id
+                     AND (tk.status = 'CONFIRMED'
+                          OR (tk.status = 'PENDING' AND bk.expired_at > SYSDATETIME())))
+            ) AS availableSeats
+        FROM trips t
+        JOIN routes r ON r.route_id = t.route_id
+        JOIN stations ds ON ds.station_id = r.departure_station_id
+        JOIN stations ast ON ast.station_id = r.arrival_station_id
+        JOIN provinces dp ON dp.province_id = ds.province_id
+        JOIN provinces ap ON ap.province_id = ast.province_id
+        JOIN buses b ON b.bus_id = t.bus_id
+        JOIN bus_types bt ON bt.type_id = b.type_id
+        WHERE ds.province_id = @fromProvinceId
+          AND ast.province_id = @toProvinceId
+          AND CAST(t.departure_time AS DATE) = @day
+          AND t.status = 'SCHEDULED'
+          AND t.departure_time > SYSDATETIME()
+    )
+    SELECT 
+        trip_id, departure_time, arrival_time, price, bus_type,
+        route_id, departure_station, arrival_station, departure_province, arrival_province,
+        availableSeats,
+        COUNT(*) OVER() AS totalCount
+    FROM TripSeats
+    WHERE availableSeats > 0
+    ORDER BY departure_time ASC
+    OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;
+END;
+GO
+
+-- 6. sp_LaySoDoGhe (sơ đồ ghế của chuyến: trạng thái động + giá qua fn_TinhGiaVe)
+CREATE OR ALTER PROCEDURE dbo.sp_LaySoDoGhe
+    @trip_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT s.seat_id, s.seat_number,
+           COALESCE(a.status, 'AVAILABLE') AS status,
+           dbo.fn_TinhGiaVe(@trip_id, s.seat_id) AS price
+    FROM seats s
+    JOIN trips t ON t.bus_id = s.bus_id AND t.trip_id = @trip_id
+    OUTER APPLY (
+        SELECT TOP 1 tk.status
+        FROM tickets tk JOIN bookings b ON b.booking_id = tk.booking_id
+        WHERE tk.trip_id = @trip_id AND tk.seat_id = s.seat_id
+          AND (tk.status = 'CONFIRMED'
+               OR (tk.status = 'PENDING' AND b.expired_at > SYSDATETIME()))
+        ORDER BY CASE WHEN tk.status = 'CONFIRMED' THEN 0 ELSE 1 END
+    ) a
+    ORDER BY s.seat_number;
+END;
+GO
+
 
