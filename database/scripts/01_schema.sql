@@ -52,8 +52,6 @@ GO
 CREATE TABLE seats (
     seat_id VARCHAR(50) PRIMARY KEY,
     seat_number VARCHAR(10) NOT NULL,
-    floor INT NOT NULL,
-    seat_type VARCHAR(20) NOT NULL,
     bus_id VARCHAR(50) NOT NULL
 );
 GO
