@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { env } from './config/env'
+import { startBookingCron } from './jobs/booking.cron'
 import { errorHandler } from './middlewares/error-handler'
 import appRouter from './modules/index'
 
@@ -19,5 +20,6 @@ app.use(errorHandler)
 
 app.listen(env.PORT, () => {
 	console.log(`API listening on http://localhost:${env.PORT}`)
+	startBookingCron()
 })
 
