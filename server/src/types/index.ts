@@ -57,3 +57,23 @@ export interface UpdateAdminUserData {
 	phone: string
 	role: UserRole
 }
+
+export interface DriverScheduleDto {
+	tripId: string
+	driverId: string
+	userId: string
+	driverName: string
+	driverPhone: string
+	licenseNumber: string
+	departureTime: Date | string
+	arrivalTime: Date | string
+	tripStatus: string
+	routeId: string
+	departureStation: string
+	arrivalStation: string
+	distanceKm: number
+	licensePlate: string
+	busType: string
+	totalSeats: number
+}
+
