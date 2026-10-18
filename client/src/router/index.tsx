@@ -7,6 +7,7 @@ import PaymentPage from '../pages/PaymentPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
+import { DriverSchedulesPage } from '../pages/driver/DriverSchedulesPage'
 import { UnauthorizedPage } from '../pages/UnauthorizedPage'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 
@@ -25,6 +26,11 @@ export const AppRoutes: React.FC = () => {
 				{/* Admin Protected Routes: Chỉ cho phép role ADMIN */}
 				<Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
 					<Route path="/admin" element={<AdminDashboardPage />} />
+				</Route>
+
+				{/* Driver Protected Routes: Chỉ cho phép role DRIVER */}
+				<Route element={<ProtectedRoute allowedRoles={['DRIVER']} />}>
+					<Route path="/driver/schedules" element={<DriverSchedulesPage />} />
 				</Route>
 
 				{/* Fallback Catch-all Route */}
