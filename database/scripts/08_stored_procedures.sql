@@ -15,16 +15,6 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    -- Validate chuyến đi
-    IF NOT EXISTS (
-        SELECT 1
-        FROM trips t
-        JOIN buses b ON b.bus_id = t.bus_id
-        WHERE t.trip_id = @trip_id AND t.status = 'SCHEDULED'
-          AND t.departure_time > SYSDATETIME() AND b.status = 'ACTIVE'
-    )
-        THROW 50060, N'Chuyến đi không khả dụng', 1;
-
     -- Validate channel
     IF @channel NOT IN ('ONLINE', 'COUNTER')
         THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
@@ -73,6 +63,16 @@ BEGIN
 
     BEGIN TRY
         BEGIN TRANSACTION;
+
+        -- Validate chuyến đi và giữ khóa đến hết transaction
+        IF NOT EXISTS (
+            SELECT 1
+            FROM trips t WITH (HOLDLOCK)
+            JOIN buses b ON b.bus_id = t.bus_id
+            WHERE t.trip_id = @trip_id AND t.status = 'SCHEDULED'
+              AND t.departure_time > SYSDATETIME() AND b.status = 'ACTIVE'
+        )
+            THROW 50060, N'Chuyến đi không khả dụng', 1;
 
         -- Giải phóng ghế hết hạn của đúng các ghế đang xin (bookings -> tickets)
         DECLARE @Stale TABLE (booking_id VARCHAR(50));
@@ -156,6 +156,15 @@ BEGIN
 
     BEGIN TRY
         BEGIN TRANSACTION;
+
+        DECLARE @trip_id VARCHAR(50);
+        SELECT TOP 1 @trip_id = trip_id FROM tickets WHERE booking_id = @booking_id;
+
+        IF @trip_id IS NULL
+            THROW 50040, N'Booking không tồn tại hoặc thông tin xác thực không đúng', 1;
+
+        IF NOT EXISTS (SELECT 1 FROM trips WITH (HOLDLOCK) WHERE trip_id = @trip_id)
+            THROW 50040, N'Booking không tồn tại hoặc thông tin xác thực không đúng', 1;
 
         DECLARE @CurrentStatus VARCHAR(20), @ExpiredAt DATETIME2;
         SELECT @CurrentStatus = status, @ExpiredAt = expired_at
@@ -395,6 +404,251 @@ BEGIN
 END;
 GO
 
+-- 6. sp_TaoChuyen
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_TaoChuyen
+    @route_id VARCHAR(50),
+    @bus_id VARCHAR(50),
+    @driver_id VARCHAR(50),
+    @departure_time DATETIME2,
+    @arrival_time DATETIME2,
+    @price DECIMAL(12,2),
+    @trip_id VARCHAR(50) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
+        IF NOT EXISTS (SELECT 1 FROM routes WHERE route_id = @route_id)
+           OR NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @bus_id AND status = 'ACTIVE')
+           OR NOT EXISTS (SELECT 1 FROM drivers WHERE driver_id = @driver_id)
+           OR @price <= 0 OR @departure_time <= SYSDATETIME() OR @arrival_time <= @departure_time
+            THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
 
+        SET @trip_id = 'TRP-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8));
+
+        INSERT INTO trips (trip_id, route_id, bus_id, driver_id, departure_time, arrival_time, price, status)
+        VALUES (@trip_id, @route_id, @bus_id, @driver_id, @departure_time, @arrival_time, @price, 'SCHEDULED');
+
+        COMMIT TRANSACTION;
+        SELECT * FROM trips WHERE trip_id = @trip_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 7. sp_HuyChuyen
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_HuyChuyen
+    @trip_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @status VARCHAR(20);
+        SELECT @status = status FROM trips WITH (XLOCK, HOLDLOCK) WHERE trip_id = @trip_id;
+        IF @status IS NULL THROW 50070, N'Chuyến không tồn tại', 1;
+        IF @status <> 'SCHEDULED' THROW 50071, N'Trạng thái chuyến không cho phép thao tác', 1;
+
+        UPDATE trips SET status = 'CANCELLED' WHERE trip_id = @trip_id;
+
+        DECLARE @CancelledBookings TABLE (booking_id VARCHAR(50));
+        INSERT INTO @CancelledBookings (booking_id)
+        SELECT DISTINCT booking_id FROM tickets
+        WHERE trip_id = @trip_id AND status IN ('PENDING', 'CONFIRMED');
+
+        UPDATE bookings SET status = 'CANCELLED'
+        WHERE booking_id IN (SELECT booking_id FROM @CancelledBookings)
+          AND status IN ('PENDING', 'CONFIRMED');
+        DECLARE @bookingCount INT = @@ROWCOUNT;
+
+        UPDATE tickets SET status = 'CANCELLED'
+        WHERE trip_id = @trip_id AND status IN ('PENDING', 'CONFIRMED');
+        DECLARE @ticketCount INT = @@ROWCOUNT;
+
+        COMMIT TRANSACTION;
+        SELECT @bookingCount AS cancelled_bookings, @ticketCount AS cancelled_tickets;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 8. sp_SuaChuyen
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_SuaChuyen
+    @trip_id VARCHAR(50),
+    @bus_id VARCHAR(50) = NULL,
+    @driver_id VARCHAR(50) = NULL,
+    @departure_time DATETIME2 = NULL,
+    @arrival_time DATETIME2 = NULL,
+    @price DECIMAL(12,2) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @currentBusId VARCHAR(50), @currentDriverId VARCHAR(50), @currentDepartureTime DATETIME2,
+                @currentArrivalTime DATETIME2, @currentPrice DECIMAL(12,2), @status VARCHAR(20);
+        SELECT @currentBusId = bus_id, @currentDriverId = driver_id, @currentDepartureTime = departure_time,
+               @currentArrivalTime = arrival_time, @currentPrice = price, @status = status
+        FROM trips WITH (XLOCK, HOLDLOCK) WHERE trip_id = @trip_id;
+
+        IF @status IS NULL THROW 50070, N'Chuyến không tồn tại', 1;
+        IF @status <> 'SCHEDULED' THROW 50071, N'Trạng thái chuyến không cho phép thao tác', 1;
+
+        DECLARE @newBusId VARCHAR(50) = COALESCE(@bus_id, @currentBusId);
+        DECLARE @newDriverId VARCHAR(50) = COALESCE(@driver_id, @currentDriverId);
+        DECLARE @newDepartureTime DATETIME2 = COALESCE(@departure_time, @currentDepartureTime);
+        DECLARE @newArrivalTime DATETIME2 = COALESCE(@arrival_time, @currentArrivalTime);
+        DECLARE @newPrice DECIMAL(12,2) = COALESCE(@price, @currentPrice);
+
+        IF @newBusId <> @currentBusId OR @newDepartureTime <> @currentDepartureTime OR @newArrivalTime <> @currentArrivalTime
+        BEGIN
+            DECLARE @ExpiredBookings TABLE (booking_id VARCHAR(50));
+            INSERT INTO @ExpiredBookings (booking_id)
+            SELECT DISTINCT b.booking_id
+            FROM bookings b JOIN tickets t ON t.booking_id = b.booking_id
+            WHERE t.trip_id = @trip_id AND t.status = 'PENDING'
+              AND b.status = 'PENDING' AND b.expired_at <= SYSDATETIME();
+
+            UPDATE bookings SET status = 'EXPIRED'
+            WHERE booking_id IN (SELECT booking_id FROM @ExpiredBookings)
+              AND status = 'PENDING' AND expired_at <= SYSDATETIME();
+
+            UPDATE tickets SET status = 'EXPIRED'
+            WHERE booking_id IN (SELECT booking_id FROM @ExpiredBookings) AND status = 'PENDING';
+
+            IF EXISTS (SELECT 1 FROM tickets WHERE trip_id = @trip_id AND status IN ('PENDING', 'CONFIRMED'))
+                THROW 50072, N'Chuyến đã có vé, không đổi xe/giờ được', 1;
+        END
+
+        IF NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @newBusId AND status = 'ACTIVE')
+           OR NOT EXISTS (SELECT 1 FROM drivers WHERE driver_id = @newDriverId)
+           OR @newPrice <= 0 OR @newArrivalTime <= @newDepartureTime
+           OR ((@departure_time IS NOT NULL OR @arrival_time IS NOT NULL) AND @newDepartureTime <= SYSDATETIME())
+            THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+        UPDATE trips
+        SET bus_id = @newBusId, driver_id = @newDriverId, departure_time = @newDepartureTime,
+            arrival_time = @newArrivalTime, price = @newPrice
+        WHERE trip_id = @trip_id;
+
+        COMMIT TRANSACTION;
+        SELECT * FROM trips WHERE trip_id = @trip_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 9. sp_DoiTrangThaiChuyen
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_DoiTrangThaiChuyen
+    @trip_id VARCHAR(50),
+    @new_status VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @status VARCHAR(20);
+        SELECT @status = status FROM trips WITH (XLOCK, HOLDLOCK) WHERE trip_id = @trip_id;
+        IF @status IS NULL THROW 50070, N'Chuyến không tồn tại', 1;
+        IF NOT ((@status = 'SCHEDULED' AND @new_status = 'DEPARTED')
+             OR (@status = 'DEPARTED' AND @new_status = 'COMPLETED'))
+            THROW 50071, N'Trạng thái chuyến không cho phép thao tác', 1;
+
+        UPDATE trips SET status = @new_status WHERE trip_id = @trip_id;
+
+        IF @new_status = 'DEPARTED'
+        BEGIN
+            DECLARE @ExpiredBookings TABLE (booking_id VARCHAR(50));
+            INSERT INTO @ExpiredBookings (booking_id)
+            SELECT DISTINCT booking_id FROM tickets WHERE trip_id = @trip_id AND status = 'PENDING';
+
+            UPDATE bookings SET status = 'EXPIRED'
+            WHERE booking_id IN (SELECT booking_id FROM @ExpiredBookings) AND status = 'PENDING';
+
+            UPDATE tickets SET status = 'EXPIRED'
+            WHERE booking_id IN (SELECT booking_id FROM @ExpiredBookings) AND status = 'PENDING';
+        END
+
+        COMMIT TRANSACTION;
+        SELECT * FROM trips WHERE trip_id = @trip_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 10. sp_CheckIn
+SET QUOTED_IDENTIFIER ON;
+GO
+SET ANSI_NULLS ON;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_CheckIn
+    @ticket_code VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE @trip_id VARCHAR(50);
+        SELECT @trip_id = trip_id FROM tickets WHERE ticket_code = @ticket_code;
+        IF @trip_id IS NULL THROW 50074, N'Vé không tồn tại', 1;
+
+        IF NOT EXISTS (SELECT 1 FROM trips WITH (HOLDLOCK) WHERE trip_id = @trip_id AND status = 'SCHEDULED')
+            THROW 50073, N'Vé không check-in được', 1;
+
+        UPDATE tickets SET status = 'CHECKED_IN'
+        WHERE ticket_code = @ticket_code AND status = 'CONFIRMED';
+        IF @@ROWCOUNT = 0 THROW 50073, N'Vé không check-in được', 1;
+
+        COMMIT TRANSACTION;
+        SELECT t.ticket_id, t.ticket_code, t.seat_id, t.passenger_name, t.passenger_phone, t.status
+        FROM tickets t WHERE t.ticket_code = @ticket_code;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
