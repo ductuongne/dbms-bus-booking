@@ -1,1 +1,1 @@
-// Trang quản lý xe (phương tiện)
+export { AdminVehiclesPage as default, AdminVehiclesPage } from './admin/AdminVehiclesPage';

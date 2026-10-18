@@ -1,2 +1,1 @@
-// Trang Quản lý Bến xe
-
+export { AdminStationsPage as default, AdminStationsPage } from './admin/AdminStationsPage';
