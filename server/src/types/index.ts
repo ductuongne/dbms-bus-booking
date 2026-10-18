@@ -31,3 +31,29 @@ export interface UpdateGuestDto {
 	fullName: string
 	passwordHash: string
 }
+
+export interface AdminUserResponseDto {
+	userId: string
+	fullName: string
+	email: string
+	phone: string
+	role: UserRole
+	loyaltyPoints: number
+	isActive: boolean
+}
+
+export interface CreateAdminUserData {
+	userId: string
+	fullName: string
+	email: string
+	phone: string
+	passwordHash: string
+	role: UserRole
+}
+
+export interface UpdateAdminUserData {
+	fullName: string
+	email: string
+	phone: string
+	role: UserRole
+}
