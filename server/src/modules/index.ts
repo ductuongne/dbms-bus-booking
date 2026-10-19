@@ -1,5 +1,6 @@
 import { Router, type RequestHandler } from 'express'
 import bookingRoutes from './bookings/booking.routes'
+import paymentRoutes from './payments/payment.routes'
 import tripRoutes from './trips/trip.routes'
 import { busRouter, adminBusRouter, adminBusTypeRouter } from './buses/bus.routes'
 import { stationRouter, provinceRouter, adminStationRouter } from './stations/station.routes'
@@ -11,6 +12,7 @@ const appRouter = Router()
 // Trips & Bookings
 appRouter.use('/trips', tripRoutes)
 appRouter.use('/bookings', bookingRoutes)
+appRouter.use('/payments', paymentRoutes)
 
 // ==========================================
 // PUBLIC USER ENDPOINTS (No authentication required)

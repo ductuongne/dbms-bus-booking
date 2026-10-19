@@ -45,6 +45,16 @@ const SQL_ERROR_MAP: Record<
 	},
 	50073: { statusCode: 409, defaultMessage: 'Không thể check-in vé' },
 	50074: { statusCode: 404, defaultMessage: 'Mã vé không tồn tại' },
+	50080: { statusCode: 409, defaultMessage: 'Booking đã được thanh toán' },
+	50081: { statusCode: 409, defaultMessage: 'Mã giao dịch đã tồn tại' },
+	50082: {
+		statusCode: 409,
+		defaultMessage: 'Số tiền thanh toán không khớp tổng tiền booking',
+	},
+	50083: {
+		statusCode: 409,
+		defaultMessage: 'Booking chưa được xác nhận nên chưa thể thanh toán',
+	},
 	50090: { statusCode: 400, defaultMessage: 'Tham số báo cáo không hợp lệ' },
 	1205: {
 		statusCode: 503,
