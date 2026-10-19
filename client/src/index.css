@@ -1,9 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-brand: #1E3A5F;
+  --color-brand-hover: #162C48;
+  --color-brand-light: #EFF6FF;
+  --color-surface: #FFFFFF;
+  --color-bg: #F8FAFC;
+  --color-border: #E2E8F0;
+  --color-text-main: #0F172A;
+  --color-text-muted: #64748B;
+  --color-action: #C2410C;
+  --color-action-hover: #9A3412;
+  --color-success: #16A34A;
+  --color-error: #DC2626;
+  --color-warning: #D97706;
+  --color-zone-blue: #2563EB;
+  --color-zone-purple: #7C3AED;
+  --color-zone-amber: #D97706;
+  --color-zone-green: #16A34A;
+}
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #1f2937;
-  background-color: #f9fafb;
+  font-family: var(--font-sans);
+  color: #0F172A;
+  background-color: #F8FAFC;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -21,4 +43,15 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

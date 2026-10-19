@@ -21,6 +21,10 @@ import {
 } from '../../services/route.service';
 import { stationService } from '../../services/station.service';
 import type { RouteDetailView, StationDetailView } from '../../types';
+import Button from '../../components/common/Button';
+import Modal from '../../components/common/Modal';
+import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
 
 export const AdminRoutesPage: React.FC = () => {
   const [routes, setRoutes] = useState<RouteListItem[]>([]);
@@ -253,48 +257,41 @@ export const AdminRoutesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <GitFork className="w-6 h-6 text-indigo-600" />
-            <span>Quản lý Tuyến Đường &amp; Lộ Trình</span>
-          </h2>
-          <p className="text-xs text-gray-500 mt-1">
+          <h2 className="text-xl font-bold text-slate-900">Quản lý Tuyến Đường &amp; Lộ Trình</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Cấu hình các tuyến xe liên tỉnh, cự ly km, thời gian di chuyển và thứ tự các trạm dừng
           </p>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          <span>Thêm Tuyến Đường Mới</span>
-        </button>
+          Thêm tuyến mới
+        </Button>
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs">
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" />
-          <input
-            type="text"
-            placeholder="Tìm theo mã tuyến, tên bến xe hoặc tỉnh thành..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent text-xs text-gray-800 focus:outline-none"
-          />
-        </div>
+      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+        <Input
+          icon={<Search className="w-4 h-4" />}
+          placeholder="Tìm theo mã tuyến, tên bến xe hoặc tỉnh thành..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
       {/* Routes Grid / Cards (Requirement 10: Show station names instead of raw IDs) */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-2">
-            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs text-gray-500">Đang tải danh sách tuyến đường...</p>
           </div>
         ) : error ? (
@@ -317,7 +314,7 @@ export const AdminRoutesPage: React.FC = () => {
                     <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded bg-gray-100 text-gray-700">
                       {route.id}
                     </span>
-                    <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-xs font-semibold text-[#1E3A5F] bg-blue-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatDuration(route.estimatedDuration)}
                     </span>
@@ -349,33 +346,34 @@ export const AdminRoutesPage: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 self-end lg:self-center">
-                  <button
-                    type="button"
+                <div className="flex items-center gap-1.5 self-end lg:self-center">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    icon={<Eye className="w-3.5 h-3.5" />}
                     onClick={() => handleViewDetail(route.id)}
-                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-colors"
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Xem lộ trình &amp; Trạm dừng</span>
-                  </button>
+                    Lộ trình &amp; Trạm dừng
+                  </Button>
 
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon={<Edit2 className="w-3.5 h-3.5" />}
                     onClick={() => handleOpenEditModal(route.id)}
-                    className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors"
                     title="Chỉnh sửa tuyến"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+                    aria-label={`Chỉnh sửa tuyến ${route.id}`}
+                  />
 
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+                    icon={<Trash2 className="w-3.5 h-3.5" />}
                     onClick={() => handleDeleteRoute(route.id)}
-                    className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer transition-colors"
                     title="Xóa tuyến"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    aria-label={`Xóa tuyến ${route.id}`}
+                  />
                 </div>
               </div>
             ))}
@@ -384,303 +382,249 @@ export const AdminRoutesPage: React.FC = () => {
       </div>
 
       {/* Requirement 12: VIEW ROUTE DETAIL MODAL WITH FULL VISUAL TIMELINE */}
-      {viewingDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono text-indigo-300 font-bold uppercase">
-                  Mã tuyến: {viewingDetail.id}
-                </span>
-                <h3 className="font-bold text-base">
-                  {viewingDetail.departureStationName} → {viewingDetail.arrivalStationName}
-                </h3>
+      <Modal
+        isOpen={Boolean(viewingDetail)}
+        onClose={() => setViewingDetail(null)}
+        title={`${viewingDetail?.departureStationName ?? ''} → ${viewingDetail?.arrivalStationName ?? ''}`}
+        description={`Mã tuyến: ${viewingDetail?.id ?? ''}`}
+        maxWidth="xl"
+      >
+        {viewingDetail && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <span className="text-gray-400 font-bold uppercase text-[10px] block">Khoảng cách</span>
+                <span className="text-base font-black text-gray-900">{viewingDetail.distanceKm} km</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setViewingDetail(null)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <span className="text-gray-400 font-bold uppercase text-[10px] block">Thời gian dự kiến</span>
+                <span className="text-base font-black text-[#1E3A5F]">
+                  {formatDuration(viewingDetail.estimatedDuration)}
+                </span>
+              </div>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-6">
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <span className="text-gray-400 font-bold uppercase text-[10px] block">Khoảng cách</span>
-                  <span className="text-base font-black text-gray-900">{viewingDetail.distanceKm} km</span>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <span className="text-gray-400 font-bold uppercase text-[10px] block">Thời gian dự kiến</span>
-                  <span className="text-base font-black text-indigo-600">
-                    {formatDuration(viewingDetail.estimatedDuration)}
-                  </span>
-                </div>
-              </div>
+            {/* Requirement 12 Visual Timeline */}
+            <div>
+              <h4 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#1E3A5F]" />
+                <span>Trình tự trạm dừng (SQL Server Ordered Stops)</span>
+              </h4>
 
-              {/* Requirement 12 Visual Timeline */}
-              <div>
-                <h4 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-indigo-600" />
-                  <span>Trình tự trạm dừng (SQL Server Ordered Stops)</span>
-                </h4>
-
-                <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200">
-                  <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-indigo-200">
-                    {viewingDetail.stops.map((stop, idx) => {
-                      const isFirst = idx === 0;
-                      const isLast = idx === viewingDetail.stops.length - 1;
-                      return (
-                        <div key={stop.id} className="relative flex items-start gap-3">
-                          <div
-                            className={`absolute -left-[19px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-xs ${
-                              isFirst
-                                ? 'bg-emerald-500 ring-4 ring-emerald-100'
-                                : isLast
-                                ? 'bg-rose-500 ring-4 ring-rose-100'
-                                : 'bg-indigo-500 ring-4 ring-indigo-100'
-                            }`}
-                          />
-                          <div className="flex-1 bg-white p-3 rounded-xl border border-gray-100">
-                            <div className="flex items-center justify-between text-xs">
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                                  isFirst
-                                    ? 'bg-emerald-50 text-emerald-700'
-                                    : isLast
-                                    ? 'bg-rose-50 text-rose-700'
-                                    : 'bg-indigo-50 text-indigo-700'
-                                }`}
-                              >
-                                {isFirst ? 'Xuất phát (#1)' : isLast ? `Điểm đích (#${stop.stopOrder})` : `Trạm trung gian #${stop.stopOrder}`}
-                              </span>
-                              <span className="font-semibold text-gray-500">{stop.provinceName}</span>
-                            </div>
-                            <h5 className="font-bold text-gray-900 text-sm mt-1">{stop.stationName}</h5>
-                            <p className="text-[11px] text-gray-500 mt-0.5">{stop.address}</p>
+              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200">
+                <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-blue-200">
+                  {viewingDetail.stops.map((stop, idx) => {
+                    const isFirst = idx === 0;
+                    const isLast = idx === viewingDetail.stops.length - 1;
+                    return (
+                      <div key={stop.id} className="relative flex items-start gap-3">
+                        <div
+                          className={`absolute -left-[19px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-xs ${
+                            isFirst
+                              ? 'bg-emerald-500 ring-4 ring-emerald-100'
+                              : isLast
+                              ? 'bg-rose-500 ring-4 ring-rose-100'
+                              : 'bg-[#1E3A5F] ring-4 ring-blue-100'
+                          }`}
+                        />
+                        <div className="flex-1 bg-white p-3 rounded-xl border border-gray-100">
+                          <div className="flex items-center justify-between text-xs">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                isFirst
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : isLast
+                                  ? 'bg-rose-50 text-rose-700'
+                                  : 'bg-blue-50 text-[#1E3A5F]'
+                              }`}
+                            >
+                              {isFirst ? 'Xuất phát (#1)' : isLast ? `Điểm đích (#${stop.stopOrder})` : `Trạm trung gian #${stop.stopOrder}`}
+                            </span>
+                            <span className="font-semibold text-gray-500">{stop.provinceName}</span>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setViewingDetail(null)}
-                className="px-5 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl cursor-pointer"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CREATE / EDIT ROUTE MODAL WITH INTERMEDIATE STOPS BUILDER */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 bg-indigo-700 text-white flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-base">
-                  {editingRoute ? `Chỉnh Sửa Tuyến: ${editingRoute.id}` : 'Thêm Tuyến Đường Mới'}
-                </h3>
-                <span className="text-[11px] text-indigo-200">
-                  Lưu tuyến đường và danh sách trạm dừng theo thứ tự vào SQL Server
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5">
-              {/* Departure & Arrival Stations */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Bến xuất phát <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={departureStationId}
-                    onChange={(e) => setDepartureStationId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
-                  >
-                    {stations.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.provinceName})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Bến đến <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={arrivalStationId}
-                    onChange={(e) => setArrivalStationId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
-                  >
-                    {stations.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.provinceName})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Distance and Duration */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Khoảng cách (km) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    required
-                    value={distanceKm}
-                    onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Thời gian ước tính (phút) <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="10"
-                      required
-                      value={estimatedDuration}
-                      onChange={(e) => setEstimatedDuration(Number(e.target.value))}
-                      className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    />
-                    <span className="text-xs text-gray-500 shrink-0 font-medium">
-                      ≈ {formatDuration(estimatedDuration)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Requirement 11: INTERMEDIATE STOPS BUILDER */}
-              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-                      Trạm dừng trung gian ({intermediateStops.length})
-                    </h4>
-                    <p className="text-[11px] text-gray-500">
-                      Thêm các điểm dừng đón/trả khách giữa điểm khởi hành và điểm đến
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddIntermediateStop}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg cursor-pointer transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Thêm trạm dừng</span>
-                  </button>
-                </div>
-
-                {intermediateStops.length === 0 ? (
-                  <div className="p-4 bg-white rounded-xl border border-dashed border-gray-300 text-center text-xs text-gray-400">
-                    Chưa có trạm trung gian nào. Tuyến sẽ chạy thẳng từ bến xuất phát đến bến đến.
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {intermediateStops.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs"
-                      >
-                        <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
-                          #{idx + 2}
-                        </span>
-
-                        <select
-                          value={item.stationId}
-                          onChange={(e) => handleChangeIntermediateStation(idx, e.target.value)}
-                          className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold focus:outline-none cursor-pointer"
-                        >
-                          {stations.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name} ({s.provinceName})
-                            </option>
-                          ))}
-                        </select>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            disabled={idx === 0}
-                            onClick={() => handleMoveStop(idx, 'UP')}
-                            className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 cursor-pointer"
-                            title="Di chuyển lên"
-                          >
-                            <MoveUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={idx === intermediateStops.length - 1}
-                            onClick={() => handleMoveStop(idx, 'DOWN')}
-                            className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 cursor-pointer"
-                            title="Di chuyển xuống"
-                          >
-                            <MoveDown className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveIntermediateStop(idx)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                            title="Xóa trạm dừng này"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                          <h5 className="font-bold text-gray-900 text-sm mt-1">{stop.stationName}</h5>
+                          <p className="text-[11px] text-gray-500 mt-0.5">{stop.address}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
               </div>
+            </div>
 
-              {/* Modal Buttons */}
-              <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Đang lưu...' : 'Lưu tuyến đường'}
-                </button>
-              </div>
-            </form>
+            <div className="pt-4 border-t border-gray-100 flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setViewingDetail(null)}
+              >
+                Đóng
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      {/* CREATE / EDIT ROUTE MODAL WITH INTERMEDIATE STOPS BUILDER */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingRoute ? `Chỉnh Sửa Tuyến: ${editingRoute.id}` : 'Thêm Tuyến Đường Mới'}
+        description="Lưu tuyến đường và danh sách trạm dừng theo thứ tự vào SQL Server"
+        maxWidth="xl"
+      >
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Departure & Arrival Stations */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Bến xuất phát *"
+              required
+              value={departureStationId}
+              onChange={(e) => setDepartureStationId(e.target.value)}
+              options={stations.map((s) => ({
+                value: s.id,
+                label: `${s.name} (${s.provinceName})`,
+              }))}
+            />
+
+            <Select
+              label="Bến đến *"
+              required
+              value={arrivalStationId}
+              onChange={(e) => setArrivalStationId(e.target.value)}
+              options={stations.map((s) => ({
+                value: s.id,
+                label: `${s.name} (${s.provinceName})`,
+              }))}
+            />
+          </div>
+
+          {/* Distance and Duration */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Khoảng cách (km) *"
+              type="number"
+              step="0.1"
+              min="1"
+              required
+              value={distanceKm}
+              onChange={(e) => setDistanceKm(Number(e.target.value))}
+            />
+
+            <div>
+              <Input
+                label="Thời gian ước tính (phút) *"
+                type="number"
+                min="10"
+                required
+                value={estimatedDuration}
+                onChange={(e) => setEstimatedDuration(Number(e.target.value))}
+                helperText={`≈ ${formatDuration(estimatedDuration)}`}
+              />
+            </div>
+          </div>
+
+          {/* Requirement 11: INTERMEDIATE STOPS BUILDER */}
+          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+                  Trạm dừng trung gian ({intermediateStops.length})
+                </h4>
+                <p className="text-[11px] text-gray-500">
+                  Thêm các điểm dừng đón/trả khách giữa điểm khởi hành và điểm đến
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                icon={<Plus className="w-3.5 h-3.5" />}
+                onClick={handleAddIntermediateStop}
+              >
+                Thêm trạm dừng
+              </Button>
+            </div>
+
+            {intermediateStops.length === 0 ? (
+              <div className="p-4 bg-white rounded-xl border border-dashed border-gray-300 text-center text-xs text-gray-400">
+                Chưa có trạm trung gian nào. Tuyến sẽ chạy thẳng từ bến xuất phát đến bến đến.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {intermediateStops.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-blue-50 text-[#1E3A5F] font-bold text-xs flex items-center justify-center shrink-0">
+                      #{idx + 2}
+                    </span>
+
+                    <select
+                      value={item.stationId}
+                      onChange={(e) => handleChangeIntermediateStation(idx, e.target.value)}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold focus:outline-none cursor-pointer"
+                    >
+                      {stations.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.provinceName})
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveStop(idx, 'UP')}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 cursor-pointer"
+                        title="Di chuyển lên"
+                      >
+                        <MoveUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === intermediateStops.length - 1}
+                        onClick={() => handleMoveStop(idx, 'DOWN')}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 cursor-pointer"
+                        title="Di chuyển xuống"
+                      >
+                        <MoveDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveIntermediateStop(idx)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
+                        title="Xóa trạm dừng này"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Modal Buttons */}
+          <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              Lưu tuyến đường
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

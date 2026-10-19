@@ -9,6 +9,7 @@ import type {
 } from '../../../types/admin'
 import { Modal } from '../../../components/ui/Modal'
 import { Input } from '../../../components/ui/Input'
+import { Select } from '../../../components/common/Select'
 import { Button } from '../../../components/ui/Button'
 import { Alert } from '../../../components/ui/Alert'
 
@@ -165,29 +166,21 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 				<Input
 					label="Địa chỉ Email"
 					type="email"
-					placeholder="user@redbus.vn"
+					placeholder="user@xeviet.vn"
 					error={errors.email?.message}
 					{...register('email')}
 				/>
 
-				<div className="w-full space-y-1.5 text-left">
-					<label
-						htmlFor="user-role-select"
-						className="block text-xs font-semibold text-slate-700 uppercase tracking-wide"
-					>
-						Vai trò (Role)
-					</label>
-					<select
-						id="user-role-select"
-						className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15 outline-none transition-all"
-						{...register('role')}
-					>
-						<option value="CUSTOMER">CUSTOMER (Khách hàng)</option>
-						<option value="STAFF">STAFF (Nhân viên phòng vé)</option>
-						<option value="DRIVER">DRIVER (Tài xế lái xe)</option>
-						<option value="ADMIN">ADMIN (Quản trị viên hệ thống)</option>
-					</select>
-				</div>
+				<Select
+					label="Vai trò (Role)"
+					options={[
+						{ value: 'CUSTOMER', label: 'CUSTOMER (Khách hàng)' },
+						{ value: 'STAFF', label: 'STAFF (Nhân viên phòng vé)' },
+						{ value: 'DRIVER', label: 'DRIVER (Tài xế lái xe)' },
+						{ value: 'ADMIN', label: 'ADMIN (Quản trị viên hệ thống)' },
+					]}
+					{...register('role')}
+				/>
 
 				{!isEditMode && (
 					<Input
