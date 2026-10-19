@@ -15,6 +15,9 @@ export interface EnvConfig {
 	PORT: number
 	port: number
 	jwtSecret: string
+	jwtRefreshSecret: string
+	jwtAccessExpiresIn: string
+	jwtRefreshExpiresIn: string
 	CLIENT_URL: string
 	clientUrl: string
 	DB_USER: string
@@ -48,6 +51,9 @@ export const env: EnvConfig = {
 	PORT: port,
 	port: port,
 	jwtSecret: process.env.JWT_SECRET ?? 'jwt_bus_booking_super_secret_key',
+	jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'jwt_bus_booking_refresh_super_secret_key',
+	jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+	jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
 	CLIENT_URL: clientUrl,
 	clientUrl: clientUrl,
 	DB_USER: dbUser,

@@ -6,12 +6,18 @@ import { AppError } from '../../utils/app-error.js'
 import { authRepository } from './auth.repository.js'
 import type { LoginDto, RegisterDto } from './auth.schema.js'
 
-function signJwt(payload: { userId: string; role: string }): string {
-	return jwt.sign(payload, env.jwtSecret, { expiresIn: '7d' })
+function signAccessToken(payload: { userId: string; role: string }): string {
+	return jwt.sign(payload, env.jwtSecret, { expiresIn: env.jwtAccessExpiresIn as any })
+}
+
+function signRefreshToken(payload: { userId: string; role: string }): string {
+	return jwt.sign(payload, env.jwtRefreshSecret, { expiresIn: env.jwtRefreshExpiresIn as any })
 }
 
 export async function login(dto: LoginDto): Promise<{
 	token: string
+	accessToken: string
+	refreshToken: string
 	user: {
 		userId: string
 		fullName: string
@@ -51,9 +57,12 @@ export async function login(dto: LoginDto): Promise<{
 	}
 
 	// ──── SUCCESS ────
-	const token = signJwt({ userId: user.user_id, role: user.role })
+	const accessToken = signAccessToken({ userId: user.user_id, role: user.role })
+	const refreshToken = signRefreshToken({ userId: user.user_id, role: user.role })
 	return {
-		token,
+		token: accessToken,
+		accessToken,
+		refreshToken,
 		user: {
 			userId: user.user_id,
 			fullName: user.full_name,
@@ -66,7 +75,7 @@ export async function login(dto: LoginDto): Promise<{
 
 export async function register(
 	dto: RegisterDto
-): Promise<{ token: string; isUpgrade: boolean }> {
+): Promise<{ token: string; accessToken: string; refreshToken: string; isUpgrade: boolean }> {
 	// BƯỚC 1: Tìm user theo phone (Anchor Identity)
 	const existingUser = await authRepository.findByPhone(dto.phone)
 
@@ -84,8 +93,9 @@ export async function register(
 			passwordHash,
 		})
 
-		const token = signJwt({ userId, role: 'CUSTOMER' })
-		return { token, isUpgrade: false }
+		const accessToken = signAccessToken({ userId, role: 'CUSTOMER' })
+		const refreshToken = signRefreshToken({ userId, role: 'CUSTOMER' })
+		return { token: accessToken, accessToken, refreshToken, isUpgrade: false }
 	}
 
 	if (existingUser.role !== 'GUEST') {
@@ -114,12 +124,45 @@ export async function register(
 	})
 
 	// BƯỚC 2c-3: Ký JWT với user_id của bản ghi CŨ (bảo toàn foreign key reference)
-	const token = signJwt({ userId: existingUser.user_id, role: 'CUSTOMER' })
-	return { token, isUpgrade: true }
+	const accessToken = signAccessToken({ userId: existingUser.user_id, role: 'CUSTOMER' })
+	const refreshToken = signRefreshToken({ userId: existingUser.user_id, role: 'CUSTOMER' })
+	return { token: accessToken, accessToken, refreshToken, isUpgrade: true }
+}
+
+export async function refreshAccessToken(
+	refreshTokenInput: string
+): Promise<{ accessToken: string; token: string }> {
+	if (!refreshTokenInput || typeof refreshTokenInput !== 'string') {
+		throw new AppError(400, 'Refresh token không được để trống!')
+	}
+
+	try {
+		const decoded = jwt.verify(refreshTokenInput, env.jwtRefreshSecret) as unknown as {
+			userId: string
+			role: string
+		}
+
+		const user = await authRepository.findUserById(decoded.userId)
+		if (!user || user.is_active === false || (user.is_active as unknown) === 0) {
+			throw new AppError(401, 'Tài khoản không tồn tại hoặc đã bị khóa!')
+		}
+
+		const newAccessToken = signAccessToken({ userId: user.user_id, role: user.role })
+		return {
+			accessToken: newAccessToken,
+			token: newAccessToken,
+		}
+	} catch (err: unknown) {
+		if (err instanceof AppError) {
+			throw err
+		}
+		throw new AppError(401, 'Refresh token không hợp lệ hoặc đã hết hạn!')
+	}
 }
 
 export const authService = {
 	register,
 	login,
+	refreshAccessToken,
 }
 

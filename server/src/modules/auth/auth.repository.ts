@@ -28,6 +28,21 @@ export async function findByPhone(phone: string): Promise<UserRow | null> {
 	return row
 }
 
+export async function findUserById(userId: string): Promise<UserRow | null> {
+	const pool = await getPool()
+	const request = pool.request()
+	request.input('userId', sql.VarChar(50), userId)
+
+	const result = await request.query<UserRow>(
+		`SELECT user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active
+		 FROM users
+		 WHERE user_id = @userId`
+	)
+
+	const row = result.recordset[0]
+	return row ?? null
+}
+
 export async function createCustomer(dto: CreateCustomerDto): Promise<void> {
 	const pool = await getPool()
 	const request = pool.request()
@@ -95,6 +110,7 @@ export async function updateGuestToCustomer(dto: UpdateGuestDto): Promise<void> 
 
 export const authRepository = {
 	findByPhone,
+	findUserById,
 	createCustomer,
 	updateGuestToCustomer,
 }

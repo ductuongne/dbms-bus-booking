@@ -19,6 +19,13 @@ export const register: RequestHandler = async (
 				? 'Tài khoản đã được kích hoạt thành công.'
 				: 'Đăng ký tài khoản thành công.',
 			token: result.token,
+			accessToken: result.accessToken,
+			refreshToken: result.refreshToken,
+			data: {
+				token: result.token,
+				accessToken: result.accessToken,
+				refreshToken: result.refreshToken,
+			},
 		})
 	} catch (err: unknown) {
 		next(err)
@@ -38,10 +45,38 @@ export const login: RequestHandler = async (
 			success: true,
 			message: 'Đăng nhập thành công.',
 			token: result.token,
+			accessToken: result.accessToken,
+			refreshToken: result.refreshToken,
 			user: result.user,
 			data: {
 				token: result.token,
+				accessToken: result.accessToken,
+				refreshToken: result.refreshToken,
 				user: result.user,
+			},
+		})
+	} catch (err: unknown) {
+		next(err)
+	}
+}
+
+export const refreshToken: RequestHandler = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	try {
+		const { refreshToken: tokenInput } = req.body as { refreshToken: string }
+		const result = await authService.refreshAccessToken(tokenInput)
+
+		res.status(200).json({
+			success: true,
+			message: 'Làm mới token thành công.',
+			token: result.accessToken,
+			accessToken: result.accessToken,
+			data: {
+				token: result.accessToken,
+				accessToken: result.accessToken,
 			},
 		})
 	} catch (err: unknown) {
@@ -76,6 +111,8 @@ export const me: RequestHandler = (
 export const authController = {
 	register,
 	login,
+	refreshToken,
 	me,
 }
+
 
