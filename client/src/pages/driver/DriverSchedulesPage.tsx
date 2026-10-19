@@ -5,8 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
 import type { DriverScheduleDto } from '../../types/driver'
 import type { ApiErrorResponse } from '../../types/auth'
-import { Button } from '../../components/ui/Button'
-import { Alert } from '../../components/ui/Alert'
+import { Button, Alert } from '../../components/common'
 import { DriverTripCard } from './components/DriverTripCard'
 
 export const DriverSchedulesPage: React.FC = () => {

@@ -7,9 +7,7 @@ import { z } from 'zod';
 import { Bus, UserPlus } from 'lucide-react';
 import { api } from '../lib/api';
 import type { ApiErrorResponse } from '../types/auth';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert } from '../components/ui/Alert';
+import { Button, Input, Alert } from '../components/common';
 import { BRAND_INFO } from '../constants';
 
 const registerSchema = z

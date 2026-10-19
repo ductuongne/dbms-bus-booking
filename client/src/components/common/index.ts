@@ -11,5 +11,4 @@ export * from './Toast';
 export * from './ConfirmDialog';
 export * from './Pagination';
 export * from './StatusDot';
-export * from '../ui/Alert';
-
+export * from './Alert';

@@ -7,11 +7,7 @@ import type {
 	CreateUserInput,
 	UpdateUserInput,
 } from '../../../types/admin'
-import { Modal } from '../../../components/ui/Modal'
-import { Input } from '../../../components/ui/Input'
-import { Select } from '../../../components/common/Select'
-import { Button } from '../../../components/ui/Button'
-import { Alert } from '../../../components/ui/Alert'
+import { Modal, Input, Select, Button, Alert } from '../../../components/common'
 
 const userFormSchema = z.object({
 	fullName: z

@@ -6,8 +6,7 @@ import { AxiosError } from 'axios';
 import { Bus, LogIn } from 'lucide-react';
 import { api } from '../lib/api';
 import type { ApiErrorResponse } from '../types/auth';
-import { Input } from '../components/ui/Input';
-import { Alert } from '../components/ui/Alert';
+import { Input, Alert } from '../components/common';
 import { BRAND_INFO } from '../constants';
 
 import { z } from 'zod';

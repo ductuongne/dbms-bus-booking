@@ -9,10 +9,7 @@ import type {
 	UpdateUserInput,
 } from '../../types/admin'
 import type { ApiErrorResponse } from '../../types/auth'
-import { Button } from '../../components/ui/Button'
-import { Alert } from '../../components/ui/Alert'
-import Input from '../../components/common/Input'
-import Select from '../../components/common/Select'
+import { Button, Alert, Input, Select } from '../../components/common'
 import { UserTable } from './components/UserTable'
 import { UserFormModal } from './components/UserFormModal'
 
