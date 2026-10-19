@@ -11,7 +11,6 @@ import {
   Clock,
   ArrowRight,
 } from 'lucide-react';
-
 import { mockProvinces } from '../mocks/mockData';
 import { toLocalISODate, addDays, formatDateVN } from '../utils';
 import Button from '../components/common/Button';
