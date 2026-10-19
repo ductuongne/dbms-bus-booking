@@ -56,7 +56,7 @@ export const UserTable: React.FC<UserTableProps> = ({
 		<Table>
 			<TableHeader>
 				<TableRow>
-					<TableHead>Mã NV/User</TableHead>
+					<TableHead>Mã tài khoản</TableHead>
 					<TableHead>Họ và tên</TableHead>
 					<TableHead>Thông tin liên hệ</TableHead>
 					<TableHead>Vai trò</TableHead>

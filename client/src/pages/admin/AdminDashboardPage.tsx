@@ -112,10 +112,10 @@ export const AdminDashboardPage: React.FC = () => {
             aria-label="Lọc theo vai trò"
             options={[
               { value: 'ALL', label: 'Tất cả vai trò' },
-              { value: 'CUSTOMER', label: 'Khách hàng (CUSTOMER)' },
-              { value: 'STAFF', label: 'Nhân viên (STAFF)' },
-              { value: 'DRIVER', label: 'Tài xế (DRIVER)' },
-              { value: 'ADMIN', label: 'Quản trị viên (ADMIN)' },
+              { value: 'CUSTOMER', label: 'Khách hàng' },
+              { value: 'STAFF', label: 'Nhân viên bán vé' },
+              { value: 'DRIVER', label: 'Tài xế' },
+              { value: 'ADMIN', label: 'Quản trị viên' },
             ]}
           />
         </div>

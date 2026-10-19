@@ -168,12 +168,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 				/>
 
 				<Select
-					label="Vai trò (Role)"
+					label="Vai trò tài khoản"
 					options={[
-						{ value: 'CUSTOMER', label: 'CUSTOMER (Khách hàng)' },
-						{ value: 'STAFF', label: 'STAFF (Nhân viên phòng vé)' },
-						{ value: 'DRIVER', label: 'DRIVER (Tài xế lái xe)' },
-						{ value: 'ADMIN', label: 'ADMIN (Quản trị viên hệ thống)' },
+						{ value: 'CUSTOMER', label: 'Khách hàng' },
+						{ value: 'STAFF', label: 'Nhân viên bán vé' },
+						{ value: 'DRIVER', label: 'Tài xế lái xe' },
+						{ value: 'ADMIN', label: 'Quản trị viên' },
 					]}
 					{...register('role')}
 				/>

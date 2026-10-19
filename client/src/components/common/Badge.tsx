@@ -19,6 +19,14 @@ export interface BadgeProps {
   className?: string;
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Quản trị viên',
+  STAFF: 'Nhân viên vé',
+  DRIVER: 'Tài xế',
+  CUSTOMER: 'Khách hàng',
+  GUEST: 'Khách vãng lai',
+};
+
 export const Badge: React.FC<BadgeProps> = ({
   variant = 'neutral',
   size = 'md',
@@ -73,6 +81,8 @@ export const Badge: React.FC<BadgeProps> = ({
           ? isActive
             ? 'Hoạt động'
             : 'Đã khóa'
+          : variant === 'role' && role
+          ? ROLE_LABELS[role] || role
           : null)}
     </span>
   );

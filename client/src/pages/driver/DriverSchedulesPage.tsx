@@ -86,9 +86,8 @@ export const DriverSchedulesPage: React.FC = () => {
         </div>
 
         <Button
-          variant="outline"
+          variant="inverse"
           size="md"
-          className="border-white/30 text-white hover:bg-white/10"
           icon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
           onClick={handleRefresh}
           disabled={isLoading}
@@ -107,9 +106,9 @@ export const DriverSchedulesPage: React.FC = () => {
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
         {[
           { label: 'Tất cả chuyến', value: 'ALL' },
-          { label: 'Sắp chạy (SCHEDULED)', value: 'SCHEDULED' },
-          { label: 'Đang chạy (DEPARTED)', value: 'DEPARTED' },
-          { label: 'Đã hoàn thành (COMPLETED)', value: 'COMPLETED' },
+          { label: 'Sắp chạy', value: 'SCHEDULED' },
+          { label: 'Đang di chuyển', value: 'DEPARTED' },
+          { label: 'Đã hoàn thành', value: 'COMPLETED' },
         ].map((tab) => (
           <button
             key={tab.value}

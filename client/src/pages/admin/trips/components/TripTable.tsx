@@ -149,7 +149,7 @@ export const TripTable: React.FC<TripTableProps> = ({
                         <>
                           <button
                             type="button"
-                            title="Bắt đầu xuất bến (DEPARTED)"
+                            title="Bắt đầu xuất bến"
                             onClick={() => onChangeStatus(trip.trip_id, 'DEPARTED')}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                           >
@@ -168,7 +168,7 @@ export const TripTable: React.FC<TripTableProps> = ({
                       {trip.status === 'DEPARTED' && (
                         <button
                           type="button"
-                          title="Hoàn thành chuyến (COMPLETED)"
+                          title="Hoàn thành chuyến xe"
                           onClick={() => onChangeStatus(trip.trip_id, 'COMPLETED')}
                           className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                         >

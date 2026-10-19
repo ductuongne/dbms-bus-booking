@@ -126,7 +126,7 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Giá vé cơ bản (VND)</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Giá vé cơ bản (VNĐ)</label>
           <Input
             type="number"
             min="10000"

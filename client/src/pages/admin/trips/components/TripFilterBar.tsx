@@ -38,10 +38,10 @@ export const TripFilterBar: React.FC<TripFilterBarProps> = ({
           className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
         >
           <option value="ALL">Tất cả trạng thái</option>
-          <option value="SCHEDULED">Sắp chạy (SCHEDULED)</option>
-          <option value="DEPARTED">Đang chạy (DEPARTED)</option>
-          <option value="COMPLETED">Hoàn thành (COMPLETED)</option>
-          <option value="CANCELLED">Đã hủy (CANCELLED)</option>
+          <option value="SCHEDULED">Sắp chạy</option>
+          <option value="DEPARTED">Đang di chuyển</option>
+          <option value="COMPLETED">Đã hoàn thành</option>
+          <option value="CANCELLED">Đã hủy</option>
         </select>
 
         <input

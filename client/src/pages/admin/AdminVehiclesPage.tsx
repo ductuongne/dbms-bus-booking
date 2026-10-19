@@ -244,8 +244,8 @@ export const AdminVehiclesPage: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             options={[
               { value: '', label: 'Tất cả trạng thái' },
-              { value: 'ACTIVE', label: 'Hoạt động (ACTIVE)' },
-              { value: 'INACTIVE', label: 'Tạm dừng (INACTIVE)' },
+              { value: 'ACTIVE', label: 'Đang hoạt động' },
+              { value: 'INACTIVE', label: 'Tạm dừng hoạt động' },
             ]}
           />
         </div>
@@ -385,7 +385,7 @@ export const AdminVehiclesPage: React.FC = () => {
                   onChange={() => setNewStatus('ACTIVE')}
                   className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
                 />
-                <span>Hoạt động (ACTIVE)</span>
+                <span>Đang hoạt động</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -396,7 +396,7 @@ export const AdminVehiclesPage: React.FC = () => {
                   onChange={() => setNewStatus('INACTIVE')}
                   className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
                 />
-                <span>Tạm dừng (INACTIVE)</span>
+                <span>Tạm dừng hoạt động</span>
               </label>
             </div>
           </div>

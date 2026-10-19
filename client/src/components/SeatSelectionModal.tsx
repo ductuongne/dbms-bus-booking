@@ -660,7 +660,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
                   <span>{formatCurrency(trip.price)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200">
-                  <span>Tạm tính:</span>
+                  <span>Tổng tiền:</span>
                   <span className="text-[#C2410C] text-sm font-black">
                     {formatCurrency(totalPrice)}
                   </span>
