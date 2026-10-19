@@ -56,6 +56,31 @@ export interface CancelBookingPayload {
   ticket_id?: string;
 }
 
+export interface StaffTicketItem {
+  ticket_id: string;
+  ticket_code: string;
+  seat_id: string;
+  seat_number: string;
+  passenger_name: string;
+  passenger_phone: string;
+  price: number;
+  status: 'ISSUED' | 'CHECKED_IN' | 'CANCELLED' | 'PENDING';
+}
+
+export interface BookingLookupResponse {
+  booking: {
+    booking_id: string;
+    booking_code: string;
+    customer_id: string;
+    channel: string;
+    created_at: string;
+    expired_at: string;
+    total_amount: number;
+    status: string;
+  };
+  tickets: StaffTicketItem[];
+}
+
 export const bookingService = {
   holdBooking: (payload: HoldBookingPayload): Promise<HoldBookingResponse> => {
     return api.post<HoldBookingResponse>('/bookings/hold', payload);
@@ -75,9 +100,25 @@ export const bookingService = {
     return api.post<{ message: string }>(`/bookings/${bookingId}/cancel`, payload);
   },
 
-  getBookingByCode: (bookingCode: string): Promise<Record<string, unknown>> => {
-    return api.get(`/bookings/lookup/${bookingCode}`);
+  getBookingByCode: (bookingCode: string): Promise<BookingLookupResponse> => {
+    return api.get<BookingLookupResponse>(`/bookings/lookup/${bookingCode}`);
+  },
+
+  getTripTickets: (tripId: string, status?: string): Promise<StaffTicketItem[]> => {
+    return api.get<StaffTicketItem[]>(`/bookings/trips/${tripId}/tickets`, { status });
+  },
+
+  checkInTicket: (ticketCode: string): Promise<{
+    ticket_id: string;
+    ticket_code: string;
+    seat_id: string;
+    passenger_name: string;
+    passenger_phone: string;
+    status: string;
+  }> => {
+    return api.post('/bookings/check-in', { ticket_code: ticketCode });
   },
 };
 
 export default bookingService;
+

@@ -20,15 +20,16 @@ import { DriverSchedulesPage } from './pages/driver/DriverSchedulesPage';
 
 // Admin pages
 import ReportsPage from './pages/ReportsPage';
-import TripsPage from './pages/TripsPage';
+import { AdminTripsPage } from './pages/admin/AdminTripsPage';
 import { AdminRoutesPage } from './pages/admin/AdminRoutesPage';
 import { AdminStationsPage } from './pages/admin/AdminStationsPage';
 import { AdminVehiclesPage } from './pages/admin/AdminVehiclesPage';
 import { AdminVehicleTypesPage } from './pages/admin/AdminVehicleTypesPage';
 import DriversPage from './pages/DriversPage';
-import BookingPage from './pages/BookingPage';
+import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
 import CustomersPage from './pages/CustomersPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+
 
 import { useAuth } from './hooks/useAuth';
 
@@ -86,14 +87,15 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="trips" element={<TripsPage />} />
+              <Route path="trips" element={<AdminTripsPage />} />
               <Route path="routes" element={<AdminRoutesPage />} />
               <Route path="stations" element={<AdminStationsPage />} />
               <Route path="vehicles" element={<AdminVehiclesPage />} />
               <Route path="vehicle-types" element={<AdminVehicleTypesPage />} />
               <Route path="drivers" element={<DriversPage />} />
-              <Route path="bookings" element={<BookingPage />} />
+              <Route path="bookings" element={<AdminBookingsPage />} />
               <Route path="customers" element={<CustomersPage />} />
+
               {/* Quản lý tài khoản: Chỉ ADMIN có quyền */}
               <Route
                 path="users"
