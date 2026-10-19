@@ -256,3 +256,67 @@ export interface BookingCheckoutView {
   finalAmount: number;
   payment: VietQrPaymentView;
 }
+
+// ==========================================
+// FLEET, ROUTE & STATION MANAGEMENT TYPES
+// ==========================================
+export interface RouteStation {
+  id: string;
+  routeId: string;
+  stationId: string;
+  stopOrder: number;
+}
+
+export interface RouteStopView {
+  id: string;
+  routeId: string;
+  stationId: string;
+  stationName: string;
+  address: string;
+  provinceName: string;
+  stopOrder: number;
+}
+
+export interface RouteDetailView {
+  id: string;
+  departureStationId: string;
+  departureStationName: string;
+  departureProvinceId: string;
+  departureProvince: string;
+  arrivalStationId: string;
+  arrivalStationName: string;
+  arrivalProvinceId: string;
+  arrivalProvince: string;
+  distanceKm: number;
+  estimatedDuration: number;
+  stops: RouteStopView[];
+}
+
+export interface BusListItemView {
+  id: string;
+  licensePlate: string;
+  typeId: string;
+  typeName: string;
+  totalSeats: number;
+  floors: number;
+  status: BusStatus;
+}
+
+export interface BusDetailView extends BusListItemView {
+  seats: {
+    id: string;
+    seatNumber: string;
+    floor: number;
+    seatType: SeatType;
+    busId: string;
+  }[];
+}
+
+export interface StationDetailView {
+  id: string;
+  name: string;
+  provinceId: string;
+  provinceName: string;
+  address: string;
+}
+

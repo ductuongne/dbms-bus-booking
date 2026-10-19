@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Bus,
   ArrowLeftRight,
@@ -9,14 +9,40 @@ import {
   Star,
   Shield,
   Zap,
+  Navigation,
+  Clock,
+  ArrowRight,
 } from 'lucide-react';
 import { mockProvinces } from '../mocks/mockData';
+import { stationService } from '../services/station.service';
+import { routeService, type RouteListItem } from '../services/route.service';
+import type { Province } from '../types';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [provinces, setProvinces] = useState<Province[]>(mockProvinces);
+  const [popularRoutes, setPopularRoutes] = useState<RouteListItem[]>([]);
   const [origin, setOrigin] = useState('Hà Nội');
   const [destination, setDestination] = useState('Ninh Bình');
   const [travelDate, setTravelDate] = useState('2026-10-18');
+
+  useEffect(() => {
+    async function loadRealData() {
+      try {
+        const [provList, routeList] = await Promise.all([
+          stationService.getAllProvinces(),
+          routeService.getAllRoutes(),
+        ]);
+        if (provList.length > 0) {
+          setProvinces(provList);
+        }
+        setPopularRoutes(routeList);
+      } catch {
+        // Fallback to mockData if server is unavailable
+      }
+    }
+    loadRealData();
+  }, []);
 
   const handleSwap = () => {
     setOrigin(destination);
@@ -100,7 +126,7 @@ export const HomePage: React.FC = () => {
                     onChange={(e) => setOrigin(e.target.value)}
                     className="w-full bg-transparent font-bold text-gray-900 text-sm focus:outline-none cursor-pointer truncate"
                   >
-                    {mockProvinces.map((p) => (
+                    {provinces.map((p) => (
                       <option key={p.id} value={p.name}>
                         {p.name}
                       </option>
@@ -134,7 +160,7 @@ export const HomePage: React.FC = () => {
                     onChange={(e) => setDestination(e.target.value)}
                     className="w-full bg-transparent font-bold text-gray-900 text-sm focus:outline-none cursor-pointer truncate"
                   >
-                    {mockProvinces.map((p) => (
+                    {provinces.map((p) => (
                       <option key={p.id} value={p.name}>
                         {p.name}
                       </option>
@@ -191,6 +217,65 @@ export const HomePage: React.FC = () => {
           </form>
         </div>
       </section>
+
+      {/* Popular Routes Section (SQL Server) */}
+      {popularRoutes.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF385C] uppercase tracking-wider mb-1">
+                <Navigation className="w-3.5 h-3.5" />
+                <span>Mạng lưới vận hành</span>
+              </div>
+              <h2 className="text-2xl font-black text-gray-900">Tuyến đường phổ biến</h2>
+            </div>
+            <Link
+              to="/routes"
+              className="text-xs font-bold text-[#FF385C] hover:underline flex items-center gap-1"
+            >
+              <span>Xem tất cả ({popularRoutes.length})</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {popularRoutes.map((r) => (
+              <Link
+                key={r.id}
+                to="/routes"
+                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md hover:border-rose-100 transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs text-gray-400 font-medium mb-2">
+                    <span className="font-mono text-[10px] font-bold bg-gray-50 px-2 py-0.5 rounded">
+                      {r.id}
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] text-[#FF385C] font-semibold">
+                      <Clock className="w-3 h-3" />
+                      {Math.round(r.estimatedDuration / 60)}h
+                    </span>
+                  </div>
+
+                  <h4 className="font-bold text-gray-900 text-sm group-hover:text-[#FF385C] transition-colors">
+                    {r.departureProvince} → {r.arrivalProvince}
+                  </h4>
+
+                  <p className="text-[11px] text-gray-500 mt-1 line-clamp-1">
+                    {r.departureStationName}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between text-xs font-semibold text-gray-600">
+                  <span>{r.distanceKm} km</span>
+                  <span className="text-[#FF385C] text-[11px] flex items-center gap-0.5">
+                    Lộ trình <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Why Choose Us */}
       <section className="bg-gray-50/60 border-y border-gray-100 py-14 mt-16">
