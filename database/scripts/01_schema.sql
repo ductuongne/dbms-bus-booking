@@ -33,6 +33,14 @@ CREATE TABLE routes (
 );
 GO
 
+CREATE TABLE route_stations (
+    route_station_id VARCHAR(50) PRIMARY KEY,
+    route_id VARCHAR(50) NOT NULL,
+    station_id VARCHAR(50) NOT NULL,
+    stop_order INT NOT NULL
+);
+GO
+
 CREATE TABLE bus_types (
     type_id VARCHAR(50) PRIMARY KEY,
     name NVARCHAR(50) NOT NULL,
@@ -52,6 +60,8 @@ GO
 CREATE TABLE seats (
     seat_id VARCHAR(50) PRIMARY KEY,
     seat_number VARCHAR(10) NOT NULL,
+    floor INT NOT NULL DEFAULT 1,
+    seat_type VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
     bus_id VARCHAR(50) NOT NULL
 );
 GO

@@ -255,7 +255,7 @@ export interface BookingCheckoutView {
   payment: VietQrPaymentView;
 }
 
-// Common UI Table & Auth types
+// Common UI Table types
 export interface PaginationState {
   page: number;
   pageSize: number;
@@ -269,10 +269,66 @@ export interface TableColumn<T> {
   width?: string;
 }
 
-export interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
-  logout: () => void;
-  isLoading: boolean;
+// ==========================================
+// FLEET, ROUTE & STATION MANAGEMENT TYPES
+// ==========================================
+export interface RouteStation {
+  id: string;
+  routeId: string;
+  stationId: string;
+  stopOrder: number;
 }
+
+export interface RouteStopView {
+  id: string;
+  routeId: string;
+  stationId: string;
+  stationName: string;
+  address: string;
+  provinceName: string;
+  stopOrder: number;
+}
+
+export interface RouteDetailView {
+  id: string;
+  departureStationId: string;
+  departureStationName: string;
+  departureProvinceId: string;
+  departureProvince: string;
+  arrivalStationId: string;
+  arrivalStationName: string;
+  arrivalProvinceId: string;
+  arrivalProvince: string;
+  distanceKm: number;
+  estimatedDuration: number;
+  stops: RouteStopView[];
+}
+
+export interface BusListItemView {
+  id: string;
+  licensePlate: string;
+  typeId: string;
+  typeName: string;
+  totalSeats: number;
+  floors: number;
+  status: BusStatus;
+}
+
+export interface BusDetailView extends BusListItemView {
+  seats: {
+    id: string;
+    seatNumber: string;
+    floor: number;
+    seatType: SeatType;
+    busId: string;
+  }[];
+}
+
+export interface StationDetailView {
+  id: string;
+  name: string;
+  provinceId: string;
+  provinceName: string;
+  address: string;
+}
+

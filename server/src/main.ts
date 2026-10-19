@@ -1,3 +1,4 @@
+import './polyfills.js'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -15,7 +16,26 @@ dotenv.config()
 
 const app = express()
 
-app.use(cors({ origin: env.CLIENT_URL }))
+const allowedOrigins = [
+	env.CLIENT_URL,
+	'http://localhost:5173',
+	'http://127.0.0.1:5173',
+	'http://localhost:3000',
+	'http://127.0.0.1:3000',
+]
+
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true)
+			} else {
+				callback(null, true)
+			}
+		},
+		credentials: true,
+	})
+)
 app.use(express.json())
 
 app.get('/api/health', (_request, response) => {

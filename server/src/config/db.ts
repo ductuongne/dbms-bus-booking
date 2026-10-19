@@ -1,3 +1,4 @@
+import '../polyfills.js'
 import sql from 'mssql'
 import { env } from './env.js'
 

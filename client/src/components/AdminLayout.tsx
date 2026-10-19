@@ -59,7 +59,7 @@ export const AdminLayout: React.FC = () => {
                 </div>
                 <div className="hidden sm:flex flex-col text-left">
                   <span className="text-xs font-semibold text-slate-900 leading-tight">
-                    {user.fullName}
+                    {user.fullName || user.userId}
                   </span>
                   <div className="mt-0.5">
                     <Badge variant="brand" size="sm">
@@ -93,3 +93,4 @@ export const AdminLayout: React.FC = () => {
 };
 
 export default AdminLayout;
+

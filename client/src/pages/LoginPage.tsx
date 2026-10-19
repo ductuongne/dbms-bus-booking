@@ -1,49 +1,96 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bus, Lock, Mail, ArrowRight } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/useToast';
-import Input from '../components/common/Input';
-import Button from '../components/common/Button';
-import Card from '../components/common/Card';
+import { AxiosError } from 'axios';
+import { Bus, LogIn } from 'lucide-react';
+
+import { api } from '../lib/api';
+import type { ApiErrorResponse } from '../types/auth';
+import { Input } from '../components/ui/Input';
+import { Alert } from '../components/ui/Alert';
+
+const loginSchema = z.object({
+  phone: z
+    .string()
+    .regex(
+      /^(0[3|5|7|8|9])+([0-9]{8})$/,
+      'Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09)'
+    ),
+  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
+interface LocationState {
+  from?: { pathname: string };
+  registeredSuccess?: boolean;
+}
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('admin123');
-  const [errorMsg, setErrorMsg] = useState('');
-  const { login, isLoading } = useAuth();
-  const { success } = useToast();
+  const { login, isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/admin';
+  const locationState = location.state as LocationState | null;
+  const registeredSuccess = locationState?.registeredSuccess;
+  const redirectUrl = locationState?.from?.pathname || (user?.role === 'ADMIN' ? '/admin' : '/');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      phone: '0901234567',
+      password: '',
+    },
+  });
 
-    if (!email.trim()) {
-      setErrorMsg('Vui lòng nhập email');
-      return;
-    }
-    if (!password) {
-      setErrorMsg('Vui lòng nhập mật khẩu');
-      return;
-    }
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      setServerError(null);
+      let response;
+      try {
+        response = await api.post('/public/login', data);
+      } catch (postErr) {
+        if (postErr instanceof AxiosError && postErr.response?.status === 404) {
+          response = await api.post('/public/auth/login', data);
+        } else {
+          throw postErr;
+        }
+      }
 
-    const result = await login(email, password);
-    if (result.success) {
-      success('Đăng nhập thành công!');
-      navigate(from, { replace: true });
-    } else {
-      setErrorMsg(result.message || 'Email hoặc mật khẩu không chính xác');
+      const token = response.data?.data?.token || response.data?.token;
+      const loggedInUser = response.data?.data?.user || response.data?.user;
+      if (!token) {
+        throw new Error('Không nhận được mã xác thực (token) từ máy chủ.');
+      }
+      login(token, loggedInUser);
+      const targetUrl = locationState?.from?.pathname || (loggedInUser?.role === 'ADMIN' ? '/admin' : '/');
+      navigate(targetUrl, { replace: true });
+    } catch (err: unknown) {
+      if (err instanceof AxiosError && err.response?.data) {
+        const apiErr = err.response.data as ApiErrorResponse;
+        setServerError(
+          apiErr.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản và mật khẩu.'
+        );
+      } else if (err instanceof Error) {
+        setServerError(err.message);
+      } else {
+        setServerError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+      }
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#F8FAFC]">
       <div className="w-full max-w-md">
-        {/* Brand header */}
+        {/* Brand Header */}
         <div className="text-center mb-8">
           <Link
             to="/"
@@ -56,63 +103,120 @@ export const LoginPage: React.FC = () => {
               Xe<span className="text-[#C2410C]">Viet</span>
             </span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 mt-4">Đăng nhập tài khoản</h2>
+          <h1 className="text-xl font-bold text-slate-900 mt-4">Đăng nhập tài khoản</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Đăng nhập để đặt vé hoặc truy cập hệ thống quản trị XeViet
+            Đặt vé xe khách nhanh chóng và an toàn cùng XeViet
           </p>
         </div>
 
-        <Card padding="lg">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {errorMsg && (
-              <div
-                role="alert"
-                className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 font-medium"
-              >
-                {errorMsg}
+        {/* Card Container */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          {isAuthenticated ? (
+            <div className="space-y-4">
+              <Alert variant="success" title="Đang trong phiên đăng nhập">
+                Bạn hiện đang đăng nhập với tài khoản{' '}
+                <strong>{user?.fullName || user?.userId}</strong> ({user?.role}).
+              </Alert>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(redirectUrl, { replace: true })}
+                  className="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#162C48] text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Tiếp tục tới {redirectUrl}
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="w-full py-2.5 px-4 border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Đăng xuất phiên hiện tại
+                </button>
               </div>
-            )}
-
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@example.com"
-              icon={<Mail className="w-4 h-4" />}
-              autoComplete="email"
-              required
-            />
-
-            <Input
-              label="Mật khẩu"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              icon={<Lock className="w-4 h-4" />}
-              autoComplete="current-password"
-              required
-            />
-
-            <div className="p-3 bg-blue-50/60 rounded-lg text-xs text-slate-600 border border-blue-100 flex flex-col gap-1">
-              <span className="font-semibold text-slate-800">Tài khoản quản trị mẫu:</span>
-              <span>Email: <code className="bg-white px-1 py-0.5 rounded border border-blue-200 text-[#1E3A5F]">admin@example.com</code></span>
-              <span>Mật khẩu: <code className="bg-white px-1 py-0.5 rounded border border-blue-200 text-[#1E3A5F]">admin123</code></span>
             </div>
+          ) : (
+            <>
+              {registeredSuccess && (
+                <div className="mb-5">
+                  <Alert variant="success" title="Đăng ký thành công">
+                    Tài khoản của bạn đã được khởi tạo. Vui lòng đăng nhập để bắt đầu đặt vé!
+                  </Alert>
+                </div>
+              )}
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isLoading}
-              className="w-full mt-2"
-              icon={<ArrowRight className="w-4 h-4" />}
-            >
-              Đăng nhập
-            </Button>
-          </form>
-        </Card>
+              {serverError && (
+                <div className="mb-5">
+                  <Alert variant="error" title="Đăng nhập thất bại">
+                    {serverError}
+                  </Alert>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+                <Input
+                  id="login-phone"
+                  label="Số điện thoại"
+                  type="tel"
+                  placeholder="Ví dụ: 0901234567"
+                  autoComplete="tel"
+                  error={errors.phone?.message}
+                  {...register('phone')}
+                />
+
+                <Input
+                  id="login-password"
+                  label="Mật khẩu"
+                  type="password"
+                  placeholder="Nhập mật khẩu"
+                  autoComplete="current-password"
+                  error={errors.password?.message}
+                  {...register('password')}
+                />
+
+                {/* Quick Account Test Chips */}
+                <div className="p-3 bg-blue-50/70 rounded-xl text-xs text-slate-600 border border-blue-100 space-y-1.5">
+                  <span className="font-semibold text-slate-800 block">Tài khoản mẫu hệ thống:</span>
+                  <div className="flex flex-wrap gap-2 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setValue('phone', '0901234567')}
+                      className="px-2 py-1 rounded bg-white border border-blue-200 text-[#1E3A5F] hover:bg-blue-50 font-mono cursor-pointer"
+                    >
+                      Admin: 0901234567
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setValue('phone', '0988000111')}
+                      className="px-2 py-1 rounded bg-white border border-blue-200 text-[#1E3A5F] hover:bg-blue-50 font-mono cursor-pointer"
+                    >
+                      Khách: 0988000111
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#162C48] text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>{isSubmitting ? 'Đang xác thực...' : 'Đăng nhập'}</span>
+                </button>
+              </form>
+
+              <div className="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-600">
+                Chưa có tài khoản?{' '}
+                <Link
+                  to="/register"
+                  className="font-semibold text-[#C2410C] hover:underline transition-colors"
+                >
+                  Đăng ký ngay
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="text-center mt-6 text-xs text-slate-500">
           <Link to="/" className="text-[#1E3A5F] hover:underline font-semibold">
@@ -125,3 +229,4 @@ export const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+

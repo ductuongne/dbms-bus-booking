@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bus, ShieldCheck, Clock, Headphones } from 'lucide-react';
+import { Bus } from 'lucide-react';
 import { BRAND_INFO } from '../constants';
 
 export const Footer: React.FC = () => {
