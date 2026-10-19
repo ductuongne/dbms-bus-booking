@@ -170,3 +170,10 @@ INSERT INTO tickets (ticket_id, ticket_code, booking_id, trip_id, seat_id, passe
 ('TCK-SEED-01', 'TCK00001', 'BKG-SEED-PENDING', 'TRP-01', 'SEA-01', N'Nguyễn Văn A', '0988000111', 200000.00, 'PENDING'),
 ('TCK-SEED-02', 'TCK00002', 'BKG-SEED-CONFIRMED', 'TRP-01', 'SEA-02', N'Khách Vãng Lai B', '0933222333', 200000.00, 'CONFIRMED');
 GO
+
+-- Payments
+INSERT INTO payments (payment_id, booking_id, method, amount, paid_at, transaction_code, status) VALUES
+('PAY-SEED-01', 'BKG-SEED-PENDING', 'BANK_TRANSFER', 200000.00, NULL, NULL, 'PENDING'),
+('PAY-SEED-02', 'BKG-SEED-CONFIRMED', 'BANK_TRANSFER', 200000.00, SYSDATETIME(), 'VQR-BKG00002', 'SUCCESS');
+GO
+

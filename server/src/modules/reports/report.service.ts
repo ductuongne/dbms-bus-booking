@@ -36,7 +36,7 @@ export interface OccupancyResponse {
 
 function formatDate(value: Date): string {
 	const pad = (n: number): string => String(n).padStart(2, '0')
-	return `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())}`
+	return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`
 }
 
 function formatLocalDateTime(value: Date): string {
