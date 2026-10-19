@@ -5,12 +5,11 @@ import {
   Building2,
   Bus,
   Layers,
-  UserCheck,
   Ticket,
-  Users,
   Shield,
   type LucideIcon,
 } from 'lucide-react';
+
 import type { UserRole } from '../types/auth';
 
 export interface AdminNavItem {
@@ -27,11 +26,10 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { path: '/admin/stations', label: 'Quản lý bến xe', icon: Building2, roles: ['ADMIN', 'STAFF'] },
   { path: '/admin/vehicles', label: 'Quản lý phương tiện', icon: Bus, roles: ['ADMIN', 'STAFF'] },
   { path: '/admin/vehicle-types', label: 'Loại phương tiện', icon: Layers, roles: ['ADMIN', 'STAFF'] },
-  { path: '/admin/drivers', label: 'Quản lý tài xế', icon: UserCheck, roles: ['ADMIN', 'STAFF'] },
   { path: '/admin/bookings', label: 'Quản lý đặt vé', icon: Ticket, roles: ['ADMIN', 'STAFF'] },
-  { path: '/admin/customers', label: 'Quản lý khách hàng', icon: Users, roles: ['ADMIN', 'STAFF'] },
   { path: '/admin/users', label: 'Quản lý tài khoản', icon: Shield, roles: ['ADMIN'] },
 ];
+
 
 
 

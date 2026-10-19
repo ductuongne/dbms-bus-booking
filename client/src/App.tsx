@@ -25,10 +25,10 @@ import { AdminRoutesPage } from './pages/admin/AdminRoutesPage';
 import { AdminStationsPage } from './pages/admin/AdminStationsPage';
 import { AdminVehiclesPage } from './pages/admin/AdminVehiclesPage';
 import { AdminVehicleTypesPage } from './pages/admin/AdminVehicleTypesPage';
-import DriversPage from './pages/DriversPage';
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
-import CustomersPage from './pages/CustomersPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+
+
 
 
 import { useAuth } from './hooks/useAuth';
@@ -92,11 +92,13 @@ export const App: React.FC = () => {
               <Route path="stations" element={<AdminStationsPage />} />
               <Route path="vehicles" element={<AdminVehiclesPage />} />
               <Route path="vehicle-types" element={<AdminVehicleTypesPage />} />
-              <Route path="drivers" element={<DriversPage />} />
               <Route path="bookings" element={<AdminBookingsPage />} />
-              <Route path="customers" element={<CustomersPage />} />
+              {/* Legacy route redirects */}
+              <Route path="drivers" element={<Navigate to="/admin/users" replace />} />
+              <Route path="customers" element={<Navigate to="/admin/users" replace />} />
 
               {/* Quản lý tài khoản: Chỉ ADMIN có quyền */}
+
               <Route
                 path="users"
                 element={
