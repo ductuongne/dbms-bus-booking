@@ -2,12 +2,22 @@ import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Bus, ArrowLeft } from 'lucide-react';
 import { ADMIN_NAV_ITEMS } from '../constants/adminNav';
+import { useAuth } from '../hooks/useAuth';
 
 interface SidebarProps {
   onItemClick?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ onItemClick }) => {
+  const { user } = useAuth();
+  const currentRole = user?.role;
+
+  // Chỉ hiển thị các mục menu được cho phép đối với role hiện tại
+  const visibleNavItems = ADMIN_NAV_ITEMS.filter((item) => {
+    if (!item.roles || item.roles.length === 0) return true;
+    return currentRole ? item.roles.includes(currentRole) : false;
+  });
+
   return (
     <aside className="w-60 h-full flex flex-col bg-[#1E3A5F] text-white">
       {/* Brand header */}
@@ -22,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onItemClick }) => {
 
       {/* Nav items */}
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto text-xs">
-        {ADMIN_NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
@@ -43,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onItemClick }) => {
           );
         })}
       </nav>
+
 
       {/* Back to website button */}
       <div className="p-3 border-t border-blue-900/40">

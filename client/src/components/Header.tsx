@@ -85,13 +85,14 @@ export const Header: React.FC = () => {
 
           {isAdminOrStaff && (
             <Link
-              to="/admin/reports"
+              to={user?.role === USER_ROLES.ADMIN ? '/admin/reports' : '/admin/trips'}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-[#1E3A5F] hover:bg-blue-100 transition-colors"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Quản trị hệ thống</span>
+              <span>{user?.role === USER_ROLES.ADMIN ? 'Quản trị hệ thống' : 'Quản lý vận hành'}</span>
             </Link>
           )}
+
 
           {isDriver && (
             <Link
@@ -209,14 +210,15 @@ export const Header: React.FC = () => {
 
           {isAdminOrStaff && (
             <Link
-              to="/admin/reports"
+              to={user?.role === USER_ROLES.ADMIN ? '/admin/reports' : '/admin/trips'}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 text-[#1E3A5F] font-semibold text-xs"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Trang quản trị</span>
+              <span>{user?.role === USER_ROLES.ADMIN ? 'Trang quản trị' : 'Quản lý vận hành'}</span>
             </Link>
           )}
+
 
           {isDriver && (
             <Link

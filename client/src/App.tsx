@@ -30,6 +30,19 @@ import BookingPage from './pages/BookingPage';
 import CustomersPage from './pages/CustomersPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 
+import { useAuth } from './hooks/useAuth';
+
+const AdminIndexRedirect: React.FC = () => {
+  const { user } = useAuth();
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/admin/reports" replace />;
+  }
+  if (user?.role === 'STAFF') {
+    return <Navigate to="/admin/trips" replace />;
+  }
+  return <Navigate to="/" replace />;
+};
+
 export const App: React.FC = () => {
   return (
     <ToastProvider>
@@ -63,8 +76,16 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/admin/reports" replace />} />
-              <Route path="reports" element={<ReportsPage />} />
+              <Route index element={<AdminIndexRedirect />} />
+              {/* Báo cáo: Chỉ ADMIN có quyền */}
+              <Route
+                path="reports"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ReportsPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="trips" element={<TripsPage />} />
               <Route path="routes" element={<AdminRoutesPage />} />
               <Route path="stations" element={<AdminStationsPage />} />
@@ -73,8 +94,17 @@ export const App: React.FC = () => {
               <Route path="drivers" element={<DriversPage />} />
               <Route path="bookings" element={<BookingPage />} />
               <Route path="customers" element={<CustomersPage />} />
-              <Route path="users" element={<AdminDashboardPage />} />
+              {/* Quản lý tài khoản: Chỉ ADMIN có quyền */}
+              <Route
+                path="users"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
+
 
             {/* Điều hướng mặc định */}
             <Route path="*" element={<Navigate to="/" replace />} />
