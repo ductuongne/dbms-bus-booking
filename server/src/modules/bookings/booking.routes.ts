@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { checkRole, verifyJWT } from '../../middlewares/auth.middleware.js'
 import { bookingRateLimiter } from '../../middlewares/rate-limit'
 import { validateRequest } from '../../middlewares/validate'
 import { bookingController } from './booking.controller'
@@ -36,24 +37,31 @@ router.post(
 	bookingController.cancelBooking.bind(bookingController)
 )
 
-// TODO(auth): authorize('STAFF', 'ADMIN', 'DRIVER')
+// Staff, Admin & Driver operations
 router.get(
 	'/lookup/:bookingCode',
+	verifyJWT,
+	checkRole(['STAFF', 'ADMIN', 'DRIVER']),
 	validateRequest({ params: bookingCodeParamsSchema }),
 	bookingController.getBookingByCode.bind(bookingController)
 )
 
 router.get(
 	'/trips/:tripId/tickets',
+	verifyJWT,
+	checkRole(['STAFF', 'ADMIN', 'DRIVER']),
 	validateRequest({ params: tripTicketsParamsSchema, query: tripTicketsQuerySchema }),
 	bookingController.getTripTickets.bind(bookingController)
 )
 
 router.post(
 	'/check-in',
+	verifyJWT,
+	checkRole(['STAFF', 'ADMIN', 'DRIVER']),
 	validateRequest({ body: checkInTicketBodySchema }),
 	bookingController.checkInTicket.bind(bookingController)
 )
 
 export default router
+
 

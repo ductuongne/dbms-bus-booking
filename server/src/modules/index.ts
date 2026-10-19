@@ -25,22 +25,21 @@ appRouter.use('/buses', busRouter)
 // ==========================================
 // ADMIN MANAGEMENT ENDPOINTS
 // ==========================================
-// Placeholder middleware for Admin authorization.
-// Currently bypassed as requested until Admin Login UI is integrated.
-const adminAuthPlaceholder: RequestHandler = (_req, _res, next) => {
-	// TODO: Replace with verifyJWT and checkRole(['ADMIN']) once Admin Auth UI is ready
-	next()
-}
+import { verifyJWT, checkRole } from '../middlewares/auth.middleware.js'
 
 const adminRouter = Router()
-adminRouter.use(adminAuthPlaceholder)
+adminRouter.use(verifyJWT)
 
-adminRouter.use('/buses', adminBusRouter)
-adminRouter.use('/bus-types', adminBusTypeRouter)
-adminRouter.use('/stations', adminStationRouter)
-adminRouter.use('/routes', adminRouteRouter)
-adminRouter.use('/reports', reportRoutes)
+// Operations management: Accessible by both ADMIN and STAFF
+adminRouter.use('/buses', checkRole(['ADMIN', 'STAFF']), adminBusRouter)
+adminRouter.use('/bus-types', checkRole(['ADMIN', 'STAFF']), adminBusTypeRouter)
+adminRouter.use('/stations', checkRole(['ADMIN', 'STAFF']), adminStationRouter)
+adminRouter.use('/routes', checkRole(['ADMIN', 'STAFF']), adminRouteRouter)
+
+// Financial Reports: Restricted to ADMIN only (STAFF receives 403 Forbidden)
+adminRouter.use('/reports', checkRole(['ADMIN']), reportRoutes)
 
 appRouter.use('/admin', adminRouter)
+
 
 export default appRouter
