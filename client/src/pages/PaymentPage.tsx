@@ -11,6 +11,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import type { BookingCheckoutView } from '../types';
 import { formatCurrency, formatFullDateVN } from '../utils';
 import { bookingService } from '../services/booking.service';
+import { paymentService } from '../services/payment.service';
 import { useToast } from '../hooks/useToast';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -93,6 +94,13 @@ export const PaymentPage: React.FC = () => {
         booking_code: checkoutData.bookingCode,
         phone: checkoutData.passenger.phone,
         payment_method: 'BANK_TRANSFER',
+      });
+      await paymentService.payBooking(checkoutData.bookingId, {
+        booking_code: checkoutData.bookingCode,
+        phone: checkoutData.passenger.phone,
+        method: 'BANK_TRANSFER',
+        transaction_code:
+          checkoutData.payment.transferContent || `VQR-${checkoutData.bookingCode}`,
       });
       setIsPaid(true);
       success(`Thanh toán thành công! Vé điện tử đã gửi tới ${checkoutData.passenger.email}`);

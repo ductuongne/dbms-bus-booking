@@ -13,12 +13,32 @@ import Badge from '../components/common/Badge';
 import { mockBookings, mockTrips, mockTickets, mockRoutes, mockStations } from '../mocks/mockData';
 import { formatCurrency } from '../utils';
 import { routeService, type RouteListItem } from '../services/route.service';
+import {
+  reportService,
+  type OccupancyReportItem,
+  type RevenueReportResponse,
+  type RouteRevenueReportItem,
+} from '../services/report.service';
+
+function formatIsoDate(date: Date): string {
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
 export const ReportsPage: React.FC = () => {
   const [routes, setRoutes] = useState<RouteListItem[]>([]);
+  const [revenueReport, setRevenueReport] = useState<RevenueReportResponse | null>(null);
+  const [routeReport, setRouteReport] = useState<RouteRevenueReportItem[]>([]);
+  const [occupancyList, setOccupancyList] = useState<OccupancyReportItem[]>([]);
 
   useEffect(() => {
     let ignore = false;
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    const from = formatIsoDate(sevenDaysAgo);
+    const to = formatIsoDate(today);
+
     routeService
       .getAllRoutes()
       .then((data) => {
@@ -29,22 +49,73 @@ export const ReportsPage: React.FC = () => {
       .catch(() => {
         // Fallback silently to mock data
       });
+
+    reportService
+      .getRevenueReport(from, to, 'DAY')
+      .then((data) => {
+        if (!ignore && data) {
+          setRevenueReport(data);
+        }
+      })
+      .catch(() => {
+        // Fallback silently to mock data
+      });
+
+    reportService
+      .getRouteRevenueReport(from, to)
+      .then((data) => {
+        if (!ignore && data && data.length > 0) {
+          setRouteReport(data);
+        }
+      })
+      .catch(() => {
+        // Fallback silently to mock data
+      });
+
+    reportService
+      .getOccupancyReport(from, to)
+      .then((data) => {
+        if (!ignore && data && data.length > 0) {
+          setOccupancyList(data);
+        }
+      })
+      .catch(() => {
+        // Fallback silently to mock data
+      });
+
     return () => {
       ignore = true;
     };
   }, []);
 
-  // Tính toán số liệu thống kê từ mock data
-  const totalRevenue = mockBookings
-    .filter((b) => b.status !== 'CANCELLED')
-    .reduce((sum, b) => sum + b.totalAmount, 0);
+  // Số liệu thống kê: ưu tiên dữ liệu thật từ SP báo cáo, fallback sang mock data
+  const totalRevenue =
+    revenueReport && revenueReport.total_revenue > 0
+      ? revenueReport.total_revenue
+      : mockBookings
+          .filter((b) => b.status !== 'CANCELLED')
+          .reduce((sum, b) => sum + b.totalAmount, 0);
 
-  const totalTickets = mockTickets.length;
-  const tripsTodayCount = mockTrips.length;
-  const occupancyRate = 86.5; // Tỷ lệ lấp đầy giả lập %
+  const totalTickets =
+    routeReport.length > 0
+      ? routeReport.reduce((sum, r) => sum + r.tickets_sold, 0)
+      : mockTickets.length;
+
+  const tripsTodayCount =
+    occupancyList.length > 0 ? occupancyList.length : mockTrips.length;
+
+  const occupancyRate =
+    occupancyList.length > 0
+      ? Number(
+          (
+            occupancyList.reduce((sum, item) => sum + item.occupancy_percent, 0) /
+            occupancyList.length
+          ).toFixed(1)
+        )
+      : 86.5;
 
   // Dữ liệu biểu đồ doanh thu 7 ngày qua (SVG thuần theo B0.3, B6.2)
-  const chartData = [
+  const fallbackChartData = [
     { day: 'Th 2', revenue: 2450000 },
     { day: 'Th 3', revenue: 3100000 },
     { day: 'Th 4', revenue: 2800000 },
@@ -54,37 +125,63 @@ export const ReportsPage: React.FC = () => {
     { day: 'CN', revenue: 6100000 },
   ];
 
-  const maxRevenue = Math.max(...chartData.map((d) => d.revenue));
+  const chartData =
+    revenueReport && revenueReport.items.length > 0
+      ? revenueReport.items.slice(-7).map((item) => ({
+          day: item.period.slice(5),
+          revenue: item.total_revenue,
+        }))
+      : fallbackChartData;
 
-  // Top 5 tuyến đông khách nhất
-  const topRoutes = routes.length > 0
-    ? routes.slice(0, 4).map((route, idx) => {
-        const ticketsSold = [142, 98, 76, 54][idx] || 40;
-        const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
-        return {
-          id: route.id,
-          name: `${route.departureStationName} → ${route.arrivalStationName}`,
-          distance: `${route.distanceKm} km`,
-          duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
-          ticketsSold,
-          revenue: estRevenue,
-        };
-      })
-    : mockRoutes.slice(0, 4).map((route, idx) => {
-        const depStation = mockStations.find((s) => s.id === route.departureStationId);
-        const arrStation = mockStations.find((s) => s.id === route.arrivalStationId);
-        const ticketsSold = [142, 98, 76, 54][idx] || 40;
-        const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
+  const maxRevenue = Math.max(1, ...chartData.map((d) => d.revenue));
 
-        return {
-          id: route.id,
-          name: `${depStation?.name || 'Hà Nội'} → ${arrStation?.name || 'Ninh Bình'}`,
-          distance: `${route.distanceKm} km`,
-          duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
-          ticketsSold,
-          revenue: estRevenue,
-        };
-      });
+  // Top tuyến đông khách nhất
+  const topRoutes =
+    routeReport.length > 0
+      ? routeReport.slice(0, 5).map((item) => {
+          const matchedRoute = routes.find((r) => r.id === item.route_id);
+          const distanceKm = matchedRoute?.distanceKm ?? 0;
+          const durationMin = matchedRoute?.estimatedDuration ?? 0;
+          return {
+            id: item.route_id,
+            name: `${item.departure_station} → ${item.arrival_station}`,
+            distance: distanceKm > 0 ? `${distanceKm} km` : '—',
+            duration:
+              durationMin > 0
+                ? `${Math.floor(durationMin / 60)}g ${durationMin % 60}ph`
+                : '—',
+            ticketsSold: item.tickets_sold,
+            revenue: item.revenue,
+          };
+        })
+      : routes.length > 0
+        ? routes.slice(0, 4).map((route, idx) => {
+            const ticketsSold = [142, 98, 76, 54][idx] || 40;
+            const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
+            return {
+              id: route.id,
+              name: `${route.departureStationName} → ${route.arrivalStationName}`,
+              distance: `${route.distanceKm} km`,
+              duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
+              ticketsSold,
+              revenue: estRevenue,
+            };
+          })
+        : mockRoutes.slice(0, 4).map((route, idx) => {
+            const depStation = mockStations.find((s) => s.id === route.departureStationId);
+            const arrStation = mockStations.find((s) => s.id === route.arrivalStationId);
+            const ticketsSold = [142, 98, 76, 54][idx] || 40;
+            const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
+
+            return {
+              id: route.id,
+              name: `${depStation?.name || 'Hà Nội'} → ${arrStation?.name || 'Ninh Bình'}`,
+              distance: `${route.distanceKm} km`,
+              duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
+              ticketsSold,
+              revenue: estRevenue,
+            };
+          });
 
   return (
     <div className="flex flex-col gap-5">
