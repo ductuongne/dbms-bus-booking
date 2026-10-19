@@ -37,9 +37,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 	const [isInitialized] = useState<boolean>(true)
 
-	// Đăng nhập: Lưu token vào storage, giải mã và cập nhật state
-	const login = useCallback((newToken: string, explicitUser?: AuthUser) => {
+	// Đăng nhập: Lưu access & refresh token vào storage, giải mã và cập nhật state
+	const login = useCallback((newToken: string, explicitUser?: AuthUser, newRefreshToken?: string) => {
 		localStorage.setItem(TOKEN_STORAGE_KEY, newToken)
+		if (newRefreshToken) {
+			localStorage.setItem('refresh_token', newRefreshToken)
+		}
 		const decoded = decodeTokenSafely(newToken)
 		setToken(newToken)
 		if (explicitUser) {
@@ -55,9 +58,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	// Đăng xuất: Xóa token khỏi storage, reset state
 	const logout = useCallback(() => {
 		localStorage.removeItem(TOKEN_STORAGE_KEY)
+		localStorage.removeItem('refresh_token')
 		setToken(null)
 		setUser(null)
 	}, [])
+
 
 	// Lắng nghe sự kiện auth:logout từ Axios Response Interceptor (khi server trả 401)
 	useEffect(() => {

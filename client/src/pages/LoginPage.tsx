@@ -37,7 +37,13 @@ export const LoginPage: React.FC = () => {
 
   const locationState = location.state as LocationState | null;
   const registeredSuccess = locationState?.registeredSuccess;
-  const redirectUrl = locationState?.from?.pathname || (user?.role === 'ADMIN' ? '/admin' : '/');
+  const redirectUrl =
+    locationState?.from?.pathname ||
+    (user?.role === 'ADMIN' || user?.role === 'STAFF'
+      ? '/admin'
+      : user?.role === 'DRIVER'
+      ? '/driver/schedule'
+      : '/');
 
   const {
     register,
@@ -66,14 +72,22 @@ export const LoginPage: React.FC = () => {
         }
       }
 
-      const token = response.data?.data?.token || response.data?.token;
+      const token = response.data?.data?.token || response.data?.token || response.data?.accessToken;
+      const refreshToken = response.data?.data?.refreshToken || response.data?.refreshToken;
       const loggedInUser = response.data?.data?.user || response.data?.user;
       if (!token) {
         throw new Error('Không nhận được mã xác thực (token) từ máy chủ.');
       }
-      login(token, loggedInUser);
-      const targetUrl = locationState?.from?.pathname || (loggedInUser?.role === 'ADMIN' ? '/admin' : '/');
+      login(token, loggedInUser, refreshToken);
+      const targetUrl =
+        locationState?.from?.pathname ||
+        (loggedInUser?.role === 'ADMIN' || loggedInUser?.role === 'STAFF'
+          ? '/admin'
+          : loggedInUser?.role === 'DRIVER'
+          ? '/driver/schedule'
+          : '/');
       navigate(targetUrl, { replace: true });
+
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response?.data) {
         const apiErr = err.response.data as ApiErrorResponse;
