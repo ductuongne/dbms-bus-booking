@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { AxiosError } from 'axios';
 import { Bus, LogIn } from 'lucide-react';
-import { api } from '../lib/api';
-import type { ApiErrorResponse } from '../types/auth';
+import { z } from 'zod';
 import { Input, Alert } from '../components/common';
 import { BRAND_INFO } from '../constants';
-
-import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
+import { authService } from '../services/auth.service';
+
 const loginSchema = z.object({
   phone: z
     .string()
@@ -60,40 +58,20 @@ export const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setServerError(null);
-      let response;
-      try {
-        response = await api.post('/public/login', data);
-      } catch (postErr) {
-        if (postErr instanceof AxiosError && postErr.response?.status === 404) {
-          response = await api.post('/public/auth/login', data);
-        } else {
-          throw postErr;
-        }
-      }
+      const authResult = await authService.login(data);
+      login(authResult.token, authResult.user, authResult.refreshToken);
 
-      const token = response.data?.data?.token || response.data?.token || response.data?.accessToken;
-      const refreshToken = response.data?.data?.refreshToken || response.data?.refreshToken;
-      const loggedInUser = response.data?.data?.user || response.data?.user;
-      if (!token) {
-        throw new Error('Không nhận được mã xác thực (token) từ máy chủ.');
-      }
-      login(token, loggedInUser, refreshToken);
       const targetUrl =
         locationState?.from?.pathname ||
-        (loggedInUser?.role === 'ADMIN' || loggedInUser?.role === 'STAFF'
+        (authResult.user.role === 'ADMIN' || authResult.user.role === 'STAFF'
           ? '/admin'
-          : loggedInUser?.role === 'DRIVER'
+          : authResult.user.role === 'DRIVER'
           ? '/driver/schedule'
           : '/');
-      navigate(targetUrl, { replace: true });
 
+      navigate(targetUrl, { replace: true });
     } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response?.data) {
-        const apiErr = err.response.data as ApiErrorResponse;
-        setServerError(
-          apiErr.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản và mật khẩu.'
-        );
-      } else if (err instanceof Error) {
+      if (err instanceof Error) {
         setServerError(err.message);
       } else {
         setServerError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
@@ -118,110 +96,122 @@ export const LoginPage: React.FC = () => {
               Xe<span className="text-action">Viet</span>
             </span>
           </Link>
-          <h1 className="text-xl font-bold text-slate-900 mt-4">Đăng nhập tài khoản</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Đặt vé xe khách nhanh chóng và an toàn cùng {BRAND_INFO.name}
+          <h1 className="mt-4 text-xl font-bold text-slate-900">
+            Đăng nhập hệ thống
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Nhập số điện thoại và mật khẩu để tiếp tục
           </p>
         </div>
 
-        {/* Card Container */}
-        <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-
-          {isAuthenticated ? (
-            <div className="space-y-4">
-              <Alert variant="success" title="Đang trong phiên đăng nhập">
-                Bạn hiện đang đăng nhập với tài khoản{' '}
-                <strong>{user?.fullName || user?.userId}</strong> ({user?.role}).
+        {/* Form Container */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
+          {isAuthenticated && user && (
+            <div className="mb-6">
+              <Alert variant="info" title="Bạn đang đăng nhập">
+                Đang đăng nhập với tài khoản{' '}
+                <strong>{user.fullName || user.phone}</strong> ({user.role}).{' '}
+                <div className="mt-2 flex gap-3">
+                  <Link
+                    to={redirectUrl}
+                    className="font-semibold underline hover:text-blue-900"
+                  >
+                    Tiếp tục vào trang
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="font-semibold text-red-600 underline hover:text-red-800"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
               </Alert>
-
-              <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => navigate(redirectUrl, { replace: true })}
-                  className="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#162C48] text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
-                >
-                  Tiếp tục tới {redirectUrl}
-                </button>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="w-full py-2.5 px-4 border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
-                >
-                  Đăng xuất phiên hiện tại
-                </button>
-              </div>
             </div>
-          ) : (
-            <>
-              {registeredSuccess && (
-                <div className="mb-5">
-                  <Alert variant="success" title="Đăng ký thành công">
-                    Tài khoản của bạn đã được khởi tạo. Vui lòng đăng nhập để bắt đầu đặt vé!
-                  </Alert>
-                </div>
-              )}
-
-              {serverError && (
-                <div className="mb-5">
-                  <Alert variant="error" title="Đăng nhập thất bại">
-                    {serverError}
-                  </Alert>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-                <Input
-                  id="login-phone"
-                  label="Số điện thoại"
-                  type="tel"
-                  placeholder="Nhập số điện thoại"
-                  autoComplete="tel"
-                  error={errors.phone?.message}
-                  {...register('phone')}
-                />
-
-                <Input
-                  id="login-password"
-                  label="Mật khẩu"
-                  type="password"
-                  placeholder="Nhập mật khẩu"
-                  autoComplete="current-password"
-                  error={errors.password?.message}
-                  {...register('password')}
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 px-4 bg-brand hover:bg-brand-hover text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Đang xác thực...' : 'Đăng nhập'}</span>
-                </button>
-              </form>
-
-              <div className="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-600">
-                Chưa có tài khoản?{' '}
-                <Link
-                  to="/register"
-                  className="font-semibold text-action hover:underline transition-colors"
-                >
-                  Đăng ký ngay
-                </Link>
-              </div>
-            </>
           )}
-        </div>
 
-        <div className="text-center mt-6 text-xs text-slate-500">
-          <Link to="/" className="text-brand hover:underline font-semibold">
-            ← Về trang chủ tìm chuyến
-          </Link>
-        </div>
+          {registeredSuccess && (
+            <div className="mb-6">
+              <Alert variant="success" title="Đăng ký thành công">
+                Tài khoản của bạn đã được khởi tạo. Vui lòng đăng nhập để bắt đầu!
+              </Alert>
+            </div>
+          )}
 
+          {serverError && (
+            <div className="mb-6">
+              <Alert variant="error" title="Lỗi đăng nhập">
+                {serverError}
+              </Alert>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <Input
+              label="Số điện thoại"
+              placeholder="0912345678"
+              type="tel"
+              autoComplete="tel"
+              disabled={isSubmitting}
+              error={errors.phone?.message}
+              {...register('phone')}
+            />
+
+            <Input
+              label="Mật khẩu"
+              placeholder="••••••••"
+              type="password"
+              autoComplete="current-password"
+              disabled={isSubmitting}
+              error={errors.password?.message}
+              {...register('password')}
+            />
+
+            <div className="flex items-center justify-between text-xs pt-1">
+              <label className="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
+                <input
+                  type="checkbox"
+                  className="rounded border-slate-300 text-brand focus:ring-brand w-3.5 h-3.5"
+                />
+                <span>Ghi nhớ đăng nhập</span>
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-brand hover:underline font-medium"
+              >
+                Quên mật khẩu?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-action hover:bg-orange-600 active:bg-orange-700 text-white font-bold py-3 px-4 shadow-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {isSubmitting ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  <span>Đăng nhập</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-600">
+            Chưa có tài khoản?{' '}
+            <Link
+              to="/register"
+              className="text-brand font-bold hover:underline"
+            >
+              Đăng ký ngay
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 export default LoginPage;
-

@@ -2,33 +2,29 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, Link } from 'react-router-dom';
-import { AxiosError } from 'axios';
 import { z } from 'zod';
 import { Bus, UserPlus } from 'lucide-react';
-import { api } from '../lib/api';
-import type { ApiErrorResponse } from '../types/auth';
 import { Button, Input, Alert } from '../components/common';
 import { BRAND_INFO } from '../constants';
+import { authService } from '../services/auth.service';
 
 const registerSchema = z
   .object({
     fullName: z
       .string()
       .min(2, 'Họ và tên phải có ít nhất 2 ký tự')
-      .max(100, 'Họ và tên không được vượt quá 100 ký tự')
-      .trim(),
+      .max(100, 'Họ và tên không được quá 100 ký tự'),
     phone: z
       .string()
       .regex(
         /^(0[3|5|7|8|9])+([0-9]{8})$/,
-        'Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09)'
+        'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 03, 05, 07, 08, 09)'
       ),
-    email: z
+    email: z.string().email('Email không hợp lệ'),
+    password: z
       .string()
-      .email('Địa chỉ email không đúng định dạng')
-      .toLowerCase()
-      .trim(),
-    password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+      .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+      .max(50, 'Mật khẩu không được quá 50 ký tự'),
     confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -61,43 +57,23 @@ export const RegisterPage: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setServerError(null);
-      const payload = {
+      await authService.register({
         fullName: data.fullName,
         phone: data.phone,
         email: data.email,
         password: data.password,
-      };
+      });
 
-      // Thử endpoint chuẩn /public/register, fallback /public/auth/register nếu cần
-      try {
-        await api.post('/public/register', payload);
-      } catch (postErr) {
-        if (
-          postErr instanceof AxiosError &&
-          postErr.response?.status === 404
-        ) {
-          await api.post('/public/auth/register', payload);
-        } else {
-          throw postErr;
-        }
-      }
-
-      // Chuyển hướng sang màn hình đăng nhập với thông báo thành công
+      // Chuyển hướng sang màn hình đăng nhập với cờ thành công
       navigate('/login', {
         replace: true,
         state: { registeredSuccess: true },
       });
     } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response?.data) {
-        const apiErr = err.response.data as ApiErrorResponse;
-        setServerError(
-          apiErr.message ||
-            'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.'
-        );
+      if (err instanceof Error) {
+        setServerError(err.message);
       } else {
-        setServerError(
-          'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'
-        );
+        setServerError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
       }
     }
   };
@@ -119,17 +95,19 @@ export const RegisterPage: React.FC = () => {
               Xe<span className="text-action">Viet</span>
             </span>
           </Link>
-          <h1 className="text-xl font-bold text-slate-900 mt-4">Tạo tài khoản mới</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Đăng ký tài khoản {BRAND_INFO.name} để quản lý vé và lịch trình di chuyển thuận tiện
+          <h1 className="mt-4 text-xl font-bold text-slate-900">
+            Tạo tài khoản mới
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Trải nghiệm dịch vụ đặt vé xe tiện lợi và nhận ưu đãi
           </p>
         </div>
 
-        {/* Card Container */}
-        <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+        {/* Form Container */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
           {serverError && (
-            <div className="mb-5">
-              <Alert variant="error" title="Đăng ký thất bại">
+            <div className="mb-6">
+              <Alert variant="error" title="Lỗi đăng ký">
                 {serverError}
               </Alert>
             </div>
@@ -137,84 +115,76 @@ export const RegisterPage: React.FC = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Input
-              id="register-fullName"
               label="Họ và tên"
-              placeholder="Ví dụ: Nguyễn Văn An"
+              placeholder="Nguyễn Văn A"
               autoComplete="name"
+              disabled={isSubmitting}
               error={errors.fullName?.message}
               {...register('fullName')}
             />
 
             <Input
-              id="register-phone"
               label="Số điện thoại"
+              placeholder="0912345678"
               type="tel"
-              placeholder="Ví dụ: 0912345678"
               autoComplete="tel"
+              disabled={isSubmitting}
               error={errors.phone?.message}
               {...register('phone')}
             />
 
             <Input
-              id="register-email"
               label="Địa chỉ Email"
+              placeholder="example@domain.com"
               type="email"
-              placeholder="vidu@gmail.com"
               autoComplete="email"
+              disabled={isSubmitting}
               error={errors.email?.message}
               {...register('email')}
             />
 
             <Input
-              id="register-password"
               label="Mật khẩu"
+              placeholder="••••••••"
               type="password"
-              placeholder="Tối thiểu 8 ký tự"
               autoComplete="new-password"
+              disabled={isSubmitting}
               error={errors.password?.message}
               {...register('password')}
             />
 
             <Input
-              id="register-confirmPassword"
               label="Xác nhận mật khẩu"
+              placeholder="••••••••"
               type="password"
-              placeholder="Nhập lại mật khẩu"
               autoComplete="new-password"
+              disabled={isSubmitting}
               error={errors.confirmPassword?.message}
               {...register('confirmPassword')}
             />
 
-            <div className="pt-2">
-              <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                isLoading={isSubmitting}
-                className="cursor-pointer"
-              >
-                <UserPlus className="w-4 h-4 mr-1.5 inline-block" />
-                <span>Đăng ký tài khoản</span>
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              variant="action"
+              size="lg"
+              fullWidth
+              loading={isSubmitting}
+              icon={<UserPlus className="w-4 h-4" />}
+              className="mt-2"
+            >
+              Đăng ký tài khoản
+            </Button>
           </form>
 
-          <div className="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-600">
+          <div className="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-600">
             Đã có tài khoản?{' '}
             <Link
               to="/login"
-              className="font-semibold text-action hover:underline transition-colors"
+              className="text-brand font-bold hover:underline"
             >
               Đăng nhập ngay
             </Link>
           </div>
-        </div>
-
-        {/* Back link */}
-        <div className="text-center mt-6 text-xs text-slate-500">
-          <Link to="/" className="text-brand hover:underline font-semibold">
-            ← Về trang chủ tìm chuyến
-          </Link>
         </div>
       </div>
     </div>
