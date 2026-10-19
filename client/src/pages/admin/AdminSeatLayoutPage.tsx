@@ -59,7 +59,7 @@ export const AdminSeatLayoutPage: React.FC = () => {
       <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <Grid className="w-6 h-6 text-indigo-600" />
+            <Grid className="w-6 h-6 text-[#1E3A5F]" />
             <span>Trực Quan Hóa Sơ Đồ Ghế (Fleet Seat Layout)</span>
           </h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -86,7 +86,7 @@ export const AdminSeatLayoutPage: React.FC = () => {
 
       {loading ? (
         <div className="py-20 text-center space-y-2">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-gray-500">Đang tải dữ liệu từ SQL Server...</p>
         </div>
       ) : !busDetail ? (
@@ -99,7 +99,7 @@ export const AdminSeatLayoutPage: React.FC = () => {
           <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-gray-200 shadow-2xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-gray-100">
               <div>
-                <span className="text-[10px] font-mono font-bold text-indigo-600 uppercase">
+                <span className="text-[10px] font-mono font-bold text-[#1E3A5F] uppercase">
                   Mã xe: {busDetail.id}
                 </span>
                 <h3 className="font-bold text-gray-900 text-lg">
@@ -110,7 +110,7 @@ export const AdminSeatLayoutPage: React.FC = () => {
                 <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">
                   {busDetail.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm dừng'}
                 </span>
-                <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full border border-indigo-200">
+                <span className="text-xs font-bold bg-blue-50 text-[#1E3A5F] px-3 py-1 rounded-full border border-blue-200">
                   {busDetail.floors} Tầng • {busDetail.totalSeats} Chỗ
                 </span>
               </div>
@@ -118,7 +118,7 @@ export const AdminSeatLayoutPage: React.FC = () => {
 
             {loadingBus ? (
               <div className="py-16 text-center">
-                <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
             ) : (
               <SeatLayoutVisualizer
@@ -136,20 +136,20 @@ export const AdminSeatLayoutPage: React.FC = () => {
             {/* Clicked Seat Details Card */}
             <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-2xs space-y-4">
               <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <Sparkles className="w-4 h-4 text-[#1E3A5F]" />
                 <span>Chi tiết ghế đang chọn</span>
               </h4>
 
               {inspectedSeatObj ? (
                 <div className="space-y-3 text-xs">
-                  <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-center justify-between">
+                  <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold text-indigo-500 uppercase">Số ghế</span>
-                      <h5 className="font-mono font-black text-2xl text-indigo-900">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Số ghế</span>
+                      <h5 className="font-mono font-black text-2xl text-[#1E3A5F]">
                         {inspectedSeatObj.seatNumber}
                       </h5>
                     </div>
-                    <span className="text-xs font-bold bg-white text-indigo-700 px-3 py-1 rounded-full shadow-2xs">
+                    <span className="text-xs font-bold bg-white text-[#1E3A5F] px-3 py-1 rounded-full shadow-2xs">
                       Tầng {inspectedSeatObj.floor}
                     </span>
                   </div>
@@ -204,7 +204,7 @@ export const AdminSeatLayoutPage: React.FC = () => {
 
                 <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
                   <span className="text-gray-600">Giường nằm (SLEEPER):</span>
-                  <span className="font-bold text-indigo-600">
+                  <span className="font-bold text-[#1E3A5F]">
                     {busDetail.seats.filter((s) => s.seatType === 'SLEEPER').length}
                   </span>
                 </div>

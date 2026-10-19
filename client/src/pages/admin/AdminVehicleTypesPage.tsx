@@ -111,7 +111,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
         <div>
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <Layers className="w-6 h-6 text-indigo-600" />
+            <Layers className="w-6 h-6 text-[#1E3A5F]" />
             <span>Quản lý Loại Xe &amp; Cấu hình Chỗ Ngồi</span>
           </h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -122,7 +122,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Loại Xe Mới</span>
@@ -132,7 +132,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
       {/* Grid of Bus Types */}
       {loading ? (
         <div className="py-20 text-center space-y-2">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-gray-500">Đang tải danh sách loại xe...</p>
         </div>
       ) : error ? (
@@ -148,7 +148,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
             >
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-                  <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                  <span className="font-mono text-xs font-bold text-[#1E3A5F] bg-blue-50 px-2 py-0.5 rounded">
                     {type.id}
                   </span>
                   <span className="text-xs font-semibold text-gray-500">
@@ -174,7 +174,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => openEditModal(type)}
-                  className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-indigo-600 hover:bg-gray-100 rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
+                  className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-100 rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                   <span>Sửa</span>
@@ -197,7 +197,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-indigo-700 text-white flex items-center justify-between">
+            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
               <h3 className="font-bold text-base">
                 {editingType ? 'Chỉnh Sửa Loại Xe' : 'Thêm Loại Xe Mới'}
               </h3>
@@ -221,7 +221,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
                   placeholder="VD: Xe Giường Nằm 34"
                   value={typeName}
                   onChange={(e) => setTypeName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                 />
               </div>
 
@@ -237,7 +237,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
                     required
                     value={totalSeats}
                     onChange={(e) => setTotalSeats(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                   />
                 </div>
 
@@ -248,7 +248,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
                   <select
                     value={floors}
                     onChange={(e) => setFloors(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
                   >
                     <option value={1}>1 tầng (Ghế ngồi, Limousine)</option>
                     <option value={2}>2 tầng (Giường nằm)</option>
@@ -267,7 +267,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Đang lưu...' : 'Lưu lại'}
                 </button>

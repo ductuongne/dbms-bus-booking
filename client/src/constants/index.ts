@@ -3,7 +3,7 @@
 export const BRAND_INFO = {
   name: 'XeViet',
   slogan: 'Đặt vé xe khách & Limousine trực tuyến',
-  hotline: '1900 xxxx (Dữ liệu mẫu)',
+  hotline: '1900 xxxx',
   email: 'hotro@xeviet.vn',
   address: 'Hà Nội, Việt Nam',
 } as const;

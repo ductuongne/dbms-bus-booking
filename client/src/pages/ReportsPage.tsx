@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DollarSign,
   Ticket,
@@ -7,13 +7,34 @@ import {
   MapPin,
   Clock,
   ArrowUpRight,
+  BarChart3,
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import { mockBookings, mockTrips, mockTickets, mockRoutes, mockStations } from '../mocks/mockData';
 import { formatCurrency } from '../utils';
+import { routeService, type RouteListItem } from '../services/route.service';
 
 export const ReportsPage: React.FC = () => {
+  const [routes, setRoutes] = useState<RouteListItem[]>([]);
+
+  useEffect(() => {
+    let ignore = false;
+    routeService
+      .getAllRoutes()
+      .then((data) => {
+        if (!ignore && data && data.length > 0) {
+          setRoutes(data);
+        }
+      })
+      .catch(() => {
+        // Fallback silently to mock data
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   // Tính toán số liệu thống kê từ mock data
   const totalRevenue = mockBookings
     .filter((b) => b.status !== 'CANCELLED')
@@ -37,24 +58,56 @@ export const ReportsPage: React.FC = () => {
   const maxRevenue = Math.max(...chartData.map((d) => d.revenue));
 
   // Top 5 tuyến đông khách nhất
-  const topRoutes = mockRoutes.slice(0, 4).map((route, idx) => {
-    const depStation = mockStations.find((s) => s.id === route.departureStationId);
-    const arrStation = mockStations.find((s) => s.id === route.arrivalStationId);
-    const ticketsSold = [142, 98, 76, 54][idx] || 40;
-    const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
+  const topRoutes = routes.length > 0
+    ? routes.slice(0, 4).map((route, idx) => {
+        const ticketsSold = [142, 98, 76, 54][idx] || 40;
+        const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
+        return {
+          id: route.id,
+          name: `${route.departureStationName} → ${route.arrivalStationName}`,
+          distance: `${route.distanceKm} km`,
+          duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
+          ticketsSold,
+          revenue: estRevenue,
+        };
+      })
+    : mockRoutes.slice(0, 4).map((route, idx) => {
+        const depStation = mockStations.find((s) => s.id === route.departureStationId);
+        const arrStation = mockStations.find((s) => s.id === route.arrivalStationId);
+        const ticketsSold = [142, 98, 76, 54][idx] || 40;
+        const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
 
-    return {
-      id: route.id,
-      name: `${depStation?.name || 'Hà Nội'} → ${arrStation?.name || 'Ninh Bình'}`,
-      distance: `${route.distanceKm} km`,
-      duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
-      ticketsSold,
-      revenue: estRevenue,
-    };
-  });
+        return {
+          id: route.id,
+          name: `${depStation?.name || 'Hà Nội'} → ${arrStation?.name || 'Ninh Bình'}`,
+          distance: `${route.distanceKm} km`,
+          duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
+          ticketsSold,
+          revenue: estRevenue,
+        };
+      });
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-[#1E3A5F]" />
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Báo cáo & Thống kê
+            </h1>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Tổng quan hiệu suất vận hành, doanh số bán vé và sản lượng chuyến xe hệ thống XeViet
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="brand" size="md">
+            Cập nhật trực tiếp
+          </Badge>
+        </div>
+      </div>
       {/* 1. 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card padding="md" className="flex items-center gap-4">

@@ -188,7 +188,7 @@ export const AdminVehiclesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
         <div>
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <Bus className="w-6 h-6 text-indigo-600" />
+            <Bus className="w-6 h-6 text-[#1E3A5F]" />
             <span>Quản lý Phương Tiện &amp; Đội Xe</span>
           </h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -204,7 +204,7 @@ export const AdminVehiclesPage: React.FC = () => {
             }
             setShowCreateModal(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Xe Mới</span>
@@ -256,7 +256,7 @@ export const AdminVehiclesPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-2">
-            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs text-gray-500">Đang tải danh sách xe từ SQL Server...</p>
           </div>
         ) : error ? (
@@ -316,7 +316,7 @@ export const AdminVehiclesPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleViewDetail(bus.id)}
-                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
+                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#1E3A5F] font-bold rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Xem ghế</span>
@@ -344,13 +344,13 @@ export const AdminVehiclesPage: React.FC = () => {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 bg-gradient-to-r from-indigo-700 to-indigo-900 text-white flex items-center justify-between">
+            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-base flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-indigo-300" />
+                  <Plus className="w-5 h-5 text-blue-200" />
                   <span>Thêm Xe Mới &amp; Sinh Sơ Đồ Ghế Tự Động</span>
                 </h3>
-                <span className="text-[11px] text-indigo-200">
+                <span className="text-[11px] text-blue-100">
                   Transaction SQL Server Atomic: Tạo xe + Tự động sinh danh sách ghế tương ứng
                 </span>
               </div>
@@ -376,7 +376,7 @@ export const AdminVehiclesPage: React.FC = () => {
                     placeholder="VD: 51B-999.88"
                     value={newLicensePlate}
                     onChange={(e) => setNewLicensePlate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold uppercase focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold uppercase focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                   />
                 </div>
 
@@ -388,7 +388,7 @@ export const AdminVehiclesPage: React.FC = () => {
                   <select
                     value={newTypeId}
                     onChange={(e) => setNewTypeId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
                   >
                     {busTypes.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -410,7 +410,7 @@ export const AdminVehiclesPage: React.FC = () => {
                       value="ACTIVE"
                       checked={newStatus === 'ACTIVE'}
                       onChange={() => setNewStatus('ACTIVE')}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
                     />
                     <span>Hoạt động (ACTIVE)</span>
                   </label>
@@ -421,7 +421,7 @@ export const AdminVehiclesPage: React.FC = () => {
                       value="INACTIVE"
                       checked={newStatus === 'INACTIVE'}
                       onChange={() => setNewStatus('INACTIVE')}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
                     />
                     <span>Tạm dừng (INACTIVE)</span>
                   </label>
@@ -431,8 +431,8 @@ export const AdminVehiclesPage: React.FC = () => {
               {/* Requirement 7: LIVE SEAT PREVIEW */}
               <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
+                  <div className="flex items-center gap-2 text-[#1E3A5F] font-bold text-xs uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4 text-[#1E3A5F]" />
                     <span>Xem trước Sơ đồ ghế sẽ được tạo tự động</span>
                   </div>
                   <span className="text-xs font-bold text-gray-700">
@@ -459,7 +459,7 @@ export const AdminVehiclesPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer disabled:opacity-50 transition-colors"
+                  className="px-6 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? 'Đang tạo xe & ghế...' : 'Lưu Xe & Tạo Ghế'}
                 </button>
@@ -475,7 +475,7 @@ export const AdminVehiclesPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
             <div className="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-mono text-indigo-300 font-bold uppercase">
+                <span className="text-[11px] font-mono text-blue-300 font-bold uppercase">
                   Mã xe: {viewingBusDetail.id}
                 </span>
                 <h3 className="font-bold text-base">

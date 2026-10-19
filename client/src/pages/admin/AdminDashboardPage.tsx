@@ -161,12 +161,12 @@ export const AdminDashboardPage: React.FC = () => {
 	}, [users, selectedRole, searchQuery])
 
 	return (
-		<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+		<div className="space-y-6">
 			{/* Top Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
 				<div>
 					<div className="flex items-center gap-2">
-						<Users className="w-6 h-6 text-[#FF385C]" />
+						<Users className="w-6 h-6 text-[#1E3A5F]" />
 						<h1 className="text-2xl font-black text-slate-900 tracking-tight">
 							Quản lý người dùng
 						</h1>
@@ -220,14 +220,14 @@ export const AdminDashboardPage: React.FC = () => {
 						placeholder="Tìm kiếm theo mã, họ tên, số điện thoại hoặc email..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15 outline-none transition-all placeholder:text-slate-400"
+						className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:border-[#1E3A5F] focus:ring-4 focus:ring-[#1E3A5F]/15 outline-none transition-all placeholder:text-slate-400"
 					/>
 				</div>
 				<select
 					value={selectedRole}
 					onChange={(e) => setSelectedRole(e.target.value)}
 					aria-label="Lọc theo vai trò"
-					className="w-full sm:w-56 px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15 outline-none transition-all cursor-pointer font-medium text-slate-700"
+					className="w-full sm:w-56 px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-[#1E3A5F] focus:ring-4 focus:ring-[#1E3A5F]/15 outline-none transition-all cursor-pointer font-medium text-slate-700"
 				>
 					<option value="ALL">Tất cả vai trò</option>
 					<option value="CUSTOMER">Khách hàng (CUSTOMER)</option>

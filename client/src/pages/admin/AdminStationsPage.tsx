@@ -143,7 +143,7 @@ export const AdminStationsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
         <div>
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <MapPin className="w-6 h-6 text-indigo-600" />
+            <MapPin className="w-6 h-6 text-[#1E3A5F]" />
             <span>Quản lý Bến Xe &amp; Trạm Dừng Chân</span>
           </h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -154,7 +154,7 @@ export const AdminStationsPage: React.FC = () => {
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Bến Xe Mới</span>
@@ -194,7 +194,7 @@ export const AdminStationsPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-2">
-            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs text-gray-500">Đang tải danh sách bến xe...</p>
           </div>
         ) : error ? (
@@ -224,7 +224,7 @@ export const AdminStationsPage: React.FC = () => {
                       {station.name}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-block bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                      <span className="inline-block bg-blue-50 text-[#1E3A5F] px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                         {station.provinceName}
                       </span>
                     </td>
@@ -236,7 +236,7 @@ export const AdminStationsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => openEditModal(station)}
-                          className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-indigo-600 hover:bg-gray-100 rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
+                          className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-100 rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                           <span>Sửa</span>
@@ -263,7 +263,7 @@ export const AdminStationsPage: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-indigo-700 text-white flex items-center justify-between">
+            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
               <h3 className="font-bold text-base">
                 {editingStation ? 'Chỉnh Sửa Bến Xe' : 'Thêm Bến Xe Mới'}
               </h3>
@@ -287,7 +287,7 @@ export const AdminStationsPage: React.FC = () => {
                   placeholder="VD: Bến xe Miền Đông mới"
                   value={stationName}
                   onChange={(e) => setStationName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                 />
               </div>
 
@@ -298,7 +298,7 @@ export const AdminStationsPage: React.FC = () => {
                 <select
                   value={provinceId}
                   onChange={(e) => setProvinceId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
                 >
                   {provinces.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -318,7 +318,7 @@ export const AdminStationsPage: React.FC = () => {
                   placeholder="VD: Số 501 Hoàng Hữu Nam, Phường Long Bình, TP. Thủ Đức"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                 />
               </div>
 
@@ -333,7 +333,7 @@ export const AdminStationsPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Đang lưu...' : 'Lưu lại'}
                 </button>

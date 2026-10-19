@@ -165,7 +165,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 				<Input
 					label="Địa chỉ Email"
 					type="email"
-					placeholder="user@redbus.vn"
+					placeholder="user@xeviet.vn"
 					error={errors.email?.message}
 					{...register('email')}
 				/>
@@ -179,7 +179,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 					</label>
 					<select
 						id="user-role-select"
-						className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15 outline-none transition-all"
+						className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 bg-white focus:border-[#1E3A5F] focus:ring-4 focus:ring-[#1E3A5F]/15 outline-none transition-all"
 						{...register('role')}
 					>
 						<option value="CUSTOMER">CUSTOMER (Khách hàng)</option>

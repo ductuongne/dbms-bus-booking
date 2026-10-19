@@ -42,7 +42,6 @@ export const LoginPage: React.FC = () => {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -177,28 +176,6 @@ export const LoginPage: React.FC = () => {
                   error={errors.password?.message}
                   {...register('password')}
                 />
-
-                {/* Quick Account Test Chips */}
-                <div className="p-3 bg-blue-50/70 rounded-xl text-xs text-slate-600 border border-blue-100 space-y-1.5">
-                  <span className="font-semibold text-slate-800 block">Tài khoản mẫu hệ thống:</span>
-                  <div className="flex flex-wrap gap-2 text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => setValue('phone', '0901234567')}
-                      className="px-2 py-1 rounded bg-white border border-blue-200 text-[#1E3A5F] hover:bg-blue-50 font-mono cursor-pointer"
-                    >
-                      Admin: 0901234567
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue('phone', '0988000111')}
-                      className="px-2 py-1 rounded bg-white border border-blue-200 text-[#1E3A5F] hover:bg-blue-50 font-mono cursor-pointer"
-                    >
-                      Khách: 0988000111
-                    </button>
-                  </div>
-                </div>
-
                 <button
                   type="submit"
                   disabled={isSubmitting}

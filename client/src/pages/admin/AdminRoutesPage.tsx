@@ -258,7 +258,7 @@ export const AdminRoutesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
         <div>
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <GitFork className="w-6 h-6 text-indigo-600" />
+            <GitFork className="w-6 h-6 text-[#1E3A5F]" />
             <span>Quản lý Tuyến Đường &amp; Lộ Trình</span>
           </h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -269,7 +269,7 @@ export const AdminRoutesPage: React.FC = () => {
         <button
           type="button"
           onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Tuyến Đường Mới</span>
@@ -294,7 +294,7 @@ export const AdminRoutesPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-2">
-            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs text-gray-500">Đang tải danh sách tuyến đường...</p>
           </div>
         ) : error ? (
@@ -317,7 +317,7 @@ export const AdminRoutesPage: React.FC = () => {
                     <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded bg-gray-100 text-gray-700">
                       {route.id}
                     </span>
-                    <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-xs font-semibold text-[#1E3A5F] bg-blue-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatDuration(route.estimatedDuration)}
                     </span>
@@ -353,7 +353,7 @@ export const AdminRoutesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleViewDetail(route.id)}
-                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-[#1E3A5F] text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-colors"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Xem lộ trình &amp; Trạm dừng</span>
@@ -362,7 +362,7 @@ export const AdminRoutesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleOpenEditModal(route.id)}
-                    className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors"
+                    className="p-2 text-gray-500 hover:text-[#1E3A5F] hover:bg-gray-100 rounded-xl cursor-pointer transition-colors"
                     title="Chỉnh sửa tuyến"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -389,7 +389,7 @@ export const AdminRoutesPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
             <div className="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono text-indigo-300 font-bold uppercase">
+                <span className="text-[10px] font-mono text-blue-300 font-bold uppercase">
                   Mã tuyến: {viewingDetail.id}
                 </span>
                 <h3 className="font-bold text-base">
@@ -413,7 +413,7 @@ export const AdminRoutesPage: React.FC = () => {
                 </div>
                 <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                   <span className="text-gray-400 font-bold uppercase text-[10px] block">Thời gian dự kiến</span>
-                  <span className="text-base font-black text-indigo-600">
+                  <span className="text-base font-black text-[#1E3A5F]">
                     {formatDuration(viewingDetail.estimatedDuration)}
                   </span>
                 </div>
@@ -422,12 +422,12 @@ export const AdminRoutesPage: React.FC = () => {
               {/* Requirement 12 Visual Timeline */}
               <div>
                 <h4 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <MapPin className="w-4 h-4 text-[#1E3A5F]" />
                   <span>Trình tự trạm dừng (SQL Server Ordered Stops)</span>
                 </h4>
 
                 <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200">
-                  <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-indigo-200">
+                  <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-blue-200">
                     {viewingDetail.stops.map((stop, idx) => {
                       const isFirst = idx === 0;
                       const isLast = idx === viewingDetail.stops.length - 1;
@@ -439,7 +439,7 @@ export const AdminRoutesPage: React.FC = () => {
                                 ? 'bg-emerald-500 ring-4 ring-emerald-100'
                                 : isLast
                                 ? 'bg-rose-500 ring-4 ring-rose-100'
-                                : 'bg-indigo-500 ring-4 ring-indigo-100'
+                                : 'bg-[#1E3A5F] ring-4 ring-blue-100'
                             }`}
                           />
                           <div className="flex-1 bg-white p-3 rounded-xl border border-gray-100">
@@ -450,7 +450,7 @@ export const AdminRoutesPage: React.FC = () => {
                                     ? 'bg-emerald-50 text-emerald-700'
                                     : isLast
                                     ? 'bg-rose-50 text-rose-700'
-                                    : 'bg-indigo-50 text-indigo-700'
+                                    : 'bg-blue-50 text-[#1E3A5F]'
                                 }`}
                               >
                                 {isFirst ? 'Xuất phát (#1)' : isLast ? `Điểm đích (#${stop.stopOrder})` : `Trạm trung gian #${stop.stopOrder}`}
@@ -485,12 +485,12 @@ export const AdminRoutesPage: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 bg-indigo-700 text-white flex items-center justify-between">
+            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-base">
                   {editingRoute ? `Chỉnh Sửa Tuyến: ${editingRoute.id}` : 'Thêm Tuyến Đường Mới'}
                 </h3>
-                <span className="text-[11px] text-indigo-200">
+                <span className="text-[11px] text-blue-100">
                   Lưu tuyến đường và danh sách trạm dừng theo thứ tự vào SQL Server
                 </span>
               </div>
@@ -513,7 +513,7 @@ export const AdminRoutesPage: React.FC = () => {
                   <select
                     value={departureStationId}
                     onChange={(e) => setDepartureStationId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
                   >
                     {stations.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -530,7 +530,7 @@ export const AdminRoutesPage: React.FC = () => {
                   <select
                     value={arrivalStationId}
                     onChange={(e) => setArrivalStationId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
                   >
                     {stations.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -554,7 +554,7 @@ export const AdminRoutesPage: React.FC = () => {
                     required
                     value={distanceKm}
                     onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                   />
                 </div>
 
@@ -569,7 +569,7 @@ export const AdminRoutesPage: React.FC = () => {
                       required
                       value={estimatedDuration}
                       onChange={(e) => setEstimatedDuration(Number(e.target.value))}
-                      className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
                     />
                     <span className="text-xs text-gray-500 shrink-0 font-medium">
                       ≈ {formatDuration(estimatedDuration)}
@@ -592,7 +592,7 @@ export const AdminRoutesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleAddIntermediateStop}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#1E3A5F] text-xs font-bold rounded-lg cursor-pointer transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm trạm dừng</span>
@@ -610,7 +610,7 @@ export const AdminRoutesPage: React.FC = () => {
                         key={idx}
                         className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs"
                       >
-                        <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
+                        <span className="w-6 h-6 rounded-full bg-blue-50 text-[#1E3A5F] font-bold text-xs flex items-center justify-center shrink-0">
                           #{idx + 2}
                         </span>
 
@@ -672,7 +672,7 @@ export const AdminRoutesPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Đang lưu...' : 'Lưu tuyến đường'}
                 </button>
