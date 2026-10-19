@@ -30,7 +30,7 @@ export const SeatLayoutVisualizer: React.FC<SeatLayoutVisualizerProps> = ({
 
   const getSeatColor = (seatType: string, isSelected: boolean) => {
     if (isSelected) {
-      return 'bg-[#FF385C] text-white border-[#FF385C] shadow-md shadow-rose-500/30 scale-105';
+      return 'bg-[#C2410C] text-white border-[#C2410C] shadow-md shadow-orange-500/30 scale-105';
     }
     switch (seatType) {
       case 'SLEEPER':

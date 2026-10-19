@@ -1,43 +1,162 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Bus,
   ArrowLeftRight,
   Calendar,
-  Search,
   Star,
-  Sparkles,
   ChevronDown,
   ChevronUp,
-  Check,
   Sun,
   Sunset,
   Moon,
   SlidersHorizontal,
+  CheckCircle2,
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import type { TripCardView } from '../types';
-import { mockTripCardViews, mockProvinces } from '../mocks/mockData';
-import { SeatSelectionModal } from '../components/SeatSelectionModal';
+import type { TripCardView, BookingCheckoutView, Province } from '../types';
+import { mockProvinces } from '../mocks/mockData';
+import { formatCurrency, formatDateVN, toLocalISODate } from '../utils';
+import { stationService } from '../services/station.service';
+import { tripService, type TripSearchResultItem } from '../services/trip.service';
+import SeatSelectionModal from '../components/SeatSelectionModal';
+import Button from '../components/common/Button';
+import Badge from '../components/common/Badge';
+import Drawer from '../components/common/Drawer';
+import EmptyState from '../components/common/EmptyState';
+
+function mapSearchResultToTripCardView(
+  item: TripSearchResultItem,
+  dateStr: string
+): TripCardView {
+  const depDate = new Date(item.departure_time);
+  const arrDate = new Date(item.arrival_time);
+
+  const depHour = depDate.getHours().toString().padStart(2, '0');
+  const depMin = depDate.getMinutes().toString().padStart(2, '0');
+  const arrHour = arrDate.getHours().toString().padStart(2, '0');
+  const arrMin = arrDate.getMinutes().toString().padStart(2, '0');
+
+  const diffMs = arrDate.getTime() - depDate.getTime();
+  const diffMins = Math.max(0, Math.floor(diffMs / (1000 * 60)));
+  const diffHours = Math.floor(diffMins / 60);
+  const remMins = diffMins % 60;
+  const durationFormatted = `${diffHours.toString().padStart(2, '0')}g ${remMins.toString().padStart(2, '0')}ph`;
+
+  let busTypeCode = 'BT-SLP-34';
+  let totalSeats = 34;
+
+  const typeLower = (item.bus_type || '').toLowerCase();
+  if (typeLower.includes('9')) {
+    busTypeCode = 'BT-LIM-09';
+    totalSeats = 9;
+  } else if (typeLower.includes('22')) {
+    busTypeCode = 'BT-LIM-22';
+    totalSeats = 22;
+  } else if (typeLower.includes('34')) {
+    busTypeCode = 'BT-SLP-34';
+    totalSeats = 34;
+  } else {
+    const numMatch = typeLower.match(/\d+/);
+    if (numMatch) {
+      totalSeats = parseInt(numMatch[0], 10);
+    }
+  }
+
+  return {
+    id: item.trip_id,
+    tripCode: item.trip_id,
+    operator: {
+      name: 'XeViet Express',
+      rating: 4.9,
+      reviewCount: 142,
+      amenities: ['Wifi tốc độ cao', 'Nước suối miễn phí', 'Cổng sạc điện thoại'],
+      cancellationPolicy: 'Miễn phí hủy trước 24 giờ',
+    },
+    busType: {
+      id: busTypeCode,
+      name: item.bus_type || (totalSeats === 22 ? 'Xe Limousine 22' : totalSeats === 9 ? 'Xe Limousine 9 Chỗ' : 'Xe Giường Nằm 34'),
+      totalSeats,
+      floors: totalSeats <= 10 ? 1 : 2,
+    },
+    bus: {
+      id: item.trip_id,
+      licensePlate: '29B-888.88',
+      typeId: busTypeCode,
+      status: 'ACTIVE',
+    },
+    route: {
+      id: item.route.route_id,
+      departureStationId: item.route.departure_station,
+      arrivalStationId: item.route.arrival_station,
+      distanceKm: 120,
+      estimatedDuration: diffMins,
+    },
+    departureStation: {
+      id: item.route.departure_station,
+      name: item.route.departure_station,
+      provinceId: item.route.departure_province,
+      address: `${item.route.departure_station}, ${item.route.departure_province}`,
+    },
+    arrivalStation: {
+      id: item.route.arrival_station,
+      name: item.route.arrival_station,
+      provinceId: item.route.arrival_province,
+      address: `${item.route.arrival_station}, ${item.route.arrival_province}`,
+    },
+    departureTime: `${depHour}:${depMin}`,
+    departureDate: dateStr,
+    arrivalTime: `${arrHour}:${arrMin}`,
+    arrivalDate: dateStr,
+    durationFormatted,
+    price: item.price,
+    availableSeatsCount: item.availableSeats,
+    totalSeats,
+    images: [
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80',
+      'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80',
+    ],
+    tags: ['Xác nhận tức thì', 'Chuyến bán chạy'],
+    pickupPoints: [
+      {
+        id: `PK-${item.trip_id}`,
+        name: item.route.departure_station,
+        address: `${item.route.departure_station}, ${item.route.departure_province}`,
+        time: `${depHour}:${depMin}`,
+        type: 'PICKUP',
+      },
+    ],
+    dropoffPoints: [
+      {
+        id: `DP-${item.trip_id}`,
+        name: item.route.arrival_station,
+        address: `${item.route.arrival_station}, ${item.route.arrival_province}`,
+        time: `${arrHour}:${arrMin}`,
+        type: 'DROPOFF',
+      },
+    ],
+  };
+}
 
 export const SearchResultsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const todayStr = toLocalISODate(new Date());
   const origin = searchParams.get('from') || 'Hà Nội';
   const destination = searchParams.get('to') || 'Ninh Bình';
-  const date = searchParams.get('date') || '2026-10-18';
+  const date = searchParams.get('date') || todayStr;
 
-  // Filters state
+  // Filter states
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedBusTypes, setSelectedBusTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'EARLIEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'RATING'>('EARLIEST');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Accordion toggle states
   const [openTimeFilter, setOpenTimeFilter] = useState(true);
   const [openTypeFilter, setOpenTypeFilter] = useState(true);
 
-  // Active seat selection trip
+  // Active modal
   const [activeTripForSeats, setActiveTripForSeats] = useState<TripCardView | null>(null);
 
   const handleSwap = () => {
@@ -56,10 +175,6 @@ export const SearchResultsPage: React.FC = () => {
     setSearchParams({ from: origin, to: destination, date: newDate });
   };
 
-  const handleUpdateSearch = () => {
-    setSearchParams({ from: origin, to: destination, date });
-  };
-
   const handleToggleTimeSlot = (slot: string) => {
     if (selectedTimeSlots.includes(slot)) {
       setSelectedTimeSlots(selectedTimeSlots.filter((s) => s !== slot));
@@ -68,47 +183,131 @@ export const SearchResultsPage: React.FC = () => {
     }
   };
 
-  const handleToggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
+  const handleToggleBusType = (typeId: string) => {
+    if (selectedBusTypes.includes(typeId)) {
+      setSelectedBusTypes(selectedBusTypes.filter((t) => t !== typeId));
     } else {
-      setSelectedTags([...selectedTags, tag]);
+      setSelectedBusTypes([...selectedBusTypes, typeId]);
     }
   };
 
-  // Filter logic
-  const filteredTrips = useMemo(() => {
-    let list = [...mockTripCardViews];
+  const [provinces, setProvinces] = useState<Province[]>(mockProvinces);
+  const [apiTrips, setApiTrips] = useState<TripCardView[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    // Filter by tags (e.g. Đón tận nhà, Trả tận nhà)
-    if (selectedTags.length > 0) {
-      list = list.filter((trip) =>
-        selectedTags.some((tag) => trip.tags.some((t) => t.includes(tag)))
-      );
+  // Load provinces thật từ API
+  useEffect(() => {
+    stationService
+      .getAllProvinces()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setProvinces(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Đồng bộ dữ liệu chuyến xe từ API thực tế
+  useEffect(() => {
+    let ignore = false;
+    async function fetchTrips() {
+      setIsLoading(true);
+      try {
+        const fromProv = provinces.find(
+          (p) =>
+            p.id.toLowerCase() === origin.toLowerCase() ||
+            p.name.toLowerCase() === origin.toLowerCase() ||
+            origin.toLowerCase().includes(p.name.toLowerCase()) ||
+            p.name.toLowerCase().includes(origin.toLowerCase())
+        );
+        const toProv = provinces.find(
+          (p) =>
+            p.id.toLowerCase() === destination.toLowerCase() ||
+            p.name.toLowerCase() === destination.toLowerCase() ||
+            destination.toLowerCase().includes(p.name.toLowerCase()) ||
+            p.name.toLowerCase().includes(destination.toLowerCase())
+        );
+
+        if (fromProv && toProv) {
+          const res = await tripService.searchTrips({
+            fromProvinceId: fromProv.id,
+            toProvinceId: toProv.id,
+            date,
+          });
+
+          if (!ignore) {
+            if (res && Array.isArray(res.data) && res.data.length > 0) {
+              setApiTrips(res.data.map((item) => mapSearchResultToTripCardView(item, date)));
+            } else {
+              setApiTrips(null);
+            }
+          }
+        } else {
+          if (!ignore) setApiTrips(null);
+        }
+      } catch {
+        if (!ignore) setApiTrips(null);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
     }
 
-    // Filter by time slots
+    fetchTrips();
+    return () => {
+      ignore = true;
+    };
+  }, [origin, destination, date, provinces]);
+
+  // 1. Chuyến xe đồng bộ từ API thực tế
+  const baseTrips = useMemo(() => {
+    return apiTrips || [];
+  }, [apiTrips]);
+
+  // 2. Tính số lượng đếm động từ dữ liệu thật cho bộ lọc (ERR-09, ERR-10)
+  const timeSlotCounts = useMemo(() => {
+    const counts = { '00-06': 0, '06-12': 0, '12-18': 0, '18-24': 0 };
+    baseTrips.forEach((t) => {
+      const hour = parseInt(t.departureTime.split(':')[0], 10);
+      if (hour >= 0 && hour < 6) counts['00-06']++;
+      else if (hour >= 6 && hour < 12) counts['06-12']++;
+      else if (hour >= 12 && hour < 18) counts['12-18']++;
+      else if (hour >= 18 && hour <= 24) counts['18-24']++;
+    });
+    return counts;
+  }, [baseTrips]);
+
+  const busTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    baseTrips.forEach((t) => {
+      counts[t.busType.id] = (counts[t.busType.id] || 0) + 1;
+    });
+    return counts;
+  }, [baseTrips]);
+
+  // 3. Lọc theo bộ lọc người dùng & Sắp xếp
+  const finalTrips = useMemo(() => {
+    let list = [...baseTrips];
+
+    // Lọc theo khung giờ
     if (selectedTimeSlots.length > 0) {
-      list = list.filter((trip) => {
-        const hour = parseInt(trip.departureTime.split(':')[0], 10);
+      list = list.filter((t) => {
+        const hour = parseInt(t.departureTime.split(':')[0], 10);
         return selectedTimeSlots.some((slot) => {
+          if (slot === '00-06') return hour >= 0 && hour < 6;
           if (slot === '06-12') return hour >= 6 && hour < 12;
           if (slot === '12-18') return hour >= 12 && hour < 18;
           if (slot === '18-24') return hour >= 18 && hour <= 24;
-          if (slot === '00-06') return hour >= 0 && hour < 6;
-          return true;
+          return false;
         });
       });
     }
 
-    // Filter by bus type
+    // Lọc theo loại xe
     if (selectedBusTypes.length > 0) {
-      list = list.filter((trip) =>
-        selectedBusTypes.includes(trip.busType.name)
-      );
+      list = list.filter((t) => selectedBusTypes.includes(t.busType.id));
     }
 
-    // Sorting
+    // Sắp xếp
     if (sortBy === 'PRICE_ASC') {
       list.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'PRICE_DESC') {
@@ -120,26 +319,138 @@ export const SearchResultsPage: React.FC = () => {
     }
 
     return list;
-  }, [selectedTags, selectedTimeSlots, selectedBusTypes, sortBy]);
+  }, [baseTrips, selectedTimeSlots, selectedBusTypes, sortBy]);
+
+  const handleProceedToCheckout = (checkoutData: BookingCheckoutView) => {
+    setActiveTripForSeats(null);
+    navigate('/payment', { state: { checkoutData } });
+  };
+
+  const renderFilterPanel = () => (
+    <div className="flex flex-col gap-5 text-sm">
+      {/* Khung giờ khởi hành */}
+      <div className="border border-slate-200 rounded-xl bg-white p-4">
+        <button
+          type="button"
+          onClick={() => setOpenTimeFilter(!openTimeFilter)}
+          className="w-full flex items-center justify-between font-bold text-slate-900 cursor-pointer text-xs uppercase tracking-wider"
+        >
+          <span>Khung giờ khởi hành</span>
+          {openTimeFilter ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {openTimeFilter && (
+          <div className="mt-3 flex flex-col gap-2">
+            {[
+              { id: '00-06', label: '00:00 - 06:00 (Sáng sớm)', icon: Moon },
+              { id: '06-12', label: '06:00 - 12:00 (Buổi sáng)', icon: Sun },
+              { id: '12-18', label: '12:00 - 18:00 (Buổi chiều)', icon: Sunset },
+              { id: '18-24', label: '18:00 - 24:00 (Buổi tối)', icon: Moon },
+            ].map((slot) => {
+              const Icon = slot.icon;
+              const isChecked = selectedTimeSlots.includes(slot.id);
+              const count = timeSlotCounts[slot.id as keyof typeof timeSlotCounts];
+              return (
+                <label
+                  key={slot.id}
+                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors text-xs ${
+                    isChecked ? 'bg-blue-50 text-[#1E3A5F] font-semibold' : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleToggleTimeSlot(slot.id)}
+                      className="rounded-xs accent-[#1E3A5F]"
+                    />
+                    <Icon className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{slot.label}</span>
+                  </div>
+                  <span className="text-slate-400 font-normal">({count})</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Loại xe (3 loại quy định tại B5) */}
+      <div className="border border-slate-200 rounded-xl bg-white p-4">
+        <button
+          type="button"
+          onClick={() => setOpenTypeFilter(!openTypeFilter)}
+          className="w-full flex items-center justify-between font-bold text-slate-900 cursor-pointer text-xs uppercase tracking-wider"
+        >
+          <span>Loại xe vận hành</span>
+          {openTypeFilter ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {openTypeFilter && (
+          <div className="mt-3 flex flex-col gap-2">
+            {[
+              { id: 'BT-LIM-09', name: 'Limousine 9 Chỗ' },
+              { id: 'BT-LIM-22', name: 'Limousine Giường Nằm 22' },
+              { id: 'BT-SLP-34', name: 'Xe Giường Nằm 34' },
+            ].map((bType) => {
+              const isChecked = selectedBusTypes.includes(bType.id);
+              const count = busTypeCounts[bType.id] || 0;
+              return (
+                <label
+                  key={bType.id}
+                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors text-xs ${
+                    isChecked ? 'bg-blue-50 text-[#1E3A5F] font-semibold' : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleToggleBusType(bType.id)}
+                      className="rounded-xs accent-[#1E3A5F]"
+                    />
+                    <span>{bType.name}</span>
+                  </div>
+                  <span className="text-slate-400 font-normal">({count})</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {(selectedTimeSlots.length > 0 || selectedBusTypes.length > 0) && (
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedTimeSlots([]);
+            setSelectedBusTypes([]);
+          }}
+          className="text-xs text-[#C2410C] font-semibold hover:underline text-left cursor-pointer"
+        >
+          Xóa toàn bộ bộ lọc
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F4F6F8] pb-16">
-      {/* 1. Top Search Summary Bar (image_af2fa7.jpg) */}
-      <section className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-xs">
+    <div className="flex-1 flex flex-col bg-[#F8FAFC] pb-16">
+      {/* 1. Thanh tóm tắt tìm kiếm ghim trên đầu */}
+      <section className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-col md:flex-row items-center gap-3">
-            {/* Origin & Destination Bar */}
-            <div className="flex items-center gap-2 flex-1 w-full bg-gray-50 p-2 rounded-2xl border border-gray-200">
-              <div className="flex items-center gap-2 flex-1 px-2">
-                <Bus className="w-4 h-4 text-gray-400" />
-                <div className="min-w-0">
-                  <span className="block text-[10px] text-gray-400 font-semibold uppercase">Từ</span>
+            <div className="flex items-center gap-2 flex-1 w-full bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 flex-1 px-2 min-w-0">
+                <Bus className="w-4 h-4 text-slate-400 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[10px] text-slate-400 font-semibold uppercase">Từ</span>
                   <select
                     value={origin}
                     onChange={(e) => handleOriginChange(e.target.value)}
-                    className="bg-transparent font-bold text-gray-900 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                    className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer truncate"
                   >
-                    {mockProvinces.map((p) => (
+                    {provinces.map((p) => (
                       <option key={p.id} value={p.name}>
                         {p.name}
                       </option>
@@ -152,21 +463,21 @@ export const SearchResultsPage: React.FC = () => {
                 type="button"
                 onClick={handleSwap}
                 aria-label="Đổi chiều đi"
-                className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#FF385C] shadow-xs cursor-pointer shrink-0"
+                className="w-7 h-7 rounded-full bg-white border border-slate-300 flex items-center justify-center text-slate-600 hover:text-[#C2410C] hover:rotate-180 transition-all cursor-pointer shrink-0"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5" />
               </button>
 
-              <div className="flex items-center gap-2 flex-1 px-2">
-                <Bus className="w-4 h-4 text-gray-400" />
-                <div className="min-w-0">
-                  <span className="block text-[10px] text-gray-400 font-semibold uppercase">Đến</span>
+              <div className="flex items-center gap-2 flex-1 px-2 min-w-0">
+                <Bus className="w-4 h-4 text-slate-400 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[10px] text-slate-400 font-semibold uppercase">Đến</span>
                   <select
                     value={destination}
                     onChange={(e) => handleDestinationChange(e.target.value)}
-                    className="bg-transparent font-bold text-gray-900 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                    className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer truncate"
                   >
-                    {mockProvinces.map((p) => (
+                    {provinces.map((p) => (
                       <option key={p.id} value={p.name}>
                         {p.name}
                       </option>
@@ -176,359 +487,266 @@ export const SearchResultsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Date bar */}
-            <div className="flex items-center gap-2 w-full md:w-auto bg-gray-50 p-2 rounded-2xl border border-gray-200">
-              <Calendar className="w-4 h-4 text-gray-400 ml-2" />
-              <div>
-                <span className="block text-[10px] text-gray-400 font-semibold uppercase">Ngày khởi hành</span>
+            <div className="w-full md:w-56 bg-slate-50 p-2 rounded-xl border border-slate-200 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
+              <div className="flex-1 min-w-0">
+                <span className="block text-[10px] text-slate-400 font-semibold uppercase">Ngày đi</span>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className="bg-transparent font-bold text-gray-900 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 />
-              </div>
-
-              <div className="flex items-center gap-1 shrink-0 ml-2">
-                <button
-                  type="button"
-                  onClick={() => handleDateChange('2026-10-18')}
-                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-rose-50 hover:text-[#FF385C] border border-gray-200 rounded-lg cursor-pointer"
-                >
-                  Hôm nay
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDateChange('2026-10-19')}
-                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-rose-50 hover:text-[#FF385C] border border-gray-200 rounded-lg cursor-pointer"
-                >
-                  Ngày mai
-                </button>
               </div>
             </div>
 
-            {/* Search red button */}
-            <button
-              type="button"
-              onClick={handleUpdateSearch}
-              className="w-10 h-10 rounded-full bg-[#FF385C] hover:bg-[#E00B41] text-white flex items-center justify-center shadow-md shadow-rose-500/20 cursor-pointer shrink-0 transition-transform hover:scale-105"
-              aria-label="Cập nhật tìm kiếm"
-            >
-              <Search className="w-4 h-4" />
-            </button>
+            {/* Mobile filter trigger */}
+            <div className="w-full md:hidden flex justify-between items-center pt-1">
+              <span className="text-xs text-slate-500 font-medium">
+                Tìm thấy <strong>{finalTrips.length}</strong> chuyến
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsMobileFilterOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Bộ lọc ({selectedTimeSlots.length + selectedBusTypes.length})</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Main Content Split (Sidebar Filters + Trip Listing) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Sidebar Filter (image_af2fa7.jpg) */}
-          <aside aria-label="Bộ lọc tìm kiếm" className="lg:col-span-3">
-            <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs sticky top-36 space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-[#FF385C]" />
-                  <span>Lọc</span>
-                </h3>
-                {(selectedTags.length > 0 || selectedTimeSlots.length > 0) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedTags([]);
-                      setSelectedTimeSlots([]);
-                      setSelectedBusTypes([]);
-                    }}
-                    className="text-[11px] text-[#FF385C] hover:underline font-semibold cursor-pointer"
-                  >
-                    Xóa tất cả
-                  </button>
-                )}
-              </div>
+      {/* 2. Main Layout: Sidebar bộ lọc + Danh sách chuyến */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Cột trái: Bộ lọc Desktop */}
+          <aside className="hidden lg:block lg:col-span-3 sticky top-36">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-bold text-sm text-slate-900">Bộ lọc tìm kiếm</h2>
+              <span className="text-xs text-slate-500">{finalTrips.length} chuyến phù hợp</span>
+            </div>
+            {renderFilterPanel()}
+          </aside>
 
-              {/* Quick Filter Badges (image_af2fa7.jpg) */}
+          {/* Drawer bộ lọc Mobile */}
+          <Drawer
+            isOpen={isMobileFilterOpen}
+            onClose={() => setIsMobileFilterOpen(false)}
+            title="Bộ lọc tìm kiếm chuyến xe"
+          >
+            {renderFilterPanel()}
+            <div className="mt-6 pt-4 border-t border-slate-200">
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full"
+                onClick={() => setIsMobileFilterOpen(false)}
+              >
+                Áp dụng ({finalTrips.length} chuyến)
+              </Button>
+            </div>
+          </Drawer>
+
+          {/* Cột phải: Danh sách chuyến xe */}
+          <main className="lg:col-span-9 flex flex-col gap-4">
+            {/* Thanh sắp xếp */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <span className="text-slate-500 font-medium hidden sm:inline">
+                Sắp xếp theo:
+              </span>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { key: 'Đón tận nhà', label: 'Đón tận nhà (11)' },
-                  { key: 'Trả tận nhà', label: 'Trả tận nhà (14)' },
-                  { key: 'Nhà xe', label: 'Nhà xe' },
-                  { key: 'Điểm lên', label: 'Điểm lên' },
-                  { key: 'Điểm xuống', label: 'Điểm xuống' },
-                  { key: 'Loại xe', label: 'Loại xe' },
-                ].map((item) => (
+                  { id: 'EARLIEST', label: 'Giờ chạy sớm nhất' },
+                  { id: 'PRICE_ASC', label: 'Giá thấp nhất' },
+                  { id: 'PRICE_DESC', label: 'Giá cao nhất' },
+                  { id: 'RATING', label: 'Đánh giá cao nhất' },
+                ].map((s) => (
                   <button
-                    key={item.key}
+                    key={s.id}
                     type="button"
-                    onClick={() => handleToggleTag(item.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
-                      selectedTags.includes(item.key)
-                        ? 'bg-rose-50 text-[#FF385C] border-[#FF385C]'
-                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                    onClick={() => setSortBy(s.id as typeof sortBy)}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
+                      sortBy === s.id
+                        ? 'bg-[#1E3A5F] text-white font-semibold'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                     }`}
                   >
-                    {item.label}
+                    {s.label}
                   </button>
                 ))}
               </div>
-
-              {/* Time Slots Filters (image_af2fa7.jpg) */}
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenTimeFilter(!openTimeFilter)}
-                  className="w-full flex items-center justify-between text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 cursor-pointer"
-                >
-                  <span>Khung giờ khởi hành</span>
-                  {openTimeFilter ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                </button>
-                {openTimeFilter && (
-                  <div className="space-y-2 text-xs">
-                    {[
-                      { id: '06-12', label: '06:00 - 12:00 (6)', icon: Sun },
-                      { id: '12-18', label: '12:00 - 18:00 (14)', icon: Sun },
-                      { id: '18-24', label: '18:00 - 24:00 (30)', icon: Sunset },
-                      { id: '00-06', label: '00:00 - 06:00 (2)', icon: Moon },
-                    ].map((slot) => {
-                      const Icon = slot.icon;
-                      const isChecked = selectedTimeSlots.includes(slot.id);
-                      return (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          onClick={() => handleToggleTimeSlot(slot.id)}
-                          className={`w-full p-2.5 rounded-xl border flex items-center justify-between text-left transition-all cursor-pointer ${
-                            isChecked
-                              ? 'border-[#FF385C] bg-rose-50/50 text-[#FF385C] font-semibold'
-                              : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Icon className="w-4 h-4 text-gray-400" />
-                            <span>{slot.label}</span>
-                          </div>
-                          {isChecked && <Check className="w-3.5 h-3.5 text-[#FF385C]" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Accordion: Loại xe */}
-              <div className="border-t border-gray-100 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setOpenTypeFilter(!openTypeFilter)}
-                  className="w-full flex items-center justify-between text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 cursor-pointer"
-                >
-                  <span>Loại xe</span>
-                  {openTypeFilter ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                </button>
-                {openTypeFilter && (
-                  <div className="space-y-1.5 text-xs text-gray-600">
-                    {['Limousine', 'Xe Giường Nằm 34', 'Xe Limousine 22'].map((typeName) => (
-                      <label key={typeName} className="flex items-center gap-2 py-1 cursor-pointer hover:text-gray-900">
-                        <input
-                          type="checkbox"
-                          checked={selectedBusTypes.includes(typeName)}
-                          onChange={() => {
-                            if (selectedBusTypes.includes(typeName)) {
-                              setSelectedBusTypes(selectedBusTypes.filter((t) => t !== typeName));
-                            } else {
-                              setSelectedBusTypes([...selectedBusTypes, typeName]);
-                            }
-                          }}
-                          className="rounded text-[#FF385C] focus:ring-[#FF385C]"
-                        />
-                        <span>{typeName}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </aside>
-
-          {/* Right Bus Cards List (image_af2fa7.jpg) */}
-          <main className="lg:col-span-9 space-y-4">
-            {/* Top Sort / Result Count Header */}
-            <div className="bg-white px-5 py-3 rounded-2xl border border-gray-100 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <span className="text-sm font-bold text-gray-900">
-                  {filteredTrips.length} chuyến xe
-                </span>
-                <span className="text-xs text-gray-500 ml-1.5">phù hợp tuyến {origin} → {destination}</span>
-              </div>
-
-              {/* Sort pills */}
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="text-gray-400 text-[11px] mr-1 hidden sm:inline">Sắp xếp:</span>
-                <button
-                  type="button"
-                  onClick={() => setSortBy('EARLIEST')}
-                  className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer ${
-                    sortBy === 'EARLIEST' ? 'bg-[#FF385C] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Giờ đi sớm nhất
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSortBy('PRICE_ASC')}
-                  className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer ${
-                    sortBy === 'PRICE_ASC' ? 'bg-[#FF385C] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Giá thấp nhất
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSortBy('RATING')}
-                  className={`px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer ${
-                    sortBy === 'RATING' ? 'bg-[#FF385C] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Đánh giá cao
-                </button>
-              </div>
             </div>
 
-            {/* List of Trip Cards */}
-            <div className="space-y-4">
-              {filteredTrips.map((trip: TripCardView) => (
-                <div
-                  key={trip.id}
-                  className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative group overflow-hidden"
-                >
-                  {/* Top Bar: Operator Name & Rating */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-base">
-                          {trip.operator.name},{' '}
-                          <span className="font-normal text-gray-600 text-sm">{trip.busType.name}</span>
-                        </h4>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {trip.availableSeatsCount} trên {trip.totalSeats} ghế còn trống
-                        </p>
-                      </div>
-                    </div>
+            {/* Danh sách thẻ chuyến */}
+            {isLoading ? (
+              <div className="bg-white p-12 rounded-xl border border-slate-200 text-center flex flex-col items-center justify-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-semibold text-slate-700">Đang tìm kiếm chuyến xe từ hệ thống...</p>
+              </div>
+            ) : finalTrips.length === 0 ? (
+              <EmptyState
+                icon={<Bus className="w-8 h-8 text-slate-400" />}
+                title="Không tìm thấy chuyến xe phù hợp"
+                description={`Không có chuyến nào từ ${origin} đi ${destination} vào ngày ${formatDateVN(date)}. Vui lòng thử ngày khác hoặc bỏ các điều kiện lọc.`}
+                actionButton={
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedTimeSlots([]);
+                      setSelectedBusTypes([]);
+                      handleDateChange(todayStr);
+                    }}
+                  >
+                    Đặt lại bộ lọc
+                  </Button>
+                }
+              />
+            ) : (
+              finalTrips.map((trip) => {
+                const maxVisibleImages = 2;
+                const remainingImages = trip.images.length - maxVisibleImages; // ERR-11
 
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 text-white font-bold text-xs shadow-xs">
-                        <Star className="w-3.5 h-3.5 fill-white" />
-                        {trip.operator.rating}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Middle Bar: Schedule & Duration Timeline */}
-                  <div className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                    {/* Time & Route (Col 8) */}
-                    <div className="md:col-span-8 flex items-center justify-between gap-3">
-                      {/* Departure */}
-                      <div className="text-left min-w-[100px]">
-                        <span className="text-xl font-black text-gray-900">{trip.departureTime}</span>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[130px]" title={trip.departureStation.name}>
-                          {trip.departureStation.name}
-                        </p>
-                      </div>
-
-                      {/* Timeline duration graphic */}
-                      <div className="flex-1 flex flex-col items-center px-2">
-                        <span className="text-[11px] font-semibold text-gray-400 mb-1">{trip.durationFormatted}</span>
-                        <div className="w-full flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-gray-300" />
-                          <div className="flex-1 h-[2px] bg-gray-200 relative">
-                            <Bus className="w-3.5 h-3.5 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white" />
+                return (
+                  <div
+                    key={trip.id}
+                    className="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all overflow-hidden p-4 sm:p-5 flex flex-col gap-3.5"
+                  >
+                    {/* Header card: Thông tin nhà xe + Tuyến đường + Đánh giá + Giá vé */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-bold text-base text-slate-900">{trip.operator.name}</h3>
+                          <Badge variant="brand" size="sm">
+                            {trip.busType.name}
+                          </Badge>
+                          <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                            Tuyến: {trip.departureStation.name} → {trip.arrivalStation.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                          <div className="flex items-center text-amber-600 font-semibold">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 mr-1" />
+                            {trip.operator.rating}
                           </div>
-                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <span>•</span>
+                          <span>{trip.operator.reviewCount} đánh giá</span>
                         </div>
                       </div>
 
-                      {/* Arrival */}
-                      <div className="text-right min-w-[100px]">
-                        <span className="text-xl font-black text-gray-900">{trip.arrivalTime}</span>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[130px]" title={trip.arrivalStation.name}>
-                          {trip.arrivalStation.name}
-                        </p>
+                      <div className="text-left sm:text-right shrink-0">
+                        <div className="text-xs text-slate-400">Giá vé mỗi ghế</div>
+                        <div className="text-xl font-black text-[#C2410C]">
+                          {formatCurrency(trip.price)}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Price & Action (Col 4) */}
-                    <div className="md:col-span-4 flex md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-5">
-                      <div className="text-left md:text-right">
-                        <span className="text-2xl font-black text-gray-900">
-                          {trip.price.toLocaleString('vi-VN')}đ
-                        </span>
-                      </div>
+                    {/* Body card: Lộ trình giờ đi/đến, thời gian ước tính (chống tràn trên mobile) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-center">
+                      <div className="sm:col-span-8 w-full min-w-0 flex items-center justify-between gap-2 sm:gap-3 bg-slate-50/70 p-3 sm:p-3.5 rounded-xl border border-slate-100">
+                        {/* Điểm đi */}
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-base sm:text-xl font-black text-slate-900 leading-tight">
+                            {trip.departureTime}
+                          </span>
+                          <span className="block text-xs font-bold text-slate-800 truncate mt-0.5" title={trip.departureStation.name}>
+                            {trip.departureStation.name}
+                          </span>
+                          <span className="hidden sm:block text-[11px] text-slate-500 truncate mt-0.5" title={trip.departureStation.address}>
+                            {trip.departureStation.address}
+                          </span>
+                        </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setActiveTripForSeats(trip)}
-                        className="px-6 py-2.5 bg-[#FF385C] hover:bg-[#E00B41] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-rose-500/20 transition-all cursor-pointer hover:scale-102 mt-0 md:mt-2"
-                      >
-                        Xem chỗ ngồi
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Vehicle Photos Thumbnail Strip (image_af2fa7.jpg: +5 more) */}
-                  <div className="flex items-center gap-2 pt-2">
-                    {trip.images.map((img, idx) => (
-                      <div key={idx} className="relative w-16 h-12 rounded-lg overflow-hidden border border-gray-200">
-                        <img
-                          src={img}
-                          alt={`${trip.operator.name} preview ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        {idx === trip.images.length - 1 && (
-                          <div className="absolute inset-0 bg-black/50 text-white font-bold text-[10px] flex items-center justify-center">
-                            +5 more
+                        {/* Thời gian */}
+                        <div className="flex flex-col items-center px-1 sm:px-2 shrink-0">
+                          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                            {trip.durationFormatted}
+                          </span>
+                          <div className="w-8 sm:w-16 h-0.5 bg-slate-300 relative my-1">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1E3A5F] absolute -top-[2px] sm:-top-[3px] right-0" />
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          <span className="text-[9px] sm:text-[10px] text-slate-400 whitespace-nowrap">Chạy thẳng</span>
+                        </div>
 
-                  {/* Badges / Policy Footer (image_af2fa7.jpg: Xác nhận tức thì, Có thể hủy) */}
-                  <div className="pt-3 mt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
-                    {trip.tags.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-50 text-gray-600 border border-gray-200"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                        {/* Điểm đến */}
+                        <div className="flex-1 min-w-0 text-right">
+                          <span className="block text-base sm:text-xl font-black text-slate-900 leading-tight">
+                            {trip.arrivalTime}
+                          </span>
+                          <span className="block text-xs font-bold text-slate-800 truncate mt-0.5" title={trip.arrivalStation.name}>
+                            {trip.arrivalStation.name}
+                          </span>
+                          <span className="hidden sm:block text-[11px] text-slate-500 truncate mt-0.5" title={trip.arrivalStation.address}>
+                            {trip.arrivalStation.address}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Nút chọn chỗ + Ghế còn trống */}
+                      <div className="sm:col-span-4 flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
+                        <div className="text-xs text-slate-600">
+                          Còn <strong className="text-emerald-700 font-bold">{trip.availableSeatsCount}</strong> / {trip.totalSeats} chỗ
+                        </div>
+
+                        <Button
+                          variant="primary"
+                          size="md"
+                          onClick={() => setActiveTripForSeats(trip)}
+                          className="w-auto px-5"
+                        >
+                          Chọn chỗ
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Footer card: Tiện ích + Ảnh xe */}
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-100">
+                      <div className="flex flex-wrap gap-2 text-slate-500">
+                        {trip.operator.amenities.slice(0, 3).map((amenity, idx) => (
+                          <span key={idx} className="flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                            <span>{amenity}</span>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Thư viện ảnh xe với nhãn +X ảnh động (ERR-11) */}
+                      {trip.images && trip.images.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          {trip.images.slice(0, maxVisibleImages).map((img, i) => (
+                            <img
+                              key={i}
+                              src={img}
+                              alt="Xe"
+                              className="w-8 h-8 rounded-md object-cover border border-slate-200"
+                            />
+                          ))}
+                          {remainingImages > 0 && (
+                            <span className="px-1.5 py-1 rounded-md bg-slate-100 text-slate-600 font-semibold text-[10px]">
+                              +{remainingImages} ảnh
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                );
+              })
+            )}
           </main>
         </div>
       </div>
 
-      {/* Interactive Seat Selection Modal when user clicks "Xem chỗ ngồi" */}
+      {/* Modal chọn chỗ ngồi */}
       {activeTripForSeats && (
         <SeatSelectionModal
           trip={activeTripForSeats}
           onClose={() => setActiveTripForSeats(null)}
-          onProceedToCheckout={(checkoutData) => {
-            setActiveTripForSeats(null);
-            navigate('/payment', { state: { checkoutData } });
-          }}
+          onProceedToCheckout={handleProceedToCheckout}
         />
       )}
-
-      {/* Floating AI Assistant button ("Hỏi RAY" from screenshot image_af2fa7.jpg) */}
-      <aside
-        aria-label="Trợ lý ảo đặt vé"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-purple-600 to-[#FF385C] text-white font-bold text-xs sm:text-sm shadow-xl shadow-purple-500/30 cursor-pointer hover:scale-105 transition-transform"
-      >
-        <Sparkles className="w-4 h-4" />
-        <span>Hỏi RAY</span>
-      </aside>
     </div>
   );
 };

@@ -30,7 +30,7 @@ export const UserTable: React.FC<UserTableProps> = ({
 	if (isLoading) {
 		return (
 			<div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-12">
-				<Loader2 className="w-8 h-8 animate-spin text-[#FF385C]" />
+				<Loader2 className="w-8 h-8 animate-spin text-[#1E3A5F]" />
 				<p className="mt-3 text-sm font-medium text-slate-500">
 					Đang tải danh sách người dùng từ hệ thống...
 				</p>
