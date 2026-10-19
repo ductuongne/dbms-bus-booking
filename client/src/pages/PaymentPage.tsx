@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import type { BookingCheckoutView } from '../types';
-import { mockBookingCheckoutView } from '../mocks/mockData';
 import { formatCurrency, formatFullDateVN } from '../utils';
+import { bookingService } from '../services/booking.service';
 import { useToast } from '../hooks/useToast';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -18,23 +18,22 @@ import Badge from '../components/common/Badge';
 export const PaymentPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { success } = useToast();
+  const { success, error: errorToast } = useToast();
 
-  const checkoutData: BookingCheckoutView =
-    (location.state as { checkoutData?: BookingCheckoutView } | null)?.checkoutData ||
-    mockBookingCheckoutView;
+  const checkoutData = (location.state as { checkoutData?: BookingCheckoutView } | null)?.checkoutData;
 
-  const totalAmount = checkoutData.totalAmount || checkoutData.finalAmount || 175000;
+  const totalAmount = checkoutData?.totalAmount || checkoutData?.finalAmount || 0;
   const [secondsLeft, setSecondsLeft] = useState(
-    checkoutData.payment.countdownSeconds || 300
+    checkoutData?.payment.countdownSeconds || 900
   );
   const [isCopiedAccount, setIsCopiedAccount] = useState(false);
   const [isCopiedContent, setIsCopiedContent] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   // Real-time Countdown Timer (ERR-15, đếm ngược tự động)
   useEffect(() => {
-    if (secondsLeft <= 0 || isPaid) return;
+    if (!checkoutData || secondsLeft <= 0 || isPaid) return;
 
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
@@ -47,7 +46,26 @@ export const PaymentPage: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [secondsLeft, isPaid]);
+  }, [checkoutData, secondsLeft, isPaid]);
+
+  if (!checkoutData) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center max-w-md w-full">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
+            <Bus className="w-6 h-6" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 mb-2">Không tìm thấy thông tin đơn hàng</h2>
+          <p className="text-xs text-slate-500 mb-6">
+            Phiên đặt vé đã kết thúc hoặc không có thông tin chuyến xe được chọn.
+          </p>
+          <Button variant="primary" className="w-full" onClick={() => navigate('/')}>
+            Quay lại trang chủ tìm chuyến
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const formatCountdown = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -68,9 +86,25 @@ export const PaymentPage: React.FC = () => {
     }
   };
 
-  const handleSimulatePayment = () => {
-    setIsPaid(true);
-    success(`Thanh toán thành công! Vé điện tử đã gửi tới ${checkoutData.passenger.email}`);
+  const handleConfirmPayment = async () => {
+    try {
+      setIsConfirming(true);
+      await bookingService.confirmBooking(checkoutData.bookingId, {
+        booking_code: checkoutData.bookingCode,
+        phone: checkoutData.passenger.phone,
+        payment_method: 'BANK_TRANSFER',
+      });
+      setIsPaid(true);
+      success(`Thanh toán thành công! Vé điện tử đã gửi tới ${checkoutData.passenger.email}`);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Xác nhận thanh toán thất bại, vui lòng kiểm tra lại.';
+      errorToast(msg);
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   return (
@@ -97,7 +131,13 @@ export const PaymentPage: React.FC = () => {
 
           <div className="flex items-center gap-3">
             {/* Countdown timer */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${
+                secondsLeft <= 60
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
+              }`}
+            >
               <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
               <span>Thời gian giữ chỗ:</span>
               <span className="font-mono font-bold text-sm tracking-wider">
@@ -200,12 +240,14 @@ export const PaymentPage: React.FC = () => {
                 <div className="flex justify-between items-center py-1 border-b border-slate-200">
                   <span className="text-slate-500">Số tài khoản:</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-900">{checkoutData.payment.accountNumber}</span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">
+                      {checkoutData.payment.accountNumber}
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleCopy(checkoutData.payment.accountNumber, 'account')}
                       title="Sao chép số tài khoản"
-                      className="p-1 hover:bg-slate-200 rounded text-slate-500 cursor-pointer"
+                      className="p-1 rounded hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
                     >
                       {isCopiedAccount ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -219,18 +261,22 @@ export const PaymentPage: React.FC = () => {
 
                 <div className="flex justify-between items-center py-1 border-b border-slate-200">
                   <span className="text-slate-500">Số tiền:</span>
-                  <span className="font-black text-sm text-[#C2410C]">{formatCurrency(totalAmount)}</span>
+                  <span className="font-bold text-[#C2410C] text-sm">
+                    {formatCurrency(totalAmount)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center py-1">
                   <span className="text-slate-500">Nội dung chuyển khoản:</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-[#1E3A5F]">{checkoutData.payment.transferContent}</span>
+                    <span className="font-mono font-bold text-[#1E3A5F]">
+                      {checkoutData.payment.transferContent}
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleCopy(checkoutData.payment.transferContent, 'content')}
-                      title="Sao chép nội dung"
-                      className="p-1 hover:bg-slate-200 rounded text-slate-500 cursor-pointer"
+                      title="Sao chép nội dung chuyển khoản"
+                      className="p-1 rounded hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
                     >
                       {isCopiedContent ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -238,16 +284,24 @@ export const PaymentPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Nút giả lập thanh toán */}
+              {/* Nút xác nhận thanh toán */}
               <div className="w-full max-w-md mt-6 pt-4 border-t border-slate-200 flex flex-col gap-2">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleSimulatePayment}
-                >
-                  Xác nhận đã chuyển khoản thành công
-                </Button>
+                {secondsLeft <= 0 ? (
+                  <div className="text-center p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                    Đã hết thời gian giữ chỗ vé. Vui lòng quay lại tìm và đặt chuyến mới.
+                  </div>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    isLoading={isConfirming}
+                    disabled={isConfirming || secondsLeft <= 0}
+                    onClick={handleConfirmPayment}
+                  >
+                    Xác nhận đã chuyển khoản thành công
+                  </Button>
+                )}
                 <span className="text-[11px] text-slate-400 text-center">
                   Hệ thống tự động kích hoạt vé sau khi phát hiện giao dịch thành công.
                 </span>
@@ -305,19 +359,33 @@ export const PaymentPage: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-slate-500">Ghế đã chọn:</span>
                   <span className="font-bold text-[#1E3A5F]">
-                    {checkoutData.selectedSeats.map((s) => s.label).join(', ')} ({checkoutData.selectedSeats.length} vé)
+                    {checkoutData.selectedSeats.map((s) => s.label).join(', ')}
                   </span>
                 </div>
               </div>
 
-              {/* Tổng tiền thanh toán = giá vé × số ghế */}
-              <div className="pt-3 border-t border-slate-200">
-                <div className="flex justify-between items-center text-sm font-bold text-slate-900">
-                  <span>Tổng tiền thanh toán:</span>
-                  <span className="text-xl font-black text-[#C2410C]">
-                    {formatCurrency(totalAmount)}
-                  </span>
+              {/* Chi tiết thanh toán */}
+              <div className="space-y-2 py-3 border-t border-slate-200">
+                <div className="flex justify-between text-slate-600">
+                  <span>Giá vé ({checkoutData.selectedSeats.length} ghế):</span>
+                  <span>{formatCurrency(totalAmount)}</span>
                 </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Phí dịch vụ:</span>
+                  <span className="text-green-600 font-medium">Miễn phí</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-bold">
+                  <span className="text-slate-900">Tổng thanh toán:</span>
+                  <span className="text-[#C2410C] text-base">{formatCurrency(totalAmount)}</span>
+                </div>
+              </div>
+
+              {/* Cam kết an toàn */}
+              <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex items-start gap-2.5 text-blue-900">
+                <Check className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                <p className="text-[11px] leading-relaxed">
+                  Giao dịch an toàn & được bảo chứng bởi Ngân hàng Nhà nước. Vé điện tử được xác nhận ngay tức thì.
+                </p>
               </div>
             </aside>
           </div>

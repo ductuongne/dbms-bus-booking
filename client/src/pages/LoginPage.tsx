@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
     resolver: zodResolver(loginSchema),
     mode: 'onTouched',
     defaultValues: {
-      phone: '0901234567',
+      phone: '',
       password: '',
     },
   });
@@ -161,7 +161,7 @@ export const LoginPage: React.FC = () => {
                   id="login-phone"
                   label="Số điện thoại"
                   type="tel"
-                  placeholder="Ví dụ: 0901234567"
+                  placeholder="Nhập số điện thoại"
                   autoComplete="tel"
                   error={errors.phone?.message}
                   {...register('phone')}

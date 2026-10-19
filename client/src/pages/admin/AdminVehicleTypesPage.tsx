@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Layers, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import {
   busService,
   type CreateBusTypePayload,
   type UpdateBusTypePayload,
 } from '../../services/bus.service';
 import type { BusType } from '../../types';
+import Button from '../../components/common/Button';
+import Modal from '../../components/common/Modal';
+import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
+import Badge from '../../components/common/Badge';
 
 export const AdminVehicleTypesPage: React.FC = () => {
   const [busTypes, setBusTypes] = useState<BusType[]>([]);
@@ -106,27 +111,24 @@ export const AdminVehicleTypesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <Layers className="w-6 h-6 text-[#1E3A5F]" />
-            <span>Quản lý Loại Xe &amp; Cấu hình Chỗ Ngồi</span>
-          </h2>
-          <p className="text-xs text-gray-500 mt-1">
+          <h2 className="text-xl font-bold text-slate-900">Quản lý Loại Xe &amp; Cấu hình Chỗ Ngồi</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Định nghĩa cấu hình số chỗ, số tầng dùng để tự động tạo sơ đồ ghế cho phương tiện
           </p>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          <span>Thêm Loại Xe Mới</span>
-        </button>
+          Thêm loại xe mới
+        </Button>
       </div>
 
       {/* Grid of Bus Types */}
@@ -148,9 +150,9 @@ export const AdminVehicleTypesPage: React.FC = () => {
             >
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-                  <span className="font-mono text-xs font-bold text-[#1E3A5F] bg-blue-50 px-2 py-0.5 rounded">
+                  <Badge variant="brand" size="sm">
                     {type.id}
-                  </span>
+                  </Badge>
                   <span className="text-xs font-semibold text-gray-500">
                     {type.floors === 2 ? 'Xe 2 tầng' : 'Xe 1 tầng'}
                   </span>
@@ -170,23 +172,24 @@ export const AdminVehicleTypesPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
+              <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-1.5">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<Edit2 className="w-3.5 h-3.5" />}
                   onClick={() => openEditModal(type)}
-                  className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-100 rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  <span>Sửa</span>
-                </button>
-                <button
-                  type="button"
+                  title="Chỉnh sửa loại xe"
+                  aria-label={`Chỉnh sửa loại xe ${type.name}`}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
                   onClick={() => handleDelete(type.id, type.name)}
-                  className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                   title="Xóa loại xe"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  aria-label={`Xóa loại xe ${type.name}`}
+                />
               </div>
             </div>
           ))}
@@ -194,88 +197,61 @@ export const AdminVehicleTypesPage: React.FC = () => {
       )}
 
       {/* Modal Create/Edit */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
-              <h3 className="font-bold text-base">
-                {editingType ? 'Chỉnh Sửa Loại Xe' : 'Thêm Loại Xe Mới'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingType ? 'Chỉnh Sửa Loại Xe' : 'Thêm Loại Xe Mới'}
+        maxWidth="md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Tên loại xe *"
+            required
+            placeholder="VD: Xe Giường Nằm 34"
+            value={typeName}
+            onChange={(e) => setTypeName(e.target.value)}
+          />
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Tên loại xe <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="VD: Xe Giường Nằm 34"
-                  value={typeName}
-                  onChange={(e) => setTypeName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
-                />
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Tổng số ghế *"
+              type="number"
+              min="1"
+              max="100"
+              required
+              value={totalSeats}
+              onChange={(e) => setTotalSeats(Number(e.target.value))}
+            />
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Tổng số ghế <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    required
-                    value={totalSeats}
-                    onChange={(e) => setTotalSeats(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Số tầng <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={floors}
-                    onChange={(e) => setFloors(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
-                  >
-                    <option value={1}>1 tầng (Ghế ngồi, Limousine)</option>
-                    <option value={2}>2 tầng (Giường nằm)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Đang lưu...' : 'Lưu lại'}
-                </button>
-              </div>
-            </form>
+            <Select
+              label="Số tầng *"
+              value={String(floors)}
+              onChange={(e) => setFloors(Number(e.target.value))}
+              options={[
+                { value: '1', label: '1 tầng (Ghế ngồi, Limousine)' },
+                { value: '2', label: '2 tầng (Giường nằm)' },
+              ]}
+            />
           </div>
-        </div>
-      )}
+
+          <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              Lưu lại
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

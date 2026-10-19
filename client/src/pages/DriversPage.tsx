@@ -145,22 +145,23 @@ export const DriversPage: React.FC = () => {
       title: 'Thao tác',
       render: (d) => (
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={<Edit2 className="w-3.5 h-3.5" />}
             onClick={() => handleOpenEdit(d)}
+            title="Chỉnh sửa tài xế"
             aria-label={`Sửa tài xế ${d.fullName}`}
-            className="p-1.5 rounded-lg text-slate-600 hover:text-[#1E3A5F] hover:bg-slate-100 cursor-pointer"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+            icon={<Trash2 className="w-3.5 h-3.5" />}
             onClick={() => setDeletingItem(d)}
+            title="Xóa tài xế"
             aria-label={`Xóa tài xế ${d.fullName}`}
-            className="p-1.5 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          />
         </div>
       ),
     },

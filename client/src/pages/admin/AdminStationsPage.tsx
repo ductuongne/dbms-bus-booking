@@ -1,11 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { MapPin, Plus, Edit2, Trash2, Search, Building } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Building } from 'lucide-react';
 import {
   stationService,
   type CreateStationPayload,
   type UpdateStationPayload,
 } from '../../services/station.service';
 import type { StationDetailView, Province } from '../../types';
+import Button from '../../components/common/Button';
+import Modal from '../../components/common/Modal';
+import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
+import Badge from '../../components/common/Badge';
 
 export const AdminStationsPage: React.FC = () => {
   const [stations, setStations] = useState<StationDetailView[]>([]);
@@ -138,60 +143,51 @@ export const AdminStationsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <MapPin className="w-6 h-6 text-[#1E3A5F]" />
-            <span>Quản lý Bến Xe &amp; Trạm Dừng Chân</span>
-          </h2>
-          <p className="text-xs text-gray-500 mt-1">
+          <h2 className="text-xl font-bold text-slate-900">Quản lý Bến Xe &amp; Trạm Dừng Chân</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Quản lý các điểm xuất phát, điểm kết thúc và các trạm trung gian của các tuyến xe
           </p>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          <span>Thêm Bến Xe Mới</span>
-        </button>
+          Thêm bến xe mới
+        </Button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
-        <div className="flex-1 w-full flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" />
-          <input
-            type="text"
+      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex-1 w-full">
+          <Input
+            icon={<Search className="w-4 h-4" />}
             placeholder="Tìm theo tên bến, địa chỉ hoặc mã..."
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            className="w-full bg-transparent text-xs text-gray-800 focus:outline-none"
           />
         </div>
 
-        <div className="w-full sm:w-60 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
-          <select
+        <div className="w-full sm:w-64">
+          <Select
             value={selectedProvinceId}
             onChange={(e) => setSelectedProvinceId(e.target.value)}
-            className="w-full bg-transparent text-xs text-gray-700 focus:outline-none cursor-pointer"
-          >
-            <option value="">Tất cả tỉnh / thành</option>
-            {provinces.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Tất cả tỉnh / thành' },
+              ...provinces.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+          />
         </div>
       </div>
 
       {/* Stations Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-2">
             <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -224,31 +220,32 @@ export const AdminStationsPage: React.FC = () => {
                       {station.name}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-block bg-blue-50 text-[#1E3A5F] px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                      <Badge variant="brand" size="sm">
                         {station.provinceName}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-5 py-4 text-gray-600 max-w-md truncate">
                       {station.address}
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={<Edit2 className="w-3.5 h-3.5" />}
                           onClick={() => openEditModal(station)}
-                          className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-100 rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>Sửa</span>
-                        </button>
-                        <button
-                          type="button"
+                          title="Chỉnh sửa bến xe"
+                          aria-label={`Chỉnh sửa bến ${station.name}`}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+                          icon={<Trash2 className="w-3.5 h-3.5" />}
                           onClick={() => handleDelete(station.id, station.name)}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                           title="Xóa bến xe"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                          aria-label={`Xóa bến ${station.name}`}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -260,88 +257,58 @@ export const AdminStationsPage: React.FC = () => {
       </div>
 
       {/* Modal Create/Edit */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
-              <h3 className="font-bold text-base">
-                {editingStation ? 'Chỉnh Sửa Bến Xe' : 'Thêm Bến Xe Mới'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingStation ? 'Chỉnh Sửa Bến Xe' : 'Thêm Bến Xe Mới'}
+        maxWidth="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Tên bến xe *"
+            required
+            placeholder="VD: Bến xe Miền Đông mới"
+            value={stationName}
+            onChange={(e) => setStationName(e.target.value)}
+          />
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Tên bến xe <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="VD: Bến xe Miền Đông mới"
-                  value={stationName}
-                  onChange={(e) => setStationName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
-                />
-              </div>
+          <Select
+            label="Tỉnh / Thành phố *"
+            required
+            value={provinceId}
+            onChange={(e) => setProvinceId(e.target.value)}
+            options={provinces.map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+          />
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Tỉnh / Thành phố <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={provinceId}
-                  onChange={(e) => setProvinceId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
-                >
-                  {provinces.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <Input
+            label="Địa chỉ chi tiết *"
+            required
+            placeholder="VD: Số 501 Hoàng Hữu Nam, Phường Long Bình, TP. Thủ Đức"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Địa chỉ chi tiết <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="VD: Số 501 Hoàng Hữu Nam, Phường Long Bình, TP. Thủ Đức"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Đang lưu...' : 'Lưu lại'}
-                </button>
-              </div>
-            </form>
+          <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              Lưu lại
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 };

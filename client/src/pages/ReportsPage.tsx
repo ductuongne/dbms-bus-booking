@@ -7,7 +7,6 @@ import {
   MapPin,
   Clock,
   ArrowUpRight,
-  BarChart3,
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
@@ -88,17 +87,14 @@ export const ReportsPage: React.FC = () => {
       });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-[#1E3A5F]" />
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Báo cáo & Thống kê
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <h2 className="text-xl font-bold text-slate-900">
+            Báo cáo &amp; Thống kê
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Tổng quan hiệu suất vận hành, doanh số bán vé và sản lượng chuyến xe hệ thống XeViet
           </p>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Bus,
@@ -28,6 +28,7 @@ export const HomePage: React.FC = () => {
   const [origin, setOrigin] = useState('Hà Nội');
   const [destination, setDestination] = useState('Ninh Bình');
   const [travelDate, setTravelDate] = useState(todayStr);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadRealData() {
@@ -56,6 +57,20 @@ export const HomePage: React.FC = () => {
   const handleQuickDate = (daysToAdd: number) => {
     const targetDate = addDays(new Date(), daysToAdd);
     setTravelDate(toLocalISODate(targetDate));
+  };
+
+  const handleOpenDatePicker = () => {
+    if (dateInputRef.current) {
+      if ('showPicker' in HTMLInputElement.prototype) {
+        try {
+          dateInputRef.current.showPicker();
+        } catch {
+          dateInputRef.current.focus();
+        }
+      } else {
+        dateInputRef.current.focus();
+      }
+    }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -158,25 +173,33 @@ export const HomePage: React.FC = () => {
             </div>
 
             {/* Ngày khởi hành */}
-            <div className="w-full lg:w-72 flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition-colors">
+            <div
+              onClick={handleOpenDatePicker}
+              className="w-full lg:w-[350px] flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+            >
               <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#1E3A5F] shrink-0">
                 <Calendar className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <label htmlFor="travel-date-input" className="block text-[11px] font-semibold text-slate-500 uppercase">
+                <label htmlFor="travel-date-input" className="block text-[11px] font-semibold text-slate-500 uppercase cursor-pointer">
                   Ngày đi
                 </label>
                 <input
+                  ref={dateInputRef}
                   id="travel-date-input"
                   type="date"
                   value={travelDate}
                   min={todayStr}
                   onChange={(e) => setTravelDate(e.target.value)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDatePicker();
+                  }}
                   className="w-full bg-transparent font-bold text-slate-900 text-sm focus:outline-none cursor-pointer"
                 />
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => handleQuickDate(0)}

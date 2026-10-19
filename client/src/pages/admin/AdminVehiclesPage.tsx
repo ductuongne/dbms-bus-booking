@@ -10,6 +10,11 @@ import {
 import { busService, type CreateBusPayload } from '../../services/bus.service';
 import type { BusListItemView, BusDetailView, BusType, SeatType } from '../../types';
 import { SeatLayoutVisualizer, type VisualSeat } from '../../components/SeatLayoutVisualizer';
+import Button from '../../components/common/Button';
+import Modal from '../../components/common/Modal';
+import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
+import Badge from '../../components/common/Badge';
 
 export const AdminVehiclesPage: React.FC = () => {
   const [buses, setBuses] = useState<BusListItemView[]>([]);
@@ -183,77 +188,71 @@ export const AdminVehiclesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-            <Bus className="w-6 h-6 text-[#1E3A5F]" />
-            <span>Quản lý Phương Tiện &amp; Đội Xe</span>
-          </h2>
-          <p className="text-xs text-gray-500 mt-1">
+          <h2 className="text-xl font-bold text-slate-900">Quản lý Phương Tiện &amp; Đội Xe</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Quản lý thông tin biển số, cấu hình sơ đồ ghế và trạng thái vận hành xe khách
           </p>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={() => {
             if (busTypes.length > 0 && !newTypeId) {
               setNewTypeId(busTypes[0]?.id ?? '');
             }
             setShowCreateModal(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          <span>Thêm Xe Mới</span>
-        </button>
+          Thêm xe mới
+        </Button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
-        <div className="flex-1 w-full flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" />
-          <input
-            type="text"
+      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex-1 w-full">
+          <Input
+            icon={<Search className="w-4 h-4" />}
             placeholder="Tìm theo biển số (ví dụ: 51B-12345) hoặc mã xe..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent text-xs text-gray-800 focus:outline-none"
           />
         </div>
 
-        <div className="w-full sm:w-48 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
-          <select
+        <div className="w-full sm:w-56">
+          <Select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="w-full bg-transparent text-xs text-gray-700 focus:outline-none cursor-pointer"
-          >
-            <option value="">Tất cả loại xe</option>
-            {busTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({t.totalSeats} chỗ)
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Tất cả loại xe' },
+              ...busTypes.map((t) => ({
+                value: t.id,
+                label: `${t.name} (${t.totalSeats} chỗ)`,
+              })),
+            ]}
+          />
         </div>
 
-        <div className="w-full sm:w-40 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
-          <select
+        <div className="w-full sm:w-48">
+          <Select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full bg-transparent text-xs text-gray-700 focus:outline-none cursor-pointer"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="ACTIVE">Hoạt động (ACTIVE)</option>
-            <option value="INACTIVE">Tạm dừng (INACTIVE)</option>
-          </select>
+            options={[
+              { value: '', label: 'Tất cả trạng thái' },
+              { value: 'ACTIVE', label: 'Hoạt động (ACTIVE)' },
+              { value: 'INACTIVE', label: 'Tạm dừng (INACTIVE)' },
+            ]}
+          />
         </div>
       </div>
 
       {/* Vehicles Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-2">
             <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -296,40 +295,39 @@ export const AdminVehiclesPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(bus)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
-                          bus.status === 'ACTIVE'
-                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
+                        className="cursor-pointer"
                         title="Bấm để đổi trạng thái"
                       >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            bus.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-gray-400'
-                          }`}
-                        />
-                        <span>{bus.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}</span>
+                        <Badge variant={bus.status === 'ACTIVE' ? 'success' : 'neutral'} size="sm">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full inline-block mr-1 ${
+                              bus.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-gray-400'
+                            }`}
+                          />
+                          {bus.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}
+                        </Badge>
                       </button>
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          icon={<Eye className="w-3.5 h-3.5" />}
                           onClick={() => handleViewDetail(bus.id)}
-                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#1E3A5F] font-bold rounded-lg cursor-pointer flex items-center gap-1 transition-colors"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Xem ghế</span>
-                        </button>
+                          Xem ghế
+                        </Button>
 
-                        <button
-                          type="button"
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+                          icon={<Trash2 className="w-3.5 h-3.5" />}
                           onClick={() => handleDeleteBus(bus.id, bus.licensePlate)}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                           title="Xóa hoặc ngừng hoạt động xe"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                          aria-label={`Xóa xe ${bus.licensePlate}`}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -341,177 +339,135 @@ export const AdminVehiclesPage: React.FC = () => {
       </div>
 
       {/* Requirement 7 & 8: CREATE BUS MODAL WITH ATOMIC SEAT GENERATOR PREVIEW */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 bg-[#1E3A5F] text-white flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-base flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-blue-200" />
-                  <span>Thêm Xe Mới &amp; Sinh Sơ Đồ Ghế Tự Động</span>
-                </h3>
-                <span className="text-[11px] text-blue-100">
-                  Transaction SQL Server Atomic: Tạo xe + Tự động sinh danh sách ghế tương ứng
-                </span>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Thêm Xe Mới & Sinh Sơ Đồ Ghế Tự Động"
+        description="Transaction SQL Server Atomic: Tạo xe + Tự động sinh danh sách ghế tương ứng"
+        maxWidth="xl"
+      >
+        <form onSubmit={handleCreateSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* License Plate */}
+            <Input
+              label="Biển số xe *"
+              required
+              placeholder="VD: 51B-999.88"
+              value={newLicensePlate}
+              onChange={(e) => setNewLicensePlate(e.target.value)}
+            />
+
+            {/* Bus Type Selector */}
+            <Select
+              label="Chọn Loại xe *"
+              required
+              value={newTypeId}
+              onChange={(e) => setNewTypeId(e.target.value)}
+              options={busTypes.map((t) => ({
+                value: t.id,
+                label: `${t.name} (${t.totalSeats} chỗ • ${t.floors} tầng)`,
+              }))}
+            />
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Trạng thái khởi tạo
+            </label>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="status"
+                  value="ACTIVE"
+                  checked={newStatus === 'ACTIVE'}
+                  onChange={() => setNewStatus('ACTIVE')}
+                  className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
+                />
+                <span>Hoạt động (ACTIVE)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="status"
+                  value="INACTIVE"
+                  checked={newStatus === 'INACTIVE'}
+                  onChange={() => setNewStatus('INACTIVE')}
+                  className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
+                />
+                <span>Tạm dừng (INACTIVE)</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Requirement 7: LIVE SEAT PREVIEW */}
+          <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[#1E3A5F] font-bold text-xs uppercase tracking-wider">
+                <Sparkles className="w-4 h-4 text-[#1E3A5F]" />
+                <span>Xem trước Sơ đồ ghế sẽ được tạo tự động</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
+              <span className="text-xs font-bold text-gray-700">
+                {previewSeats.length} ghế • {selectedTypeObj?.floors ?? 1} tầng
+              </span>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* License Plate */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Biển số xe <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="VD: 51B-999.88"
-                    value={newLicensePlate}
-                    onChange={(e) => setNewLicensePlate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold uppercase focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none"
-                  />
-                </div>
-
-                {/* Bus Type Selector */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Chọn Loại xe <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={newTypeId}
-                    onChange={(e) => setNewTypeId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] focus:outline-none cursor-pointer"
-                  >
-                    {busTypes.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.totalSeats} chỗ • {t.floors} tầng)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Trạng thái khởi tạo</label>
-                <div className="flex items-center gap-4 text-xs font-semibold">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="ACTIVE"
-                      checked={newStatus === 'ACTIVE'}
-                      onChange={() => setNewStatus('ACTIVE')}
-                      className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
-                    />
-                    <span>Hoạt động (ACTIVE)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="INACTIVE"
-                      checked={newStatus === 'INACTIVE'}
-                      onChange={() => setNewStatus('INACTIVE')}
-                      className="text-[#1E3A5F] focus:ring-[#1E3A5F]"
-                    />
-                    <span>Tạm dừng (INACTIVE)</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Requirement 7: LIVE SEAT PREVIEW */}
-              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[#1E3A5F] font-bold text-xs uppercase tracking-wider">
-                    <Sparkles className="w-4 h-4 text-[#1E3A5F]" />
-                    <span>Xem trước Sơ đồ ghế sẽ được tạo tự động</span>
-                  </div>
-                  <span className="text-xs font-bold text-gray-700">
-                    {previewSeats.length} ghế • {selectedTypeObj?.floors ?? 1} tầng
-                  </span>
-                </div>
-
-                <SeatLayoutVisualizer
-                  seats={previewSeats}
-                  floors={selectedTypeObj?.floors ?? 1}
-                  interactive={false}
-                />
-              </div>
-
-              {/* Modal Actions */}
-              <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 bg-[#1E3A5F] hover:bg-[#162C48] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer disabled:opacity-50 transition-colors"
-                >
-                  {isSubmitting ? 'Đang tạo xe & ghế...' : 'Lưu Xe & Tạo Ghế'}
-                </button>
-              </div>
-            </form>
+            <SeatLayoutVisualizer
+              seats={previewSeats}
+              floors={selectedTypeObj?.floors ?? 1}
+              interactive={false}
+            />
           </div>
-        </div>
-      )}
+
+          {/* Modal Actions */}
+          <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCreateModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              Lưu Xe &amp; Tạo Ghế
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* VIEW BUS DETAIL & SEAT LAYOUT MODAL */}
-      {viewingBusDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-mono text-blue-300 font-bold uppercase">
-                  Mã xe: {viewingBusDetail.id}
-                </span>
-                <h3 className="font-bold text-base">
-                  Biển số: {viewingBusDetail.licensePlate} • {viewingBusDetail.typeName}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setViewingBusDetail(null)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        isOpen={Boolean(viewingBusDetail)}
+        onClose={() => setViewingBusDetail(null)}
+        title={`Biển số: ${viewingBusDetail?.licensePlate ?? ''} • ${viewingBusDetail?.typeName ?? ''}`}
+        description={`Mã xe: ${viewingBusDetail?.id ?? ''}`}
+        maxWidth="xl"
+      >
+        {viewingBusDetail && (
+          <div className="space-y-4">
+            <SeatLayoutVisualizer
+              seats={viewingBusDetail.seats}
+              floors={viewingBusDetail.floors}
+              interactive={false}
+              title={`Sơ đồ ghế thực tế từ CSDL (${viewingBusDetail.seats.length} ghế)`}
+            />
 
-            <div className="p-6 overflow-y-auto space-y-4">
-              <SeatLayoutVisualizer
-                seats={viewingBusDetail.seats}
-                floors={viewingBusDetail.floors}
-                interactive={false}
-                title={`Sơ đồ ghế thực tế từ CSDL (${viewingBusDetail.seats.length} ghế)`}
-              />
-            </div>
-
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
-              <button
-                type="button"
+            <div className="pt-4 border-t border-gray-100 flex justify-end">
+              <Button
+                variant="outline"
                 onClick={() => setViewingBusDetail(null)}
-                className="px-5 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold cursor-pointer"
               >
                 Đóng
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

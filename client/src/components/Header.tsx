@@ -111,7 +111,7 @@ export const Header: React.FC = () => {
                 </div>
                 <div className="hidden lg:flex flex-col text-left">
                   <span className="text-xs font-semibold text-slate-900 leading-tight max-w-[130px] truncate">
-                    {user.fullName || user.userId}
+                    {user.fullName}
                   </span>
                   <div className="mt-0.5">
                     <Badge variant="brand" size="sm">

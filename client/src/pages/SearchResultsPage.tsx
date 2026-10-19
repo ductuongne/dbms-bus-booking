@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Bus,
   ArrowLeftRight,
@@ -13,14 +13,129 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import type { TripCardView, BookingCheckoutView } from '../types';
-import { mockTripCardViews, mockProvinces } from '../mocks/mockData';
+import type { TripCardView, BookingCheckoutView, Province } from '../types';
+import { mockProvinces } from '../mocks/mockData';
 import { formatCurrency, formatDateVN, toLocalISODate } from '../utils';
+import { stationService } from '../services/station.service';
+import { tripService, type TripSearchResultItem } from '../services/trip.service';
 import SeatSelectionModal from '../components/SeatSelectionModal';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Drawer from '../components/common/Drawer';
 import EmptyState from '../components/common/EmptyState';
+
+function mapSearchResultToTripCardView(
+  item: TripSearchResultItem,
+  dateStr: string
+): TripCardView {
+  const depDate = new Date(item.departure_time);
+  const arrDate = new Date(item.arrival_time);
+
+  const depHour = depDate.getHours().toString().padStart(2, '0');
+  const depMin = depDate.getMinutes().toString().padStart(2, '0');
+  const arrHour = arrDate.getHours().toString().padStart(2, '0');
+  const arrMin = arrDate.getMinutes().toString().padStart(2, '0');
+
+  const diffMs = arrDate.getTime() - depDate.getTime();
+  const diffMins = Math.max(0, Math.floor(diffMs / (1000 * 60)));
+  const diffHours = Math.floor(diffMins / 60);
+  const remMins = diffMins % 60;
+  const durationFormatted = `${diffHours.toString().padStart(2, '0')}g ${remMins.toString().padStart(2, '0')}ph`;
+
+  let busTypeCode = 'BT-SLP-34';
+  let totalSeats = 34;
+
+  const typeLower = (item.bus_type || '').toLowerCase();
+  if (typeLower.includes('9')) {
+    busTypeCode = 'BT-LIM-09';
+    totalSeats = 9;
+  } else if (typeLower.includes('22')) {
+    busTypeCode = 'BT-LIM-22';
+    totalSeats = 22;
+  } else if (typeLower.includes('34')) {
+    busTypeCode = 'BT-SLP-34';
+    totalSeats = 34;
+  } else {
+    const numMatch = typeLower.match(/\d+/);
+    if (numMatch) {
+      totalSeats = parseInt(numMatch[0], 10);
+    }
+  }
+
+  return {
+    id: item.trip_id,
+    tripCode: item.trip_id,
+    operator: {
+      name: 'XeViet Express',
+      rating: 4.9,
+      reviewCount: 142,
+      amenities: ['Wifi tốc độ cao', 'Nước suối miễn phí', 'Cổng sạc điện thoại'],
+      cancellationPolicy: 'Miễn phí hủy trước 24 giờ',
+    },
+    busType: {
+      id: busTypeCode,
+      name: item.bus_type || (totalSeats === 22 ? 'Xe Limousine 22' : totalSeats === 9 ? 'Xe Limousine 9 Chỗ' : 'Xe Giường Nằm 34'),
+      totalSeats,
+      floors: totalSeats <= 10 ? 1 : 2,
+    },
+    bus: {
+      id: item.trip_id,
+      licensePlate: '29B-888.88',
+      typeId: busTypeCode,
+      status: 'ACTIVE',
+    },
+    route: {
+      id: item.route.route_id,
+      departureStationId: item.route.departure_station,
+      arrivalStationId: item.route.arrival_station,
+      distanceKm: 120,
+      estimatedDuration: diffMins,
+    },
+    departureStation: {
+      id: item.route.departure_station,
+      name: item.route.departure_station,
+      provinceId: item.route.departure_province,
+      address: `${item.route.departure_station}, ${item.route.departure_province}`,
+    },
+    arrivalStation: {
+      id: item.route.arrival_station,
+      name: item.route.arrival_station,
+      provinceId: item.route.arrival_province,
+      address: `${item.route.arrival_station}, ${item.route.arrival_province}`,
+    },
+    departureTime: `${depHour}:${depMin}`,
+    departureDate: dateStr,
+    arrivalTime: `${arrHour}:${arrMin}`,
+    arrivalDate: dateStr,
+    durationFormatted,
+    price: item.price,
+    availableSeatsCount: item.availableSeats,
+    totalSeats,
+    images: [
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80',
+      'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80',
+    ],
+    tags: ['Xác nhận tức thì', 'Chuyến bán chạy'],
+    pickupPoints: [
+      {
+        id: `PK-${item.trip_id}`,
+        name: item.route.departure_station,
+        address: `${item.route.departure_station}, ${item.route.departure_province}`,
+        time: `${depHour}:${depMin}`,
+        type: 'PICKUP',
+      },
+    ],
+    dropoffPoints: [
+      {
+        id: `DP-${item.trip_id}`,
+        name: item.route.arrival_station,
+        address: `${item.route.arrival_station}, ${item.route.arrival_province}`,
+        time: `${arrHour}:${arrMin}`,
+        type: 'DROPOFF',
+      },
+    ],
+  };
+}
 
 export const SearchResultsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,44 +191,77 @@ export const SearchResultsPage: React.FC = () => {
     }
   };
 
-  // 1. Lọc theo URL params: from, to, date (ERR-18)
-  const baseTrips = useMemo(() => {
-    let list = [...mockTripCardViews];
+  const [provinces, setProvinces] = useState<Province[]>(mockProvinces);
+  const [apiTrips, setApiTrips] = useState<TripCardView[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    if (date) {
-      // Nếu có chuyến cùng ngày thì lọc, nếu ngày khác thì kiểm tra departureDate
-      const dateMatches = list.filter((t) => t.departureDate === date);
-      if (dateMatches.length > 0) {
-        list = dateMatches;
+  // Load provinces thật từ API
+  useEffect(() => {
+    stationService
+      .getAllProvinces()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setProvinces(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Đồng bộ dữ liệu chuyến xe từ API thực tế
+  useEffect(() => {
+    let ignore = false;
+    async function fetchTrips() {
+      setIsLoading(true);
+      try {
+        const fromProv = provinces.find(
+          (p) =>
+            p.id.toLowerCase() === origin.toLowerCase() ||
+            p.name.toLowerCase() === origin.toLowerCase() ||
+            origin.toLowerCase().includes(p.name.toLowerCase()) ||
+            p.name.toLowerCase().includes(origin.toLowerCase())
+        );
+        const toProv = provinces.find(
+          (p) =>
+            p.id.toLowerCase() === destination.toLowerCase() ||
+            p.name.toLowerCase() === destination.toLowerCase() ||
+            destination.toLowerCase().includes(p.name.toLowerCase()) ||
+            p.name.toLowerCase().includes(destination.toLowerCase())
+        );
+
+        if (fromProv && toProv) {
+          const res = await tripService.searchTrips({
+            fromProvinceId: fromProv.id,
+            toProvinceId: toProv.id,
+            date,
+          });
+
+          if (!ignore) {
+            if (res && Array.isArray(res.data) && res.data.length > 0) {
+              setApiTrips(res.data.map((item) => mapSearchResultToTripCardView(item, date)));
+            } else {
+              setApiTrips(null);
+            }
+          }
+        } else {
+          if (!ignore) setApiTrips(null);
+        }
+      } catch {
+        if (!ignore) setApiTrips(null);
+      } finally {
+        if (!ignore) setIsLoading(false);
       }
     }
 
-    if (origin) {
-      const q = origin.toLowerCase().trim();
-      const originMatches = list.filter(
-        (t) =>
-          t.departureStation.name.toLowerCase().includes(q) ||
-          t.departureStation.address.toLowerCase().includes(q) ||
-          q.includes('hà nội') ||
-          q.includes('ha noi')
-      );
-      if (originMatches.length > 0) list = originMatches;
-    }
+    fetchTrips();
+    return () => {
+      ignore = true;
+    };
+  }, [origin, destination, date, provinces]);
 
-    if (destination) {
-      const q = destination.toLowerCase().trim();
-      const destMatches = list.filter(
-        (t) =>
-          t.arrivalStation.name.toLowerCase().includes(q) ||
-          t.arrivalStation.address.toLowerCase().includes(q) ||
-          q.includes('ninh bình') ||
-          q.includes('ninh binh')
-      );
-      if (destMatches.length > 0) list = destMatches;
-    }
-
-    return list;
-  }, [origin, destination, date]);
+  // 1. Chuyến xe đồng bộ từ API thực tế
+  const baseTrips = useMemo(() => {
+    return apiTrips || [];
+  }, [apiTrips]);
 
   // 2. Tính số lượng đếm động từ dữ liệu thật cho bộ lọc (ERR-09, ERR-10)
   const timeSlotCounts = useMemo(() => {
@@ -302,7 +450,7 @@ export const SearchResultsPage: React.FC = () => {
                     onChange={(e) => handleOriginChange(e.target.value)}
                     className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer truncate"
                   >
-                    {mockProvinces.map((p) => (
+                    {provinces.map((p) => (
                       <option key={p.id} value={p.name}>
                         {p.name}
                       </option>
@@ -329,7 +477,7 @@ export const SearchResultsPage: React.FC = () => {
                     onChange={(e) => handleDestinationChange(e.target.value)}
                     className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer truncate"
                   >
-                    {mockProvinces.map((p) => (
+                    {provinces.map((p) => (
                       <option key={p.id} value={p.name}>
                         {p.name}
                       </option>
@@ -432,7 +580,12 @@ export const SearchResultsPage: React.FC = () => {
             </div>
 
             {/* Danh sách thẻ chuyến */}
-            {finalTrips.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-white p-12 rounded-xl border border-slate-200 text-center flex flex-col items-center justify-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-semibold text-slate-700">Đang tìm kiếm chuyến xe từ hệ thống...</p>
+              </div>
+            ) : finalTrips.length === 0 ? (
               <EmptyState
                 icon={<Bus className="w-8 h-8 text-slate-400" />}
                 title="Không tìm thấy chuyến xe phù hợp"
@@ -458,16 +611,19 @@ export const SearchResultsPage: React.FC = () => {
                 return (
                   <div
                     key={trip.id}
-                    className="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all overflow-hidden p-4 sm:p-5 flex flex-col gap-4"
+                    className="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all overflow-hidden p-4 sm:p-5 flex flex-col gap-3.5"
                   >
-                    {/* Header card: Thông tin nhà xe + Đánh giá + Giá vé */}
+                    {/* Header card: Thông tin nhà xe + Tuyến đường + Đánh giá + Giá vé */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-bold text-base text-slate-900">{trip.operator.name}</h3>
                           <Badge variant="brand" size="sm">
                             {trip.busType.name}
                           </Badge>
+                          <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                            Tuyến: {trip.departureStation.name} → {trip.arrivalStation.name}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
                           <div className="flex items-center text-amber-600 font-semibold">
@@ -479,7 +635,7 @@ export const SearchResultsPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="text-left sm:text-right mt-1 sm:mt-0">
+                      <div className="text-left sm:text-right shrink-0">
                         <div className="text-xs text-slate-400">Giá vé mỗi ghế</div>
                         <div className="text-xl font-black text-[#C2410C]">
                           {formatCurrency(trip.price)}
@@ -487,54 +643,58 @@ export const SearchResultsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Body card: Lộ trình giờ đi/đến, thời gian ước tính */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                      <div className="sm:col-span-8 flex items-center justify-between gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                    {/* Body card: Lộ trình giờ đi/đến, thời gian ước tính (chống tràn trên mobile) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-center">
+                      <div className="sm:col-span-8 w-full min-w-0 flex items-center justify-between gap-2 sm:gap-3 bg-slate-50/70 p-3 sm:p-3.5 rounded-xl border border-slate-100">
                         {/* Điểm đi */}
-                        <div className="flex-1">
-                          <span className="text-lg font-black text-slate-900">{trip.departureTime}</span>
-                          <span className="block text-xs font-semibold text-slate-800 truncate">
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-base sm:text-xl font-black text-slate-900 leading-tight">
+                            {trip.departureTime}
+                          </span>
+                          <span className="block text-xs font-bold text-slate-800 truncate mt-0.5" title={trip.departureStation.name}>
                             {trip.departureStation.name}
                           </span>
-                          <span className="block text-[11px] text-slate-500 truncate">
+                          <span className="hidden sm:block text-[11px] text-slate-500 truncate mt-0.5" title={trip.departureStation.address}>
                             {trip.departureStation.address}
                           </span>
                         </div>
 
                         {/* Thời gian */}
-                        <div className="flex flex-col items-center px-2 shrink-0">
-                          <span className="text-[11px] text-slate-500 font-medium">
+                        <div className="flex flex-col items-center px-1 sm:px-2 shrink-0">
+                          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium whitespace-nowrap">
                             {trip.durationFormatted}
                           </span>
-                          <div className="w-16 h-0.5 bg-slate-300 relative my-1">
-                            <div className="w-2 h-2 rounded-full bg-[#1E3A5F] absolute -top-[3px] right-0" />
+                          <div className="w-8 sm:w-16 h-0.5 bg-slate-300 relative my-1">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1E3A5F] absolute -top-[2px] sm:-top-[3px] right-0" />
                           </div>
-                          <span className="text-[10px] text-slate-400">Chạy thẳng</span>
+                          <span className="text-[9px] sm:text-[10px] text-slate-400 whitespace-nowrap">Chạy thẳng</span>
                         </div>
 
                         {/* Điểm đến */}
-                        <div className="flex-1 text-right">
-                          <span className="text-lg font-black text-slate-900">{trip.arrivalTime}</span>
-                          <span className="block text-xs font-semibold text-slate-800 truncate">
+                        <div className="flex-1 min-w-0 text-right">
+                          <span className="block text-base sm:text-xl font-black text-slate-900 leading-tight">
+                            {trip.arrivalTime}
+                          </span>
+                          <span className="block text-xs font-bold text-slate-800 truncate mt-0.5" title={trip.arrivalStation.name}>
                             {trip.arrivalStation.name}
                           </span>
-                          <span className="block text-[11px] text-slate-500 truncate">
+                          <span className="hidden sm:block text-[11px] text-slate-500 truncate mt-0.5" title={trip.arrivalStation.address}>
                             {trip.arrivalStation.address}
                           </span>
                         </div>
                       </div>
 
                       {/* Nút chọn chỗ + Ghế còn trống */}
-                      <div className="sm:col-span-4 flex sm:flex-col items-center sm:items-end justify-between gap-2">
+                      <div className="sm:col-span-4 flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
                         <div className="text-xs text-slate-600">
-                          Còn <strong className="text-green-700">{trip.availableSeatsCount}</strong> / {trip.totalSeats} chỗ
+                          Còn <strong className="text-emerald-700 font-bold">{trip.availableSeatsCount}</strong> / {trip.totalSeats} chỗ
                         </div>
 
                         <Button
                           variant="primary"
                           size="md"
                           onClick={() => setActiveTripForSeats(trip)}
-                          className="w-full sm:w-auto"
+                          className="w-auto px-5"
                         >
                           Chọn chỗ
                         </Button>

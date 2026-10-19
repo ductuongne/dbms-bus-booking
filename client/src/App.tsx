@@ -25,7 +25,6 @@ import { AdminRoutesPage } from './pages/admin/AdminRoutesPage';
 import { AdminStationsPage } from './pages/admin/AdminStationsPage';
 import { AdminVehiclesPage } from './pages/admin/AdminVehiclesPage';
 import { AdminVehicleTypesPage } from './pages/admin/AdminVehicleTypesPage';
-import { AdminSeatLayoutPage } from './pages/admin/AdminSeatLayoutPage';
 import DriversPage from './pages/DriversPage';
 import BookingPage from './pages/BookingPage';
 import CustomersPage from './pages/CustomersPage';
@@ -71,7 +70,6 @@ export const App: React.FC = () => {
               <Route path="stations" element={<AdminStationsPage />} />
               <Route path="vehicles" element={<AdminVehiclesPage />} />
               <Route path="vehicle-types" element={<AdminVehicleTypesPage />} />
-              <Route path="seat-layout" element={<AdminSeatLayoutPage />} />
               <Route path="drivers" element={<DriversPage />} />
               <Route path="bookings" element={<BookingPage />} />
               <Route path="customers" element={<CustomersPage />} />

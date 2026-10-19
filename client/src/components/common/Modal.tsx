@@ -5,7 +5,9 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: React.ReactNode;
+  description?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   children: React.ReactNode;
   className?: string;
 }
@@ -14,10 +16,13 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
-  size = 'md',
+  description,
+  size,
+  maxWidth,
   children,
   className = '',
 }) => {
+  const modalSize = size || maxWidth || 'md';
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -106,11 +111,16 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : 'Hộp thoại'}
-        className={`relative w-full ${sizeStyles[size]} bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] ${className}`}
+        className={`relative w-full ${sizeStyles[modalSize]} bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] ${className}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">{title}</h2>
+            {description && (
+              <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}

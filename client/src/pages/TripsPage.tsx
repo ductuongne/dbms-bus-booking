@@ -178,24 +178,23 @@ export const TripsPage: React.FC = () => {
       title: 'Thao tác',
       render: (trip) => (
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={<Edit2 className="w-3.5 h-3.5" />}
             onClick={() => handleOpenEdit(trip)}
             title="Chỉnh sửa chuyến xe"
             aria-label={`Chỉnh sửa chuyến ${trip.id}`}
-            className="p-1.5 rounded-lg text-slate-600 hover:text-[#1E3A5F] hover:bg-slate-100 cursor-pointer"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+            icon={<Trash2 className="w-3.5 h-3.5" />}
             onClick={() => setDeletingItem(trip)}
             title="Hủy chuyến xe"
             aria-label={`Hủy chuyến ${trip.id}`}
-            className="p-1.5 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          />
         </div>
       ),
     },

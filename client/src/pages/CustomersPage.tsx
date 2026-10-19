@@ -8,6 +8,7 @@ import Table from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
 import Input from '../components/common/Input';
 import Badge from '../components/common/Badge';
+import Button from '../components/common/Button';
 
 export const CustomersPage: React.FC = () => {
   const { success } = useToast();
@@ -90,28 +91,20 @@ export const CustomersPage: React.FC = () => {
       key: 'actions',
       title: 'Thao tác',
       render: (u) => (
-        <button
-          type="button"
+        <Button
+          size="sm"
+          variant="ghost"
           onClick={() => handleToggleStatus(u)}
           aria-label={u.isActive ? `Khóa tài khoản ${u.fullName}` : `Kích hoạt tài khoản ${u.fullName}`}
-          className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold ${
+          className={
             u.isActive
-              ? 'text-red-600 hover:bg-red-50'
-              : 'text-green-700 hover:bg-green-50'
-          }`}
+              ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+              : 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
+          }
+          icon={u.isActive ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
         >
-          {u.isActive ? (
-            <>
-              <Lock className="w-4 h-4" />
-              <span>Khóa</span>
-            </>
-          ) : (
-            <>
-              <Unlock className="w-4 h-4" />
-              <span>Kích hoạt</span>
-            </>
-          )}
-        </button>
+          {u.isActive ? 'Khóa' : 'Kích hoạt'}
+        </Button>
       ),
     },
   ];
