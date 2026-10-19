@@ -23,9 +23,10 @@ INSERT INTO bus_types (type_id, name, total_seats, floors) VALUES
 ('BT-03', N'Xe Ghế Ngồi 45', 45, 1);
 GO
 
--- Users (Admin, Customer, Guest)
+-- Users (Admin, Staff, Customer, Guest)
 INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active) VALUES 
 ('USR-ADMIN-1', N'System Administrator', 'admin@example.com', '0901234567', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'ADMIN', 0, 1),
+('USR-STF-1', N'Nhân viên Bán vé', 'staff@example.com', '0902223334', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'STAFF', 0, 1),
 ('USR-CUS-1', N'Nguyễn Văn A', 'nva@example.com', '0988000111', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 150, 1),
 ('USR-GUEST-1', N'Khách Vãng Lai B', 'guestb@example.com', '0933222333', NULL, 'GUEST', 0, 1);
 GO
@@ -157,6 +158,22 @@ INSERT INTO trips (trip_id, route_id, bus_id, driver_id, departure_time, arrival
 ('TRP-03', 'RT-HAN-NBI', 'BUS-03', 'DRV-01',
  DATEADD(HOUR, 7, CAST(DATEADD(DAY, 1, CAST(SYSDATETIME() AS DATE)) AS DATETIME2)),
  DATEADD(HOUR, 9, CAST(DATEADD(DAY, 1, CAST(SYSDATETIME() AS DATE)) AS DATETIME2)),
+ 120000.00, 'SCHEDULED'),
+('TRP-04', 'RT-HAN-NBI', 'BUS-03', 'DRV-01',
+ DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)),
+ DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)),
+ 120000.00, 'SCHEDULED'),
+('TRP-05', 'RT-HAN-NBI', 'BUS-04', 'DRV-02',
+ DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)),
+ DATEADD(HOUR, 20, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)),
+ 100000.00, 'SCHEDULED'),
+('TRP-06', 'RT-SGN-DLI', 'BUS-01', 'DRV-01',
+ DATEADD(HOUR, 21, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)),
+ DATEADD(HOUR, 27, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)),
+ 220000.00, 'SCHEDULED'),
+('TRP-07', 'RT-HAN-NBI', 'BUS-03', 'DRV-02',
+ DATEADD(HOUR, 9, CAST(DATEADD(DAY, 2, CAST(SYSDATETIME() AS DATE)) AS DATETIME2)),
+ DATEADD(HOUR, 11, CAST(DATEADD(DAY, 2, CAST(SYSDATETIME() AS DATE)) AS DATETIME2)),
  120000.00, 'SCHEDULED');
 GO
 
