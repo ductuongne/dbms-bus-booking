@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
-import { mockBookings, mockTrips, mockTickets, mockRoutes, mockStations } from '../mocks/mockData';
 import { formatCurrency } from '../utils';
 import { routeService, type RouteListItem } from '../services/route.service';
 import {
@@ -42,12 +41,12 @@ export const ReportsPage: React.FC = () => {
     routeService
       .getAllRoutes()
       .then((data) => {
-        if (!ignore && data && data.length > 0) {
+        if (!ignore && data) {
           setRoutes(data);
         }
       })
       .catch(() => {
-        // Fallback silently to mock data
+        // Bỏ qua lỗi khi chưa tải được danh sách tuyến
       });
 
     reportService
@@ -58,29 +57,29 @@ export const ReportsPage: React.FC = () => {
         }
       })
       .catch(() => {
-        // Fallback silently to mock data
+        // Bỏ qua lỗi khi chưa tải được báo cáo doanh thu
       });
 
     reportService
       .getRouteRevenueReport(from, to)
       .then((data) => {
-        if (!ignore && data && data.length > 0) {
+        if (!ignore && data) {
           setRouteReport(data);
         }
       })
       .catch(() => {
-        // Fallback silently to mock data
+        // Bỏ qua lỗi khi chưa tải được báo cáo tuyến
       });
 
     reportService
       .getOccupancyReport(from, to)
       .then((data) => {
-        if (!ignore && data && data.length > 0) {
+        if (!ignore && data) {
           setOccupancyList(data);
         }
       })
       .catch(() => {
-        // Fallback silently to mock data
+        // Bỏ qua lỗi khi chưa tải được báo cáo lấp đầy
       });
 
     return () => {
@@ -88,21 +87,12 @@ export const ReportsPage: React.FC = () => {
     };
   }, []);
 
-  // Số liệu thống kê: ưu tiên dữ liệu thật từ SP báo cáo, fallback sang mock data
-  const totalRevenue =
-    revenueReport && revenueReport.total_revenue > 0
-      ? revenueReport.total_revenue
-      : mockBookings
-          .filter((b) => b.status !== 'CANCELLED')
-          .reduce((sum, b) => sum + b.totalAmount, 0);
+  // Số liệu thống kê trực tiếp từ Stored Procedures báo cáo
+  const totalRevenue = revenueReport?.total_revenue ?? 0;
 
-  const totalTickets =
-    routeReport.length > 0
-      ? routeReport.reduce((sum, r) => sum + r.tickets_sold, 0)
-      : mockTickets.length;
+  const totalTickets = routeReport.reduce((sum, r) => sum + r.tickets_sold, 0);
 
-  const tripsTodayCount =
-    occupancyList.length > 0 ? occupancyList.length : mockTrips.length;
+  const tripsTodayCount = occupancyList.length;
 
   const occupancyRate =
     occupancyList.length > 0
@@ -112,76 +102,39 @@ export const ReportsPage: React.FC = () => {
             occupancyList.length
           ).toFixed(1)
         )
-      : 86.5;
+      : 0;
 
-  // Dữ liệu biểu đồ doanh thu 7 ngày qua (SVG thuần theo B0.3, B6.2)
-  const fallbackChartData = [
-    { day: 'Th 2', revenue: 2450000 },
-    { day: 'Th 3', revenue: 3100000 },
-    { day: 'Th 4', revenue: 2800000 },
-    { day: 'Th 5', revenue: 4200000 },
-    { day: 'Th 6', revenue: 5600000 },
-    { day: 'Th 7', revenue: 6800000 },
-    { day: 'CN', revenue: 6100000 },
-  ];
-
-  const chartData =
-    revenueReport && revenueReport.items.length > 0
-      ? revenueReport.items.slice(-7).map((item) => ({
-          day: item.period.slice(5),
-          revenue: item.total_revenue,
-        }))
-      : fallbackChartData;
+  // Dữ liệu biểu đồ doanh thu 7 ngày qua (SVG thuần)
+  const chartData = Array.from({ length: 7 }, (_, idx) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - idx));
+    const iso = formatIsoDate(d);
+    const matched = revenueReport?.items.find((item) => item.period.startsWith(iso));
+    return {
+      day: iso.slice(5),
+      revenue: matched?.total_revenue ?? 0,
+    };
+  });
 
   const maxRevenue = Math.max(1, ...chartData.map((d) => d.revenue));
 
-  // Top tuyến đông khách nhất
-  const topRoutes =
-    routeReport.length > 0
-      ? routeReport.slice(0, 5).map((item) => {
-          const matchedRoute = routes.find((r) => r.id === item.route_id);
-          const distanceKm = matchedRoute?.distanceKm ?? 0;
-          const durationMin = matchedRoute?.estimatedDuration ?? 0;
-          return {
-            id: item.route_id,
-            name: `${item.departure_station} → ${item.arrival_station}`,
-            distance: distanceKm > 0 ? `${distanceKm} km` : '—',
-            duration:
-              durationMin > 0
-                ? `${Math.floor(durationMin / 60)}g ${durationMin % 60}ph`
-                : '—',
-            ticketsSold: item.tickets_sold,
-            revenue: item.revenue,
-          };
-        })
-      : routes.length > 0
-        ? routes.slice(0, 4).map((route, idx) => {
-            const ticketsSold = [142, 98, 76, 54][idx] || 40;
-            const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
-            return {
-              id: route.id,
-              name: `${route.departureStationName} → ${route.arrivalStationName}`,
-              distance: `${route.distanceKm} km`,
-              duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
-              ticketsSold,
-              revenue: estRevenue,
-            };
-          })
-        : mockRoutes.slice(0, 4).map((route, idx) => {
-            const depStation = mockStations.find((s) => s.id === route.departureStationId);
-            const arrStation = mockStations.find((s) => s.id === route.arrivalStationId);
-            const ticketsSold = [142, 98, 76, 54][idx] || 40;
-            const estRevenue = [25560000, 17640000, 11400000, 9450000][idx] || 5000000;
-
-            return {
-              id: route.id,
-              name: `${depStation?.name || 'Hà Nội'} → ${arrStation?.name || 'Ninh Bình'}`,
-              distance: `${route.distanceKm} km`,
-              duration: `${Math.floor(route.estimatedDuration / 60)}g ${route.estimatedDuration % 60}ph`,
-              ticketsSold,
-              revenue: estRevenue,
-            };
-          });
+  // Top tuyến đông khách nhất từ dữ liệu thật
+  const topRoutes = routeReport.slice(0, 5).map((item) => {
+    const matchedRoute = routes.find((r) => r.id === item.route_id);
+    const distanceKm = matchedRoute?.distanceKm ?? 0;
+    const durationMin = matchedRoute?.estimatedDuration ?? 0;
+    return {
+      id: item.route_id,
+      name: `${item.departure_station} → ${item.arrival_station}`,
+      distance: distanceKm > 0 ? `${distanceKm} km` : '—',
+      duration:
+        durationMin > 0
+          ? `${Math.floor(durationMin / 60)}g ${durationMin % 60}ph`
+          : '—',
+      ticketsSold: item.tickets_sold,
+      revenue: item.revenue,
+    };
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -344,30 +297,38 @@ export const ReportsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {topRoutes.map((route, idx) => (
-                <tr key={route.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-5 py-3.5 font-bold text-slate-900 flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-600 font-bold">
-                      {idx + 1}
-                    </span>
-                    <MapPin className="w-3.5 h-3.5 text-[#1E3A5F]" />
-                    <span>{route.name}</span>
-                  </td>
-                  <td className="px-5 py-3.5 text-slate-600">{route.distance}</td>
-                  <td className="px-5 py-3.5 text-slate-600 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    <span>{route.duration}</span>
-                  </td>
-                  <td className="px-5 py-3.5 text-center font-semibold text-slate-800">
-                    <Badge variant="brand" size="sm">
-                      {route.ticketsSold} vé
-                    </Badge>
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-bold text-[#C2410C]">
-                    {formatCurrency(route.revenue)}
+              {topRoutes.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                    Chưa có dữ liệu doanh thu tuyến đường trong khoảng thời gian này.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                topRoutes.map((route, idx) => (
+                  <tr key={route.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-3.5 font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-600 font-bold">
+                        {idx + 1}
+                      </span>
+                      <MapPin className="w-3.5 h-3.5 text-[#1E3A5F]" />
+                      <span>{route.name}</span>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600">{route.distance}</td>
+                    <td className="px-5 py-3.5 text-slate-600 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <span>{route.duration}</span>
+                    </td>
+                    <td className="px-5 py-3.5 text-center font-semibold text-slate-800">
+                      <Badge variant="brand" size="sm">
+                        {route.ticketsSold} vé
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-bold text-[#C2410C]">
+                      {formatCurrency(route.revenue)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
