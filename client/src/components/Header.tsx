@@ -1,77 +1,181 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bus, Ticket, Globe, Undo2, HelpCircle, User } from 'lucide-react';
+import { Bus, Ticket, Phone, User, ShieldCheck, LogOut, Menu } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { BRAND_INFO, USER_ROLES } from '../constants';
+import Drawer from './common/Drawer';
 
 export const Header: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const isAdminOrStaff = user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF);
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo RedBus */}
+        {/* Logo XeViet */}
         <Link
           to="/"
-          className="flex items-center gap-2 text-left cursor-pointer transition-transform hover:scale-102"
-          aria-label="Về trang chủ RedBus"
+          className="flex items-center gap-2.5 text-left cursor-pointer transition-transform hover:scale-102"
+          aria-label="Về trang chủ XeViet"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FF385C] flex items-center justify-center text-white shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-[#1E3A5F] flex items-center justify-center text-white shadow-xs">
             <Bus className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-2xl font-black tracking-tight text-[#FF385C]">
-              red<span className="text-gray-900">Bus</span>
+            <span className="text-2xl font-black tracking-tight text-[#1E3A5F]">
+              Xe<span className="text-[#C2410C]">Viet</span>
             </span>
           </div>
         </Link>
 
-        {/* Navigation Links */}
-        <nav className="flex items-center gap-2 sm:gap-6 text-sm text-gray-700">
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-6 text-sm text-slate-700">
           <Link
-            to="/search?from=Hà Nội&to=Ninh Bình&date=2026-10-18"
-            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              currentPath === '/search'
-                ? 'bg-rose-50 text-[#FF385C]'
-                : 'hover:bg-gray-100 text-gray-700'
+            to="/"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              currentPath === '/'
+                ? 'bg-blue-50 text-[#1E3A5F] font-semibold'
+                : 'hover:bg-slate-100 text-slate-700'
             }`}
           >
-            <Ticket className="w-4 h-4 text-gray-500" />
+            <Ticket className="w-4 h-4 text-slate-500" />
             <span>Tìm chuyến</span>
           </Link>
 
-          <Link
-            to="/payment"
-            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              currentPath === '/payment'
-                ? 'bg-rose-50 text-[#FF385C]'
-                : 'hover:bg-gray-100 text-gray-700'
-            }`}
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+            <Phone className="w-4 h-4 text-[#C2410C]" />
+            <span>Hotline: {BRAND_INFO.hotline}</span>
+          </div>
+
+          {isAdminOrStaff && (
+            <Link
+              to="/admin/reports"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-[#1E3A5F] hover:bg-blue-100 transition-colors"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Trang quản trị</span>
+            </Link>
+          )}
+
+          {user ? (
+            <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
+              <span className="text-xs font-semibold text-slate-800">
+                {user.fullName}
+              </span>
+              <button
+                type="button"
+                onClick={logout}
+                title="Đăng xuất"
+                aria-label="Đăng xuất"
+                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#1E3A5F] text-white hover:bg-[#162C48] transition-colors shadow-xs"
+            >
+              <User className="w-4 h-4" />
+              <span>Đăng nhập</span>
+            </Link>
+          )}
+        </nav>
+
+        {/* Mobile Hamburger Button */}
+        <div className="flex items-center md:hidden gap-2">
+          {user ? (
+            <span className="text-xs font-medium text-slate-700 truncate max-w-[120px]">
+              {user.fullName}
+            </span>
+          ) : (
+            <Link
+              to="/login"
+              className="text-xs font-semibold text-[#1E3A5F] px-2.5 py-1.5 rounded-lg bg-blue-50"
+            >
+              Đăng nhập
+            </Link>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Mở menu"
+            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
           >
-            <Ticket className="w-4 h-4 text-gray-500" />
-            <span>Mã đặt vé</span>
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Menu */}
+      <Drawer
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        title="Menu XeViet"
+      >
+        <div className="flex flex-col gap-4 text-sm">
+          <Link
+            to="/"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-2 p-2.5 rounded-lg hover:bg-slate-50 font-medium text-slate-800"
+          >
+            <Ticket className="w-5 h-5 text-[#1E3A5F]" />
+            <span>Tìm chuyến</span>
           </Link>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-gray-100 cursor-pointer">
-            <Globe className="w-4 h-4 text-gray-500" />
-            <span>Tiếng Việt</span>
+          <div className="flex items-center gap-2 p-2.5 text-xs text-slate-600 bg-slate-50 rounded-lg">
+            <Phone className="w-4 h-4 text-[#C2410C]" />
+            <span>Hotline: {BRAND_INFO.hotline}</span>
           </div>
 
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-gray-100 cursor-pointer">
-            <Undo2 className="w-4 h-4 text-gray-500" />
-            <span>Hủy vé</span>
-          </div>
+          {isAdminOrStaff && (
+            <Link
+              to="/admin/reports"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 text-[#1E3A5F] font-semibold text-xs"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Trang quản trị</span>
+            </Link>
+          )}
 
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-gray-100 cursor-pointer">
-            <HelpCircle className="w-4 h-4 text-gray-400" />
-            <span>Hỗ trợ</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 hover:bg-gray-200 cursor-pointer text-gray-800">
-            <User className="w-4 h-4 text-gray-600" />
-            <span>Tài khoản</span>
-          </div>
-        </nav>
-      </div>
+          {user ? (
+            <div className="border-t border-slate-100 pt-4 flex flex-col gap-2">
+              <div className="text-xs text-slate-500">
+                Đăng nhập với: <strong className="text-slate-800">{user.fullName}</strong> ({user.role})
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-2 p-2.5 text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+          ) : (
+            <div className="border-t border-slate-100 pt-4">
+              <Link
+                to="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#1E3A5F] text-white font-semibold text-xs"
+              >
+                <User className="w-4 h-4" />
+                <span>Đăng nhập</span>
+              </Link>
+            </div>
+          )}
+        </div>
+      </Drawer>
     </header>
   );
 };

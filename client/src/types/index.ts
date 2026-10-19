@@ -1,7 +1,4 @@
-// ==========================================
-// TYPES THEO CHUẨN DATABASE SCHEMA (01_schema.sql)
-// ==========================================
-
+import React from 'react';
 import {
   USER_ROLES,
   BUS_STATUS,
@@ -24,7 +21,10 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[keyof typeof PAYMENT_METHOD
 export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 export type TicketStatus = (typeof TICKET_STATUS)[keyof typeof TICKET_STATUS];
 
-// 1. Table: users
+// ==========================================
+// 1. DATABASE ENTITIES (01_schema.sql)
+// ==========================================
+
 export interface User {
   id: string;
   fullName: string;
@@ -36,13 +36,11 @@ export interface User {
   isActive: boolean;
 }
 
-// 2. Table: provinces
 export interface Province {
   id: string;
   name: string;
 }
 
-// 3. Table: stations
 export interface Station {
   id: string;
   name: string;
@@ -50,16 +48,14 @@ export interface Station {
   address: string;
 }
 
-// 4. Table: routes
 export interface Route {
   id: string;
   departureStationId: string;
   arrivalStationId: string;
   distanceKm: number;
-  estimatedDuration: number; // Thời gian ước tính (phút)
+  estimatedDuration: number; // Phút
 }
 
-// 5. Table: bus_types
 export interface BusType {
   id: string;
   name: string;
@@ -67,7 +63,6 @@ export interface BusType {
   floors: number;
 }
 
-// 6. Table: buses
 export interface Bus {
   id: string;
   licensePlate: string;
@@ -75,7 +70,6 @@ export interface Bus {
   status: BusStatus;
 }
 
-// 7. Table: seats
 export interface Seat {
   id: string;
   seatNumber: string;
@@ -84,7 +78,6 @@ export interface Seat {
   busId: string;
 }
 
-// 8. Table: drivers
 export interface Driver {
   id: string;
   userId: string;
@@ -92,7 +85,6 @@ export interface Driver {
   licenseExpiry: string; // ISO date YYYY-MM-DD
 }
 
-// 9. Table: trips
 export interface Trip {
   id: string;
   routeId: string;
@@ -104,7 +96,6 @@ export interface Trip {
   status: TripStatus;
 }
 
-// 10. Table: bookings
 export interface Booking {
   id: string;
   bookingCode: string;
@@ -116,7 +107,6 @@ export interface Booking {
   status: BookingStatus;
 }
 
-// 11. Table: payments
 export interface Payment {
   id: string;
   bookingId: string;
@@ -127,7 +117,6 @@ export interface Payment {
   status: PaymentStatus;
 }
 
-// 12. Table: tickets
 export interface Ticket {
   id: string;
   ticketCode: string;
@@ -141,39 +130,58 @@ export interface Ticket {
 }
 
 // ==========================================
-// DTOs & VIEW MODELS PHỤC VỤ GIAO DIỆN CLIENT
+// 2. VIEW MODELS & CLIENT DTOs
 // ==========================================
 
-export type SeatState = 'AVAILABLE' | 'BOOKED' | 'SELECTED';
+export type SeatStatus = 'AVAILABLE' | 'HELD' | 'BOOKED';
+export type SeatZone = 'blue' | 'purple' | 'amber' | 'green';
+
+export interface SeatCell {
+  id: string;
+  label: string;        // "A03", "B11", "07"
+  seatNumber?: string;  // tương thích tạm
+  floor: 1 | 2;         // 1 = tầng A, 2 = tầng B
+  row: number;          // bắt đầu từ 1
+  col: number;          // bắt đầu từ 1
+  zone: SeatZone;       // màu viền nhóm ghế
+  status: SeatStatus;
+  price: number;
+}
+
+export type SeatItemView = SeatCell;
+
+export interface BusLayoutConfig {
+  busTypeCode: string;
+  name: string;
+  floors: 1 | 2;
+  cols: number;
+  rows: number;
+  showFloorPrefix: boolean; // true: A/B, false: 01-09
+  driver?: { floor: 1; row: number; col: number }; // row 0 là hàng trên hàng đầu
+}
+
+export interface SeatLayoutView {
+  busId: string;
+  busTypeCode: string;
+  busTypeName: string;
+  floors: 1 | 2;
+  totalSeats: number;
+  layoutConfig: BusLayoutConfig;
+  seats: SeatCell[];
+}
 
 export interface StopPointView {
   id: string;
   name: string;
   address: string;
-  time: string; // e.g. "17:50"
+  time: string; // "17:50"
   type: 'PICKUP' | 'DROPOFF';
-}
-
-export interface SeatItemView extends Seat {
-  row: number;
-  col: number;
-  status: SeatState;
-  price: number;
-}
-
-export interface SeatLayoutView {
-  busId: string;
-  busTypeName: string;
-  floors: number;
-  totalSeats: number;
-  driverSeatPosition: { floor: number; row: number; col: number };
-  seats: SeatItemView[];
 }
 
 export interface OperatorInfo {
   name: string;
   logoUrl?: string;
-  rating: number; // e.g. 4.2
+  rating: number;
   reviewCount: number;
   amenities: string[];
   cancellationPolicy: string;
@@ -189,15 +197,15 @@ export interface TripCardView {
   departureStation: Station;
   arrivalStation: Station;
   departureTime: string; // "16:15"
-  departureDate: string; // "2026-10-18"
+  departureDate: string; // "YYYY-MM-DD"
   arrivalTime: string; // "17:30"
-  arrivalDate: string; // "2026-10-18"
+  arrivalDate: string; // "YYYY-MM-DD"
   durationFormatted: string; // "01g 15ph"
   price: number;
   availableSeatsCount: number;
   totalSeats: number;
   images: string[];
-  tags: string[]; // ["Xác nhận tức thì", "Có thể hủy", "Đón tận nhà", "Trả tận nhà"]
+  tags: string[];
   pickupPoints: StopPointView[];
   dropoffPoints: StopPointView[];
 }
@@ -217,17 +225,6 @@ export interface SearchFilterState {
   sortBy?: 'DEPARTURE_EARLIEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'RATING_DESC';
 }
 
-export interface PromotionCardView {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  discountBadge: string; // e.g. "Giảm đến 40%" hoặc "Tiết kiệm 30%"
-  expiryText: string; // e.g. "Hạn sử dụng đến 31 Th3"
-  bannerUrl?: string;
-  accentColor?: string;
-}
-
 export interface VietQrPaymentView {
   bankName: string;
   bankBin: string;
@@ -243,7 +240,7 @@ export interface BookingCheckoutView {
   bookingId: string;
   bookingCode: string;
   trip: TripCardView;
-  selectedSeats: SeatItemView[];
+  selectedSeats: SeatCell[];
   pickupPoint: StopPointView;
   dropoffPoint: StopPointView;
   passenger: {
@@ -251,8 +248,31 @@ export interface BookingCheckoutView {
     phone: string;
     email: string;
   };
+  totalAmount?: number;
   totalOriginalAmount: number;
   discountAmount: number;
   finalAmount: number;
   payment: VietQrPaymentView;
+}
+
+// Common UI Table & Auth types
+export interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface TableColumn<T> {
+  key: string;
+  title: string;
+  render?: (item: T, index: number) => React.ReactNode;
+  width?: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
+  logout: () => void;
+  isLoading: boolean;
 }

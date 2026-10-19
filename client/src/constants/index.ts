@@ -1,4 +1,12 @@
-// Hằng số nghiệp vụ đặt vé xe khách theo Database Schema & UI RedBus
+// Hằng số nghiệp vụ đặt vé xe khách theo Database Schema & UI XeViet
+
+export const BRAND_INFO = {
+  name: 'XeViet',
+  slogan: 'Đặt vé xe khách & Limousine trực tuyến',
+  hotline: '1900 xxxx (Dữ liệu mẫu)',
+  email: 'hotro@xeviet.vn',
+  address: 'Hà Nội, Việt Nam',
+} as const;
 
 export const USER_ROLES = {
   CUSTOMER: 'CUSTOMER',
@@ -56,14 +64,19 @@ export const TICKET_STATUS = {
 
 // Hằng số giao diện & UI/UX
 export const BRAND_COLORS = {
-  PRIMARY: '#FF385C', // Màu đỏ phong cách Airbnb / RedBus
-  PRIMARY_HOVER: '#E00B41',
-  PRIMARY_LIGHT: '#FFF1F3',
-  ACCENT_GREEN: '#00A699',
-  TEXT_MAIN: '#1F2937',
-  TEXT_MUTED: '#6B7280',
-  BORDER: '#E5E7EB',
-  BG_PAGE: '#F9FAFB',
+  BRAND: '#1E3A5F',
+  BRAND_HOVER: '#162C48',
+  BRAND_LIGHT: '#EFF6FF',
+  SURFACE: '#FFFFFF',
+  BG: '#F8FAFC',
+  BORDER: '#E2E8F0',
+  TEXT_MAIN: '#0F172A',
+  TEXT_MUTED: '#64748B',
+  ACTION: '#C2410C',
+  ACTION_HOVER: '#9A3412',
+  SUCCESS: '#16A34A',
+  ERROR: '#DC2626',
+  WARNING: '#D97706',
 } as const;
 
 // Khung giờ khởi hành dùng cho bộ lọc
@@ -74,11 +87,44 @@ export const TIME_SLOT_FILTERS = [
   { id: 'SLOT_00_06', label: '00:00 - 06:00', startHour: 0, endHour: 6 },
 ] as const;
 
+// Cấu hình sơ đồ 3 loại xe theo chuẩn thiết kế B5
+export const BUS_LAYOUT_CONFIGS = {
+  'BT-SLP-34': {
+    busTypeCode: 'BT-SLP-34',
+    name: 'Xe Giường Nằm 34',
+    floors: 2,
+    cols: 3,
+    rows: 6,
+    totalSeats: 34,
+    showFloorPrefix: true,
+  },
+  'BT-LIM-22': {
+    busTypeCode: 'BT-LIM-22',
+    name: 'Xe Limousine Giường Nằm 22',
+    floors: 2,
+    cols: 2,
+    rows: 6,
+    totalSeats: 22,
+    showFloorPrefix: true,
+    driver: { floor: 1, row: 0, col: 1 },
+  },
+  'BT-LIM-09': {
+    busTypeCode: 'BT-LIM-09',
+    name: 'Xe Limousine 9 Chỗ',
+    floors: 1,
+    cols: 3,
+    rows: 4,
+    totalSeats: 9,
+    showFloorPrefix: false,
+    driver: { floor: 1, row: 1, col: 1 },
+  },
+} as const;
+
 // Thông tin mặc định cổng thanh toán VietQR
 export const VIETQR_CONFIG = {
   DEFAULT_BANK: 'VPBank',
-  BANK_BIN: '970432', // VPBank BIN
+  BANK_BIN: '970432',
   ACCOUNT_NUMBER: '1988668899',
-  ACCOUNT_NAME: 'CONG TY CP DAT VE XE KHACH',
-  DEFAULT_COUNTDOWN_SECONDS: 300, // 5 phút giữ chỗ
+  ACCOUNT_NAME: 'CONG TY CP XEVIET',
+  DEFAULT_COUNTDOWN_SECONDS: 300,
 } as const;
