@@ -9,7 +9,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_GiuCho
     @customer_id VARCHAR(50) = NULL,
     @trip_id VARCHAR(50),
     @passengers NVARCHAR(MAX),
-    @channel VARCHAR(20) = 'ONLINE'
+    @channel VARCHAR(20) = 'ONLINE',
+    @email VARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -49,18 +50,6 @@ BEGIN
     )
         THROW 50010, N'Chuyến hoặc ghế không tồn tại', 1;
 
-    -- Kiểm tra khách hàng
-    IF @customer_id IS NULL
-    BEGIN
-        SELECT TOP 1 @customer_id = user_id FROM users WHERE role = 'GUEST' ORDER BY user_id;
-        IF @customer_id IS NULL THROW 50062, N'Khách hàng không tồn tại', 1;
-    END
-    ELSE
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM users WHERE user_id = @customer_id)
-            THROW 50062, N'Khách hàng không tồn tại', 1;
-    END
-
     BEGIN TRY
         BEGIN TRANSACTION;
 
@@ -96,6 +85,49 @@ BEGIN
               AND status IN ('PENDING', 'CONFIRMED')
         )
             THROW 50030, N'Ghế đã được giữ hoặc đã bán', 1;
+
+        -- Kiểm tra và xác định khách hàng (Tài khoản thành viên hoặc Khách vãng lai)
+        DECLARE @ContactPhone VARCHAR(20) = (SELECT TOP 1 phone FROM @P);
+        DECLARE @ContactName NVARCHAR(100) = (SELECT TOP 1 name FROM @P);
+
+        IF @customer_id IS NOT NULL
+        BEGIN
+            -- Nếu truyền customer_id, kiểm tra xem có tồn tại không
+            IF NOT EXISTS (SELECT 1 FROM users WITH (HOLDLOCK) WHERE user_id = @customer_id)
+            BEGIN
+                -- Nếu customer_id không tồn tại (vd: token cũ / user bị xóa), tra cứu theo SĐT hành khách
+                SELECT TOP 1 @customer_id = user_id FROM users WITH (UPDLOCK, HOLDLOCK) WHERE phone = @ContactPhone;
+            END
+        END
+
+        -- Nếu chưa có hoặc chưa tìm thấy customer_id
+        IF @customer_id IS NULL
+        BEGIN
+            -- Bước 1: Tra cứu theo SĐT hành khách trong bảng users
+            SELECT TOP 1 @customer_id = user_id FROM users WITH (UPDLOCK, HOLDLOCK) WHERE phone = @ContactPhone;
+
+            -- Bước 2: Nếu SĐT chưa từng xuất hiện trong hệ thống, tự động tạo tài khoản GUEST
+            IF @customer_id IS NULL
+            BEGIN
+                DECLARE @GuestEmail VARCHAR(100) = @email;
+                IF @GuestEmail IS NULL OR LTRIM(RTRIM(@GuestEmail)) = '' OR EXISTS (SELECT 1 FROM users WHERE email = @GuestEmail)
+                BEGIN
+                    SET @GuestEmail = @ContactPhone + '@guest.xeviet.vn';
+                    IF EXISTS (SELECT 1 FROM users WHERE email = @GuestEmail)
+                    BEGIN
+                        SET @GuestEmail = @ContactPhone + '_' + LOWER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 6)) + '@guest.xeviet.vn';
+                    END
+                END
+
+                SET @customer_id = 'USR-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8));
+
+                INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active)
+                VALUES (@customer_id, @ContactName, @GuestEmail, @ContactPhone, NULL, 'GUEST', 0, 1);
+            END
+        END
+
+        IF @customer_id IS NULL OR NOT EXISTS (SELECT 1 FROM users WHERE user_id = @customer_id)
+            THROW 50062, N'Khách hàng không tồn tại', 1;
 
         -- Tính tổng tiền
         DECLARE @TotalAmount DECIMAL(12,2) = 0;
@@ -137,7 +169,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        IF ERROR_NUMBER() IN (2601, 2627) AND ERROR_MESSAGE() LIKE '%uq_tickets_trip_seat_active%'
+        IF ERROR_NUMBER() IN (2601, 2627) AND (ERROR_MESSAGE() LIKE '%uq_tickets_trip_seat_active%' OR ERROR_MESSAGE() LIKE '%uq_user_phone%')
             THROW 50031, N'Tranh chấp giữ chỗ, vui lòng thử lại', 1;
         THROW;
     END CATCH
