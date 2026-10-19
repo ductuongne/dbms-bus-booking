@@ -45,6 +45,7 @@ const SQL_ERROR_MAP: Record<
 	},
 	50073: { statusCode: 409, defaultMessage: 'Không thể check-in vé' },
 	50074: { statusCode: 404, defaultMessage: 'Mã vé không tồn tại' },
+	50090: { statusCode: 400, defaultMessage: 'Tham số báo cáo không hợp lệ' },
 	1205: {
 		statusCode: 503,
 		defaultMessage: 'Hệ thống đang bận, vui lòng thử lại sau',

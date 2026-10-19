@@ -4,6 +4,7 @@ import tripRoutes from './trips/trip.routes'
 import { busRouter, adminBusRouter, adminBusTypeRouter } from './buses/bus.routes'
 import { stationRouter, provinceRouter, adminStationRouter } from './stations/station.routes'
 import { routeRouter, adminRouteRouter } from './routes/route.routes'
+import reportRoutes from './reports/report.routes'
 
 const appRouter = Router()
 
@@ -36,6 +37,7 @@ adminRouter.use('/buses', adminBusRouter)
 adminRouter.use('/bus-types', adminBusTypeRouter)
 adminRouter.use('/stations', adminStationRouter)
 adminRouter.use('/routes', adminRouteRouter)
+adminRouter.use('/reports', reportRoutes)
 
 appRouter.use('/admin', adminRouter)
 
