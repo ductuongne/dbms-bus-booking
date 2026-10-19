@@ -168,7 +168,7 @@ export const RegisterPage: React.FC = () => {
               variant="action"
               size="lg"
               fullWidth
-              loading={isSubmitting}
+              isLoading={isSubmitting}
               icon={<UserPlus className="w-4 h-4" />}
               className="mt-2"
             >

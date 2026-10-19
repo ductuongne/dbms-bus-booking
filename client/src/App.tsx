@@ -4,6 +4,7 @@ import ToastProvider from './components/common/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import AdminLayout from './components/AdminLayout';
+import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Public pages
@@ -64,8 +65,17 @@ export const App: React.FC = () => {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Phân hệ Tài xế (Bảo vệ bởi ProtectedRoute - DRIVER) */}
-            <Route element={<ProtectedRoute allowedRoles={['DRIVER']} />}>
-              <Route path="/driver/schedules" element={<DriverSchedulesPage />} />
+            <Route
+              path="/driver"
+              element={
+                <ProtectedRoute allowedRoles={['DRIVER']}>
+                  <DriverLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="/driver/schedules" replace />} />
+              <Route path="schedules" element={<DriverSchedulesPage />} />
+              <Route path="schedule" element={<Navigate to="/driver/schedules" replace />} />
             </Route>
 
             {/* Nhóm Quản Trị Hệ Thống (Bảo vệ bởi ProtectedRoute - ADMIN & STAFF) */}

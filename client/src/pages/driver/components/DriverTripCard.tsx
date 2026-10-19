@@ -3,10 +3,13 @@ import { Bus, Clock, Navigation } from 'lucide-react'
 import type { DriverScheduleDto, TripStatus } from '../../../types/driver'
 
 export interface DriverTripCardProps {
-	trip: DriverScheduleDto
+	trip?: DriverScheduleDto
+	schedule?: DriverScheduleDto
 }
 
-export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
+export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip, schedule }) => {
+	const activeTrip = trip || schedule
+
 	// Định dạng giờ và ngày từ chuỗi thời gian ISO
 	const formatDateTime = (dateStr: string) => {
 		try {
@@ -29,8 +32,10 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
 		}
 	}
 
-	const dep = formatDateTime(trip.departureTime)
-	const arr = formatDateTime(trip.arrivalTime)
+	if (!activeTrip) return null
+
+	const dep = formatDateTime(activeTrip.departureTime)
+	const arr = formatDateTime(activeTrip.arrivalTime)
 
 	// Cấu hình Badge trạng thái chuyến đi
 	const statusConfig: Record<TripStatus, { label: string; className: string }> = {
@@ -52,8 +57,8 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
 		},
 	}
 
-	const currentStatus = statusConfig[trip.tripStatus] || {
-		label: trip.tripStatus,
+	const currentStatus = statusConfig[activeTrip.tripStatus] || {
+		label: activeTrip.tripStatus,
 		className: 'bg-slate-50 text-slate-700 border-slate-200',
 	}
 
@@ -67,9 +72,9 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
 					</div>
 					<div>
 						<span className="font-mono text-xs font-bold text-slate-700 uppercase tracking-wider">
-							{trip.tripId}
+							{activeTrip.tripId}
 						</span>
-						<p className="text-[11px] text-slate-400">Tuyến #{trip.routeId}</p>
+						<p className="text-[11px] text-slate-400">Tuyến #{activeTrip.routeId}</p>
 					</div>
 				</div>
 				<span
@@ -94,7 +99,7 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
 								Điểm đón (Khởi hành)
 							</p>
 							<h4 className="text-sm font-bold text-slate-900 leading-snug">
-								{trip.departureStation}
+								{activeTrip.departureStation}
 							</h4>
 							<p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
 								<Clock className="w-3 h-3 text-slate-400" />
@@ -108,7 +113,7 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
 								Điểm trả (Điểm đến)
 							</p>
 							<h4 className="text-sm font-bold text-slate-900 leading-snug">
-								{trip.arrivalStation}
+								{activeTrip.arrivalStation}
 							</h4>
 							<p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
 								<Clock className="w-3 h-3 text-slate-400" />
@@ -125,12 +130,12 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({ trip }) => {
 				<div className="flex items-center gap-1.5">
 					<Navigation className="w-3.5 h-3.5 text-slate-400" />
 					<span className="font-semibold text-slate-900">
-						{trip.licensePlate}
+						{activeTrip.licensePlate}
 					</span>
-					<span className="text-slate-400">({trip.busType})</span>
+					<span className="text-slate-400">({activeTrip.busType})</span>
 				</div>
 				<div className="text-slate-500 font-medium">
-					{trip.distanceKm} km • {trip.totalSeats} chỗ
+					{activeTrip.distanceKm} km • {activeTrip.totalSeats} chỗ
 				</div>
 			</div>
 		</div>

@@ -39,7 +39,7 @@ export const LoginPage: React.FC = () => {
     (user?.role === 'ADMIN' || user?.role === 'STAFF'
       ? '/admin'
       : user?.role === 'DRIVER'
-      ? '/driver/schedule'
+      ? '/driver/schedules'
       : '/');
 
   const {
@@ -66,7 +66,7 @@ export const LoginPage: React.FC = () => {
         (authResult.user.role === 'ADMIN' || authResult.user.role === 'STAFF'
           ? '/admin'
           : authResult.user.role === 'DRIVER'
-          ? '/driver/schedule'
+          ? '/driver/schedules'
           : '/');
 
       navigate(targetUrl, { replace: true });
