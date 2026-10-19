@@ -171,3 +171,93 @@ AS
     JOIN provinces p ON p.province_id = s.province_id;
 GO
 
+-- ==============================================================================
+-- FINANCIAL & REPORTING VIEWS (Người 4)
+-- ==============================================================================
+
+-- 8. vw_LichSuThanhToan: lịch sử thanh toán kèm thông tin booking và khách hàng
+CREATE OR ALTER VIEW dbo.vw_LichSuThanhToan
+AS
+    SELECT
+        p.payment_id,
+        p.booking_id,
+        bk.booking_code,
+        bk.channel,
+        bk.status AS booking_status,
+        bk.total_amount AS booking_total_amount,
+        u.full_name AS customer_name,
+        u.phone AS customer_phone,
+        p.method,
+        p.amount,
+        p.paid_at,
+        p.transaction_code,
+        p.status AS payment_status
+    FROM payments p
+    JOIN bookings bk ON bk.booking_id = p.booking_id
+    JOIN users u ON u.user_id = bk.customer_id;
+GO
+
+-- 9. vw_DoanhThuTheoNgay: doanh thu mỗi ngày theo phương thức thanh toán
+CREATE OR ALTER VIEW dbo.vw_DoanhThuTheoNgay
+AS
+    SELECT
+        CAST(p.paid_at AS DATE) AS report_date,
+        p.method,
+        COUNT(*) AS payment_count,
+        SUM(p.amount) AS total_revenue
+    FROM payments p
+    WHERE p.status = 'SUCCESS'
+    GROUP BY CAST(p.paid_at AS DATE), p.method;
+GO
+
+-- 10. vw_DoanhThuTheoTuyen: số vé bán và doanh thu theo tuyến, theo ngày thanh toán
+CREATE OR ALTER VIEW dbo.vw_DoanhThuTheoTuyen
+AS
+    SELECT
+        CAST(p.paid_at AS DATE) AS paid_date,
+        r.route_id,
+        ds.name AS departure_station,
+        ast.name AS arrival_station,
+        COUNT(tk.ticket_id) AS tickets_sold,
+        SUM(tk.price) AS revenue
+    FROM payments p
+    JOIN tickets tk ON tk.booking_id = p.booking_id
+    JOIN trips t ON t.trip_id = tk.trip_id
+    JOIN routes r ON r.route_id = t.route_id
+    JOIN stations ds ON ds.station_id = r.departure_station_id
+    JOIN stations ast ON ast.station_id = r.arrival_station_id
+    WHERE p.status = 'SUCCESS'
+      AND tk.status IN ('CONFIRMED', 'CHECKED_IN')
+    GROUP BY CAST(p.paid_at AS DATE), r.route_id, ds.name, ast.name;
+GO
+
+-- 11. vw_TyLeLapDayChuyen: ghế đã bán, tổng ghế và tỷ lệ lấp đầy từng chuyến
+CREATE OR ALTER VIEW dbo.vw_TyLeLapDayChuyen
+AS
+    SELECT
+        t.trip_id,
+        t.route_id,
+        t.departure_time,
+        t.status AS trip_status,
+        b.license_plate,
+        (SELECT COUNT(*) FROM seats s WHERE s.bus_id = t.bus_id) AS total_seats,
+        (SELECT COUNT(*) FROM tickets tk
+         WHERE tk.trip_id = t.trip_id AND tk.status IN ('CONFIRMED', 'CHECKED_IN')) AS sold_seats,
+        dbo.fn_TyLeLapDay(t.trip_id) AS occupancy_percent
+    FROM trips t
+    JOIN buses b ON b.bus_id = t.bus_id;
+GO
+
+-- 12. vw_ThongKeThanhToan: số giao dịch và tổng tiền theo phương thức và trạng thái
+CREATE OR ALTER VIEW dbo.vw_ThongKeThanhToan
+AS
+    SELECT
+        method,
+        status,
+        COUNT(*) AS payment_count,
+        SUM(amount) AS total_amount
+    FROM payments
+    GROUP BY method, status;
+GO
+
+

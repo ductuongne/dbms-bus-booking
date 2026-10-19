@@ -83,3 +83,48 @@ BEGIN
 END;
 GO
 
+-- 4. trg_KiemTraThanhToan (AFTER INSERT, UPDATE ON payments)
+-- Khi một giao dịch chuyển sang SUCCESS:
+--   * số tiền phải khớp tổng tiền booking
+--   * booking không được có giao dịch SUCCESS khác
+CREATE OR ALTER TRIGGER trg_KiemTraThanhToan
+ON payments
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @NewSuccess TABLE (payment_id VARCHAR(50), booking_id VARCHAR(50), amount DECIMAL(12,2));
+
+    INSERT INTO @NewSuccess (payment_id, booking_id, amount)
+    SELECT i.payment_id, i.booking_id, i.amount
+    FROM inserted i
+    LEFT JOIN deleted d ON d.payment_id = i.payment_id
+    WHERE i.status = 'SUCCESS' AND (d.payment_id IS NULL OR d.status <> 'SUCCESS');
+
+    IF EXISTS (
+        SELECT 1
+        FROM @NewSuccess n
+        JOIN bookings bk ON bk.booking_id = n.booking_id
+        WHERE n.amount <> bk.total_amount
+    )
+    BEGIN
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW 50082, N'Số tiền thanh toán không khớp tổng tiền booking', 1;
+    END
+
+    IF EXISTS (
+        SELECT 1
+        FROM @NewSuccess n
+        JOIN payments o ON o.booking_id = n.booking_id
+                       AND o.payment_id <> n.payment_id
+                       AND o.status = 'SUCCESS'
+    )
+    BEGIN
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW 50080, N'Booking đã được thanh toán', 1;
+    END
+END;
+GO
+
+

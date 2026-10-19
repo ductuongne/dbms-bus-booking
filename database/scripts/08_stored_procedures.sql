@@ -1076,3 +1076,138 @@ BEGIN
 END;
 GO
 
+-- ==============================================================================
+-- FINANCIAL & REPORTING STORED PROCEDURES (Người 4)
+-- ==============================================================================
+
+-- 24. sp_TraCuuThanhToan: tra cứu các giao dịch thanh toán của booking (xác thực bằng mã booking + SĐT)
+CREATE OR ALTER PROCEDURE dbo.sp_TraCuuThanhToan
+    @booking_code VARCHAR(20),
+    @phone VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        DECLARE @BookingId VARCHAR(50);
+        SELECT @BookingId = booking_id FROM bookings WHERE booking_code = @booking_code;
+
+        IF @BookingId IS NULL OR NOT EXISTS (
+            SELECT 1 FROM tickets WHERE booking_id = @BookingId AND passenger_phone = @phone
+        )
+            THROW 50040, N'Booking không tồn tại hoặc thông tin xác thực không đúng', 1;
+
+        SELECT
+            payment_id, booking_id, booking_code, method, amount,
+            paid_at, transaction_code, payment_status AS status,
+            dbo.fn_TrangThaiThanhToan(booking_id) AS booking_payment_status,
+            dbo.fn_TongTienDaThanhToan(booking_id) AS total_paid
+        FROM dbo.vw_LichSuThanhToan
+        WHERE booking_id = @BookingId
+        ORDER BY paid_at DESC;
+    END TRY
+    BEGIN CATCH
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 25. sp_BaoCaoDoanhThu: doanh thu trong khoảng ngày, gom theo DAY hoặc MONTH
+CREATE OR ALTER PROCEDURE dbo.sp_BaoCaoDoanhThu
+    @from_date DATE,
+    @to_date DATE,
+    @group_by VARCHAR(10) = 'DAY'
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        IF @from_date IS NULL OR @to_date IS NULL OR @from_date > @to_date
+           OR @group_by NOT IN ('DAY', 'MONTH')
+            THROW 50090, N'Tham số báo cáo không hợp lệ', 1;
+
+        DECLARE @fromTime DATETIME2 = CAST(@from_date AS DATETIME2);
+        DECLARE @toTime DATETIME2 = DATEADD(DAY, 1, CAST(@to_date AS DATETIME2));
+
+        IF @group_by = 'DAY'
+            SELECT
+                CAST(paid_at AS DATE) AS period,
+                COUNT(*) AS payment_count,
+                SUM(amount) AS total_revenue
+            FROM payments
+            WHERE status = 'SUCCESS' AND paid_at >= @fromTime AND paid_at < @toTime
+            GROUP BY CAST(paid_at AS DATE)
+            ORDER BY period;
+        ELSE
+            SELECT
+                DATEFROMPARTS(YEAR(paid_at), MONTH(paid_at), 1) AS period,
+                COUNT(*) AS payment_count,
+                SUM(amount) AS total_revenue
+            FROM payments
+            WHERE status = 'SUCCESS' AND paid_at >= @fromTime AND paid_at < @toTime
+            GROUP BY DATEFROMPARTS(YEAR(paid_at), MONTH(paid_at), 1)
+            ORDER BY period;
+    END TRY
+    BEGIN CATCH
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 26. sp_BaoCaoDoanhThuTuyen: số vé bán và doanh thu theo tuyến trong khoảng ngày
+CREATE OR ALTER PROCEDURE dbo.sp_BaoCaoDoanhThuTuyen
+    @from_date DATE,
+    @to_date DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        IF @from_date IS NULL OR @to_date IS NULL OR @from_date > @to_date
+            THROW 50090, N'Tham số báo cáo không hợp lệ', 1;
+
+        SELECT
+            route_id,
+            departure_station,
+            arrival_station,
+            SUM(tickets_sold) AS tickets_sold,
+            SUM(revenue) AS revenue
+        FROM dbo.vw_DoanhThuTheoTuyen
+        WHERE paid_date BETWEEN @from_date AND @to_date
+        GROUP BY route_id, departure_station, arrival_station
+        ORDER BY revenue DESC;
+    END TRY
+    BEGIN CATCH
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 27. sp_BaoCaoLapDay: tỷ lệ lấp đầy các chuyến khởi hành trong khoảng ngày
+CREATE OR ALTER PROCEDURE dbo.sp_BaoCaoLapDay
+    @from_date DATE,
+    @to_date DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        IF @from_date IS NULL OR @to_date IS NULL OR @from_date > @to_date
+            THROW 50090, N'Tham số báo cáo không hợp lệ', 1;
+
+        SELECT
+            trip_id, route_id, departure_time, trip_status, license_plate,
+            total_seats, sold_seats, occupancy_percent
+        FROM dbo.vw_TyLeLapDayChuyen
+        WHERE departure_time >= CAST(@from_date AS DATETIME2)
+          AND departure_time < DATEADD(DAY, 1, CAST(@to_date AS DATETIME2))
+          AND trip_status <> 'CANCELLED'
+        ORDER BY departure_time;
+    END TRY
+    BEGIN CATCH
+        THROW;
+    END CATCH
+END;
+GO
+
+

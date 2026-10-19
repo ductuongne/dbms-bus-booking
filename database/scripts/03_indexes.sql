@@ -72,3 +72,13 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_trips_driver_time' AND object_id = OBJECT_ID('trips'))
     CREATE INDEX idx_trips_driver_time ON trips(driver_id, departure_time, arrival_time);
 GO
+
+-- Financial & Reporting Indexes (Người 4)
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_payments_status_paid_at' AND object_id = OBJECT_ID('payments'))
+    CREATE NONCLUSTERED INDEX idx_payments_status_paid_at
+    ON payments(status, paid_at) INCLUDE (booking_id, method, amount);
+GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_tickets_trip_status' AND object_id = OBJECT_ID('tickets'))
+    CREATE NONCLUSTERED INDEX idx_tickets_trip_status
+    ON tickets(trip_id, status) INCLUDE (booking_id, price);
+GO
