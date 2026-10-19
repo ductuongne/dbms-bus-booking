@@ -64,8 +64,7 @@ GO
 ALTER TABLE bookings ADD CONSTRAINT uq_booking_code UNIQUE (booking_code);
 GO
 
-ALTER TABLE payments ADD CONSTRAINT uq_payment_transaction_code UNIQUE (transaction_code);
-GO
+-- uq_payment_transaction_code được định nghĩa dưới dạng Filtered Unique Index trong 03_indexes.sql (do transaction_code có thể NULL)
 
 ALTER TABLE tickets ADD CONSTRAINT uq_ticket_code UNIQUE (ticket_code);
 GO

@@ -171,6 +171,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
             phone: passengerPhone.trim(),
           })),
           channel: 'ONLINE',
+          email: passengerEmail.trim(),
         });
 
         const checkoutPayload: BookingCheckoutView = {

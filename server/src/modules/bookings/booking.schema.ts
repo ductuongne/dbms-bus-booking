@@ -13,7 +13,8 @@ export const holdBookingBodySchema = z.object({
 		.array(passengerSchema)
 		.min(1, 'passengers phải có ít nhất 1 phần tử')
 		.max(5, 'passengers tối đa 5 phần tử'),
-	channel: z.enum(['ONLINE', 'COUNTER']).default('ONLINE')
+	channel: z.enum(['ONLINE', 'COUNTER']).default('ONLINE'),
+	email: z.string().trim().email('email không hợp lệ').optional()
 })
 
 export const confirmBookingBodySchema = z.object({

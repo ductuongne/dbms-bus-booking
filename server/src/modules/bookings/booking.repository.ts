@@ -57,6 +57,7 @@ export interface HoldBookingInput {
 	tripId: string
 	passengers: PassengerInput[]
 	channel: string
+	email?: string | null
 }
 
 function splitResult(recordsets: BookingRow[][]): BookingWithTickets {
@@ -73,7 +74,8 @@ export class BookingRepository {
 			customer_id: { type: sql.VarChar(50), value: input.customerId ?? null },
 			trip_id: { type: sql.VarChar(50), value: input.tripId },
 			passengers: { type: sql.NVarChar(sql.MAX), value: JSON.stringify(input.passengers) },
-			channel: { type: sql.VarChar(20), value: input.channel }
+			channel: { type: sql.VarChar(20), value: input.channel },
+			email: { type: sql.VarChar(100), value: input.email ?? null }
 		})
 
 		return splitResult(result.recordsets)

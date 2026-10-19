@@ -94,7 +94,8 @@ export class BookingService {
 				customerId: body.customer_id ?? null,
 				tripId: body.trip_id,
 				passengers: body.passengers,
-				channel: body.channel
+				channel: body.channel,
+				email: body.email ?? null
 			})
 		)
 

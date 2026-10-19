@@ -34,6 +34,10 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_tickets_code' AND obj
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_payments_booking_id' AND object_id = OBJECT_ID('payments'))
     CREATE INDEX idx_payments_booking_id ON payments(booking_id);
 GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'uq_payment_transaction_code' AND object_id = OBJECT_ID('payments'))
+    CREATE UNIQUE NONCLUSTERED INDEX uq_payment_transaction_code ON payments(transaction_code) WHERE transaction_code IS NOT NULL;
+GO
+
 
 -- Bảng Seats
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_seats_bus_id' AND object_id = OBJECT_ID('seats'))
