@@ -35,8 +35,11 @@ export const ReportsPage: React.FC = () => {
     const today = new Date();
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(today.getDate() - 6);
+    const nextSevenDays = new Date(today);
+    nextSevenDays.setDate(today.getDate() + 7);
     const from = formatIsoDate(sevenDaysAgo);
     const to = formatIsoDate(today);
+    const occupancyTo = formatIsoDate(nextSevenDays);
 
     routeService
       .getAllRoutes()
@@ -72,7 +75,7 @@ export const ReportsPage: React.FC = () => {
       });
 
     reportService
-      .getOccupancyReport(from, to)
+      .getOccupancyReport(from, occupancyTo)
       .then((data) => {
         if (!ignore && data) {
           setOccupancyList(data);
