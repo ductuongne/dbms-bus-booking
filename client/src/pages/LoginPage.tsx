@@ -8,7 +8,10 @@ import { api } from '../lib/api';
 import type { ApiErrorResponse } from '../types/auth';
 import { Input } from '../components/ui/Input';
 import { Alert } from '../components/ui/Alert';
+import { BRAND_INFO } from '../constants';
 
+import { z } from 'zod';
+import { useAuth } from '../hooks/useAuth';
 const loginSchema = z.object({
   phone: z
     .string()
@@ -87,29 +90,31 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#F8FAFC]">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-bg text-slate-900">
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2.5 text-2xl font-black text-[#1E3A5F] hover:opacity-90"
+            className="inline-flex items-center gap-2.5 text-2xl font-black text-brand hover:opacity-90 transition-opacity"
+            aria-label={`Về trang chủ ${BRAND_INFO.name}`}
           >
-            <div className="w-10 h-10 rounded-xl bg-[#1E3A5F] flex items-center justify-center text-white shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white shadow-xs">
               <Bus className="w-6 h-6" />
             </div>
             <span>
-              Xe<span className="text-[#C2410C]">Viet</span>
+              Xe<span className="text-action">Viet</span>
             </span>
           </Link>
           <h1 className="text-xl font-bold text-slate-900 mt-4">Đăng nhập tài khoản</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Đặt vé xe khách nhanh chóng và an toàn cùng XeViet
+            Đặt vé xe khách nhanh chóng và an toàn cùng {BRAND_INFO.name}
           </p>
         </div>
 
         {/* Card Container */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+
           {isAuthenticated ? (
             <div className="space-y-4">
               <Alert variant="success" title="Đang trong phiên đăng nhập">
@@ -197,7 +202,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-2.5 px-4 bg-[#1E3A5F] hover:bg-[#162C48] text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 px-4 bg-brand hover:bg-brand-hover text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isSubmitting ? 'Đang xác thực...' : 'Đăng nhập'}</span>
@@ -208,7 +213,7 @@ export const LoginPage: React.FC = () => {
                 Chưa có tài khoản?{' '}
                 <Link
                   to="/register"
-                  className="font-semibold text-[#C2410C] hover:underline transition-colors"
+                  className="font-semibold text-action hover:underline transition-colors"
                 >
                   Đăng ký ngay
                 </Link>
@@ -218,10 +223,11 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="text-center mt-6 text-xs text-slate-500">
-          <Link to="/" className="text-[#1E3A5F] hover:underline font-semibold">
+          <Link to="/" className="text-brand hover:underline font-semibold">
             ← Về trang chủ tìm chuyến
           </Link>
         </div>
+
       </div>
     </div>
   );

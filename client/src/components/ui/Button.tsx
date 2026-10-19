@@ -2,11 +2,12 @@ import React from 'react'
 import { Loader2 } from 'lucide-react'
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-	variant?: 'primary' | 'outline' | 'ghost'
+	variant?: 'primary' | 'action' | 'outline' | 'ghost'
 	size?: 'sm' | 'md' | 'lg'
 	isLoading?: boolean
 	fullWidth?: boolean
 }
+
 
 export const Button: React.FC<ButtonProps> = ({
 	children,
@@ -24,11 +25,14 @@ export const Button: React.FC<ButtonProps> = ({
 
 	const variantClasses = {
 		primary:
-			'bg-[#FF385C] hover:bg-[#E00B41] text-white shadow-sm shadow-red-500/20 focus:ring-4 focus:ring-red-500/20 focus:outline-none',
+			'bg-[#1E3A5F] hover:bg-[#162C48] text-white shadow-xs focus:ring-4 focus:ring-[#1E3A5F]/20 focus:outline-none',
+		action:
+			'bg-[#C2410C] hover:bg-[#9A3412] text-white shadow-xs focus:ring-4 focus:ring-[#C2410C]/20 focus:outline-none',
 		outline:
 			'border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs focus:ring-4 focus:ring-slate-100 focus:outline-none',
 		ghost: 'bg-transparent hover:bg-slate-100 text-slate-700',
 	}[variant]
+
 
 	const sizeClasses = {
 		sm: 'text-xs px-3 py-1.5 gap-1.5',
