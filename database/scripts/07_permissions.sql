@@ -28,11 +28,7 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'Role_KeToan' AND type = 'R')
-BEGIN
-    CREATE ROLE Role_KeToan;
-END
-GO
+
 
 -- 2. PHÂN QUYỀN Role_Admin (Toàn quyền quản trị cơ sở dữ liệu)
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE TO Role_Admin;
@@ -84,12 +80,3 @@ DENY DELETE ON bookings TO Role_KhachHang;
 DENY DELETE ON tickets TO Role_KhachHang;
 GO
 
--- 6. PHÂN QUYỀN Role_KeToan (Kế toán tài chính & doanh thu)
-GRANT SELECT ON payments TO Role_KeToan;
-GRANT SELECT ON bookings TO Role_KeToan;
-GRANT SELECT ON tickets TO Role_KeToan;
-GRANT SELECT ON trips TO Role_KeToan;
-DENY INSERT, UPDATE, DELETE ON trips TO Role_KeToan;
-DENY INSERT, UPDATE, DELETE ON buses TO Role_KeToan;
-DENY INSERT, UPDATE, DELETE ON routes TO Role_KeToan;
-GO

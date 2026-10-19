@@ -44,6 +44,7 @@ export async function createCustomer(dto: CreateCustomerDto): Promise<void> {
 			 VALUES (@userId, @fullName, @phone, @email, @passwordHash, 'CUSTOMER', 0, 1)`
 		)
 	} catch (err: unknown) {
+		console.error(err)
 		if (isSqlUniqueViolation(err)) {
 			throw new AppError(
 				409,
