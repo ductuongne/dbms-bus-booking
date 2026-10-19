@@ -67,6 +67,14 @@ DENY DELETE ON bookings TO Role_NhanVien;
 DENY DELETE ON tickets TO Role_NhanVien;
 GO
 
+IF OBJECT_ID('dbo.sp_ThanhToan', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_ThanhToan TO Role_NhanVien;
+IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_NhanVien;
+IF OBJECT_ID('dbo.vw_LichSuThanhToan', 'V') IS NOT NULL
+    GRANT SELECT ON dbo.vw_LichSuThanhToan TO Role_NhanVien;
+GO
+
 -- 5. PHÂN QUYỀN Role_KhachHang (Khách hàng đặt vé và xem chuyến)
 GRANT SELECT ON trips TO Role_KhachHang;
 GRANT SELECT ON routes TO Role_KhachHang;
@@ -79,4 +87,11 @@ GRANT SELECT, INSERT ON payments TO Role_KhachHang;
 DENY DELETE ON bookings TO Role_KhachHang;
 DENY DELETE ON tickets TO Role_KhachHang;
 GO
+
+IF OBJECT_ID('dbo.sp_ThanhToan', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_ThanhToan TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_KhachHang;
+GO
+
 

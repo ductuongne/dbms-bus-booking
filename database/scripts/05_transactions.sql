@@ -207,3 +207,85 @@ BEGIN
     END CATCH
 END;
 GO
+
+-- GIAO DỊCH 3: Thanh toán đơn đặt vé (Atomic Payment Processing & Concurrency Control)
+-- Đảm bảo tính ACID và dùng khóa UPDLOCK, HOLDLOCK để ngăn chặn thanh toán trùng đồng thời (Double Payment).
+CREATE OR ALTER PROCEDURE dbo.sp_ThanhToan
+    @booking_id VARCHAR(50),
+    @booking_code VARCHAR(20),
+    @phone VARCHAR(20),
+    @method VARCHAR(20),
+    @transaction_code VARCHAR(100) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @method NOT IN ('CASH', 'BANK_TRANSFER')
+        THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+    SET @transaction_code = NULLIF(LTRIM(RTRIM(@transaction_code)), '');
+
+    IF @method = 'BANK_TRANSFER' AND @transaction_code IS NULL
+        THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Khóa booking đến hết transaction để hai lần thanh toán đồng thời không cùng thành công
+        DECLARE @Status VARCHAR(20), @ExpiredAt DATETIME2, @TotalAmount DECIMAL(12,2);
+        SELECT @Status = status, @ExpiredAt = expired_at, @TotalAmount = total_amount
+        FROM bookings WITH (UPDLOCK, HOLDLOCK)
+        WHERE booking_id = @booking_id AND booking_code = @booking_code;
+
+        IF @Status IS NULL OR NOT EXISTS (
+            SELECT 1 FROM tickets WHERE booking_id = @booking_id AND passenger_phone = @phone
+        )
+            THROW 50040, N'Booking không tồn tại hoặc thông tin xác thực không đúng', 1;
+
+        IF EXISTS (SELECT 1 FROM payments WITH (UPDLOCK, HOLDLOCK) WHERE booking_id = @booking_id AND status = 'SUCCESS')
+            THROW 50080, N'Booking đã được thanh toán', 1;
+
+        IF @Status <> 'CONFIRMED'
+            THROW 50083, N'Booking chưa được xác nhận nên chưa thể thanh toán', 1;
+
+        -- Tiền mặt không có mã giao dịch ngoài hệ thống, tự sinh để luôn khác NULL
+        DECLARE @PaymentId VARCHAR(50);
+
+        SELECT TOP 1 @PaymentId = payment_id
+        FROM payments WITH (UPDLOCK)
+        WHERE booking_id = @booking_id AND status = 'PENDING'
+        ORDER BY payment_id;
+
+        IF @PaymentId IS NULL
+            SET @PaymentId = 'PAY-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8));
+
+        IF @transaction_code IS NULL
+            SET @transaction_code = 'CASH-' + @PaymentId;
+
+        IF EXISTS (SELECT 1 FROM payments WHERE transaction_code = @transaction_code AND payment_id <> @PaymentId)
+            THROW 50081, N'Mã giao dịch đã tồn tại', 1;
+
+        IF EXISTS (SELECT 1 FROM payments WHERE payment_id = @PaymentId)
+            UPDATE payments
+            SET method = @method,
+                amount = @TotalAmount,
+                paid_at = SYSDATETIME(),
+                transaction_code = @transaction_code,
+                status = 'SUCCESS'
+            WHERE payment_id = @PaymentId;
+        ELSE
+            INSERT INTO payments (payment_id, booking_id, method, amount, paid_at, transaction_code, status)
+            VALUES (@PaymentId, @booking_id, @method, @TotalAmount, SYSDATETIME(), @transaction_code, 'SUCCESS');
+
+        COMMIT TRANSACTION;
+
+        SELECT * FROM payments WHERE payment_id = @PaymentId;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
