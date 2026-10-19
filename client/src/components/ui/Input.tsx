@@ -16,7 +16,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
 		const stateClasses = error
 			? 'border-red-500 focus:border-red-600 focus:ring-4 focus:ring-red-500/15 pr-10'
-			: 'border-slate-300 hover:border-slate-400 focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15'
+			: 'border-slate-300 hover:border-slate-400 focus:border-[#1E3A5F] focus:ring-4 focus:ring-[#1E3A5F]/15'
+
 
 		return (
 			<div className="w-full space-y-1.5 text-left">

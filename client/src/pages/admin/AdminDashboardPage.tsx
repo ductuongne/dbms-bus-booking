@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
-import { Plus, Search, RefreshCw, Users } from 'lucide-react'
+import { Plus, Search, RefreshCw } from 'lucide-react'
 import { AxiosError } from 'axios'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
@@ -11,6 +11,8 @@ import type {
 import type { ApiErrorResponse } from '../../types/auth'
 import { Button } from '../../components/ui/Button'
 import { Alert } from '../../components/ui/Alert'
+import Input from '../../components/common/Input'
+import Select from '../../components/common/Select'
 import { UserTable } from './components/UserTable'
 import { UserFormModal } from './components/UserFormModal'
 
@@ -161,17 +163,14 @@ export const AdminDashboardPage: React.FC = () => {
 	}, [users, selectedRole, searchQuery])
 
 	return (
-		<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+		<div className="flex flex-col gap-5">
 			{/* Top Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
 				<div>
-					<div className="flex items-center gap-2">
-						<Users className="w-6 h-6 text-[#FF385C]" />
-						<h1 className="text-2xl font-black text-slate-900 tracking-tight">
-							Quản lý người dùng
-						</h1>
-					</div>
-					<p className="text-xs text-slate-500 mt-1">
+					<h2 className="text-xl font-bold text-slate-900">
+						Quản lý tài khoản &amp; Người dùng
+					</h2>
+					<p className="text-xs text-slate-500 mt-0.5">
 						Quản trị danh sách nhân sự, tài xế và khách hàng toàn hệ thống
 					</p>
 				</div>
@@ -179,28 +178,26 @@ export const AdminDashboardPage: React.FC = () => {
 					<Button
 						variant="outline"
 						size="md"
+						icon={
+							<RefreshCw
+								className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+							/>
+						}
 						onClick={handleRefresh}
 						disabled={isLoading}
-						className="cursor-pointer"
 					>
-						<RefreshCw
-							className={`w-4 h-4 mr-1.5 inline-block ${
-								isLoading ? 'animate-spin' : ''
-							}`}
-						/>
-						<span>Làm mới</span>
+						Làm mới
 					</Button>
 					<Button
 						variant="primary"
 						size="md"
+						icon={<Plus className="w-4 h-4" />}
 						onClick={() => {
 							setUserToEdit(null)
 							setIsModalOpen(true)
 						}}
-						className="cursor-pointer"
 					>
-						<Plus className="w-4 h-4 mr-1 inline-block" />
-						<span>Thêm người dùng</span>
+						Thêm người dùng
 					</Button>
 				</div>
 			</div>
@@ -213,28 +210,28 @@ export const AdminDashboardPage: React.FC = () => {
 
 			{/* Filter & Search Bar */}
 			<div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-				<div className="relative flex-1 w-full">
-					<Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-					<input
-						type="text"
+				<div className="flex-1 w-full">
+					<Input
+						icon={<Search className="w-4 h-4" />}
 						placeholder="Tìm kiếm theo mã, họ tên, số điện thoại hoặc email..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15 outline-none transition-all placeholder:text-slate-400"
 					/>
 				</div>
-				<select
-					value={selectedRole}
-					onChange={(e) => setSelectedRole(e.target.value)}
-					aria-label="Lọc theo vai trò"
-					className="w-full sm:w-56 px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-[#FF385C] focus:ring-4 focus:ring-red-500/15 outline-none transition-all cursor-pointer font-medium text-slate-700"
-				>
-					<option value="ALL">Tất cả vai trò</option>
-					<option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
-					<option value="STAFF">Nhân viên (STAFF)</option>
-					<option value="DRIVER">Tài xế (DRIVER)</option>
-					<option value="ADMIN">Quản trị viên (ADMIN)</option>
-				</select>
+				<div className="w-full sm:w-60">
+					<Select
+						value={selectedRole}
+						onChange={(e) => setSelectedRole(e.target.value)}
+						aria-label="Lọc theo vai trò"
+						options={[
+							{ value: 'ALL', label: 'Tất cả vai trò' },
+							{ value: 'CUSTOMER', label: 'Khách hàng (CUSTOMER)' },
+							{ value: 'STAFF', label: 'Nhân viên (STAFF)' },
+							{ value: 'DRIVER', label: 'Tài xế (DRIVER)' },
+							{ value: 'ADMIN', label: 'Quản trị viên (ADMIN)' },
+						]}
+					/>
+				</div>
 			</div>
 
 			{/* Presentational Table */}
