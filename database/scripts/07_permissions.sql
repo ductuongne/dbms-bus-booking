@@ -94,4 +94,86 @@ IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_KhachHang;
 GO
 
+-- ==============================================================================
+-- 6. TẠO 4 SERVER LOGINS & DATABASE USERS TƯƠNG ỨNG VỚI 4 ROLES
+-- ==============================================================================
+
+-- 6.1. Login & User cho Quản trị viên (Admin)
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'login_admin')
+BEGIN
+    CREATE LOGIN login_admin WITH PASSWORD = 'AdminStrongPassword@2026', CHECK_POLICY = OFF;
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'user_admin')
+BEGIN
+    CREATE USER user_admin FOR LOGIN login_admin;
+END
+GO
+ALTER ROLE Role_Admin ADD MEMBER user_admin;
+GO
+
+-- 6.2. Login & User cho Nhân viên (Staff)
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'login_nhanvien')
+BEGIN
+    CREATE LOGIN login_nhanvien WITH PASSWORD = 'StaffStrongPassword@2026', CHECK_POLICY = OFF;
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'user_nhanvien')
+BEGIN
+    CREATE USER user_nhanvien FOR LOGIN login_nhanvien;
+END
+GO
+ALTER ROLE Role_NhanVien ADD MEMBER user_nhanvien;
+GO
+
+-- 6.3. Login & User cho Tài xế (Driver)
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'login_taixe')
+BEGIN
+    CREATE LOGIN login_taixe WITH PASSWORD = 'DriverStrongPassword@2026', CHECK_POLICY = OFF;
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'user_taixe')
+BEGIN
+    CREATE USER user_taixe FOR LOGIN login_taixe;
+END
+GO
+ALTER ROLE Role_TaiXe ADD MEMBER user_taixe;
+GO
+
+-- 6.4. Login & User cho Khách hàng (Customer)
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'login_khachhang')
+BEGIN
+    CREATE LOGIN login_khachhang WITH PASSWORD = 'CustomerStrongPassword@2026', CHECK_POLICY = OFF;
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'user_khachhang')
+BEGIN
+    CREATE USER user_khachhang FOR LOGIN login_khachhang;
+END
+GO
+ALTER ROLE Role_KhachHang ADD MEMBER user_khachhang;
+GO
+
+-- ==============================================================================
+-- 7. MINH HỌA LỆNH REVOKE (THU HỒI QUYỀN ĐÃ CẤP)
+-- ==============================================================================
+-- Kịch bản nghiệp vụ:
+-- Trong đợt kiểm toán doanh thu, Nhân viên (Role_NhanVien) được Quản trị viên tạm cấp quyền
+-- xem thông tin nhạy cảm của bảng users và View thống kê tổng quan hệ thống.
+-- Sau khi kỳ kiểm toán kết thúc, Quản trị viên thực hiện lệnh REVOKE để thu hồi các quyền này,
+-- đảm bảo tuân thủ nghiêm ngặt nguyên tắc Đặc quyền tối thiểu (Least Privilege).
+
+-- Bước 7.1: Tạm cấp quyền cho Role_NhanVien
+GRANT SELECT ON dbo.users TO Role_NhanVien;
+IF OBJECT_ID('dbo.vw_ThongKeTongQuan', 'V') IS NOT NULL
+    GRANT SELECT ON dbo.vw_ThongKeTongQuan TO Role_NhanVien;
+GO
+
+-- Bước 7.2: Thu hồi quyền (REVOKE) đã tạm cấp
+REVOKE SELECT ON dbo.users FROM Role_NhanVien;
+IF OBJECT_ID('dbo.vw_ThongKeTongQuan', 'V') IS NOT NULL
+    REVOKE SELECT ON dbo.vw_ThongKeTongQuan FROM Role_NhanVien;
+GO
+
+
 

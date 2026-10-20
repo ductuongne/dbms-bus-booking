@@ -127,4 +127,52 @@ BEGIN
 END;
 GO
 
+-- 5. trg_CapNhatDiemTichLuyKhachHang (AFTER INSERT, UPDATE ON payments)
+-- Tự động tích lũy điểm thưởng thành viên khi thanh toán thành công (1 điểm cho mỗi 10.000 VNĐ)
+CREATE OR ALTER TRIGGER trg_CapNhatDiemTichLuyKhachHang
+ON payments
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Chỉ xử lý các giao dịch chuyển sang trạng thái SUCCESS
+    ;WITH NewlyPaid AS (
+        SELECT i.payment_id, i.booking_id, i.amount
+        FROM inserted i
+        LEFT JOIN deleted d ON d.payment_id = i.payment_id
+        WHERE i.status = 'SUCCESS' AND (d.payment_id IS NULL OR d.status <> 'SUCCESS')
+    )
+    UPDATE u
+    SET u.loyalty_points = u.loyalty_points + CAST(FLOOR(np.amount / 10000.0) AS INT)
+    FROM users u
+    JOIN bookings b ON b.customer_id = u.user_id
+    JOIN NewlyPaid np ON np.booking_id = b.booking_id;
+END;
+GO
+
+-- 6. trg_DongBoTrangThaiVeKhiBookingHuy (AFTER UPDATE ON bookings)
+-- Tự động cập nhật trạng thái vé thành CANCELLED khi đơn đặt vé bị CANCELLED hoặc EXPIRED
+CREATE OR ALTER TRIGGER trg_DongBoTrangThaiVeKhiBookingHuy
+ON bookings
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(status)
+    BEGIN
+        UPDATE t
+        SET t.status = 'CANCELLED'
+        FROM tickets t
+        JOIN inserted i ON i.booking_id = t.booking_id
+        JOIN deleted d ON d.booking_id = i.booking_id
+        WHERE i.status IN ('CANCELLED', 'EXPIRED')
+          AND d.status NOT IN ('CANCELLED', 'EXPIRED')
+          AND t.status NOT IN ('CANCELLED', 'CHECKED_IN');
+    END
+END;
+GO
+
+
 
