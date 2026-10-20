@@ -196,8 +196,8 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
             accountNumber: VIETQR_CONFIG.ACCOUNT_NUMBER,
             accountName: VIETQR_CONFIG.ACCOUNT_NAME,
             amount: holdRes.total_amount,
-            transferContent: `XEVIET ${holdRes.booking_code}`,
-            qrImageUrl: `https://img.vietqr.io/image/${VIETQR_CONFIG.BANK_BIN}-${VIETQR_CONFIG.ACCOUNT_NUMBER}-compact2.png?amount=${holdRes.total_amount}&addInfo=XEVIET%20${holdRes.booking_code}&accountName=${encodeURIComponent(
+            transferContent: `Daisy Booking ${holdRes.booking_code}`,
+            qrImageUrl: `https://img.vietqr.io/image/${VIETQR_CONFIG.BANK_BIN}-${VIETQR_CONFIG.ACCOUNT_NUMBER}-compact2.png?amount=${holdRes.total_amount}&addInfo=Daisy Booking%20${holdRes.booking_code}&accountName=${encodeURIComponent(
               VIETQR_CONFIG.ACCOUNT_NAME
             )}`,
             countdownSeconds: VIETQR_CONFIG.DEFAULT_COUNTDOWN_SECONDS,

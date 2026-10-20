@@ -1,10 +1,10 @@
-// Hằng số nghiệp vụ đặt vé xe khách theo Database Schema & UI XeViet
+// Hằng số nghiệp vụ đặt vé xe khách theo Database Schema & UI Daisy Booking
 
 export const BRAND_INFO = {
-  name: 'XeViet',
+  name: 'Daisy Booking',
   slogan: 'Đặt vé xe khách & Limousine trực tuyến',
   hotline: '1900 xxxx',
-  email: 'hotro@xeviet.vn',
+  email: 'hotro@daisy.vn',
   address: 'Hà Nội, Việt Nam',
 } as const;
 
@@ -120,11 +120,11 @@ export const BUS_LAYOUT_CONFIGS = {
   },
 } as const;
 
-// Thông tin mặc định cổng thanh toán VietQR
+// Thông tin cổng thanh toán VietQR lấy từ biến môi trường (.env)
 export const VIETQR_CONFIG = {
-  DEFAULT_BANK: 'VPBank',
-  BANK_BIN: '970432',
-  ACCOUNT_NUMBER: '1988668899',
-  ACCOUNT_NAME: 'CONG TY CP XEVIET',
-  DEFAULT_COUNTDOWN_SECONDS: 300,
+  DEFAULT_BANK: import.meta.env.VITE_VIETQR_DEFAULT_BANK ?? '',
+  BANK_BIN: import.meta.env.VITE_VIETQR_BANK_BIN ?? '',
+  ACCOUNT_NUMBER: import.meta.env.VITE_VIETQR_ACCOUNT_NUMBER ?? '',
+  ACCOUNT_NAME: import.meta.env.VITE_VIETQR_ACCOUNT_NAME ?? '',
+  DEFAULT_COUNTDOWN_SECONDS: Number(import.meta.env.VITE_VIETQR_COUNTDOWN_SECONDS ?? 0),
 } as const;

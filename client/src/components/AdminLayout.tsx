@@ -26,7 +26,7 @@ export const AdminLayout: React.FC = () => {
       <Drawer
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
-        title="Quản trị XeViet"
+        title="Quản trị Daisy Booking"
       >
         <div className="-m-5">
           <Sidebar onItemClick={() => setIsMobileSidebarOpen(false)} />

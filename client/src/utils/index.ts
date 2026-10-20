@@ -1,5 +1,5 @@
 /**
- * Các hàm tiện ích dùng chung cho ứng dụng XeViet
+ * Các hàm tiện ích dùng chung cho ứng dụng Daisy Booking
  */
 
 /**

@@ -162,7 +162,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 				<Input
 					label="Địa chỉ Email"
 					type="email"
-					placeholder="user@xeviet.vn"
+					placeholder="user@daisy.vn"
 					error={errors.email?.message}
 					{...register('email')}
 				/>

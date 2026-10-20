@@ -66,7 +66,7 @@ function mapSearchResultToTripCardView(
     id: item.trip_id,
     tripCode: item.trip_id,
     operator: {
-      name: 'XeViet Express',
+      name: 'Daisy Booking Express',
       rating: 4.9,
       reviewCount: 142,
       amenities: ['Wifi tốc độ cao', 'Nước suối miễn phí', 'Cổng sạc điện thoại'],

@@ -94,7 +94,7 @@ export const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto text-center max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-slate-200 border border-white/10 mb-4">
             <Bus className="w-3.5 h-3.5 text-[#C2410C]" />
-            <span>Nền tảng vé xe khách &amp; Limousine trực tuyến XeViet</span>
+            <span>Nền tảng vé xe khách &amp; Limousine trực tuyến Daisy Booking</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
@@ -350,7 +350,7 @@ export const HomePage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-10">
-            <h2 className="text-xl font-bold text-slate-900">Tại sao nên đặt vé tại XeViet?</h2>
+            <h2 className="text-xl font-bold text-slate-900">Tại sao nên đặt vé tại Daisy Booking?</h2>
             <p className="text-xs text-slate-500 mt-1">Trải nghiệm đặt vé trực quan, giữ chỗ chuẩn xác và an tâm trên từng cây số</p>
           </div>
 
@@ -386,7 +386,7 @@ export const HomePage: React.FC = () => {
               <div>
                 <h3 className="font-bold text-slate-900 text-sm mb-1">Bảo hiểm hành khách trọn vẹn</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  100% vé xuất qua hệ thống XeViet đều đi kèm bảo hiểm bắt buộc theo tiêu chuẩn vận tải đường bộ.
+                  100% vé xuất qua hệ thống Daisy Booking đều đi kèm bảo hiểm bắt buộc theo tiêu chuẩn vận tải đường bộ.
                 </p>
               </div>
             </div>

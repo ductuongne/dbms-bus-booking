@@ -36,11 +36,11 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-        {/* Logo XeViet */}
+        {/* Logo Daisy Booking */}
         <Link
           to="/"
           className="flex items-center gap-2.5 text-left cursor-pointer transition-transform hover:scale-102 shrink-0"
-          aria-label="Về trang chủ XeViet"
+          aria-label="Về trang chủ Daisy Booking"
         >
           <div className="w-10 h-10 rounded-xl bg-[#1E3A5F] flex items-center justify-center text-white shadow-xs">
             <Bus className="w-6 h-6" />
@@ -182,7 +182,7 @@ export const Header: React.FC = () => {
       <Drawer
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
-        title="Menu XeViet"
+        title="Menu Daisy Booking"
       >
         <div className="flex flex-col gap-4 text-sm">
           <Link

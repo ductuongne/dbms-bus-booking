@@ -112,10 +112,10 @@ BEGIN
                 DECLARE @GuestEmail VARCHAR(100) = @email;
                 IF @GuestEmail IS NULL OR LTRIM(RTRIM(@GuestEmail)) = '' OR EXISTS (SELECT 1 FROM users WHERE email = @GuestEmail)
                 BEGIN
-                    SET @GuestEmail = @ContactPhone + '@guest.xeviet.vn';
+                    SET @GuestEmail = @ContactPhone + '@guest.daisy.vn';
                     IF EXISTS (SELECT 1 FROM users WHERE email = @GuestEmail)
                     BEGIN
-                        SET @GuestEmail = @ContactPhone + '_' + LOWER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 6)) + '@guest.xeviet.vn';
+                        SET @GuestEmail = @ContactPhone + '_' + LOWER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 6)) + '@guest.daisy.vn';
                     END
                 END
 

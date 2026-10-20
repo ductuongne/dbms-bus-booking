@@ -90,7 +90,7 @@ export const RoutesPage: React.FC = () => {
             Mạng Lưới Tuyến Xe Toàn Quốc
           </h1>
           <p className="text-slate-200 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Tra cứu thông tin chính xác về các tuyến xe khách liên tỉnh XeViet, khoảng cách thực tế, thời gian di chuyển dự kiến và danh sách các điểm đón trả trung gian.
+            Tra cứu thông tin chính xác về các tuyến xe khách liên tỉnh Daisy Booking, khoảng cách thực tế, thời gian di chuyển dự kiến và danh sách các điểm đón trả trung gian.
           </p>
         </div>
       </section>
@@ -176,7 +176,7 @@ export const RoutesPage: React.FC = () => {
             <Navigation className="w-5 h-5 text-[#C2410C]" />
             <span>Danh sách tuyến xe đang vận hành ({filteredRoutes.length})</span>
           </h2>
-          <span className="text-xs text-slate-500">Dữ liệu thời gian thực từ hệ thống XeViet</span>
+          <span className="text-xs text-slate-500">Dữ liệu thời gian thực từ hệ thống Daisy Booking</span>
         </div>
 
         {loading ? (

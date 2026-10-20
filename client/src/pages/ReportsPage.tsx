@@ -148,7 +148,7 @@ export const ReportsPage: React.FC = () => {
             Báo cáo &amp; Thống kê
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tổng quan hiệu suất vận hành, doanh số bán vé và sản lượng chuyến xe hệ thống XeViet
+            Tổng quan hiệu suất vận hành, doanh số bán vé và sản lượng chuyến xe hệ thống Daisy Booking
           </p>
         </div>
         <div className="flex items-center gap-2">
