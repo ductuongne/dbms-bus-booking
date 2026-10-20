@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- 10_seed_data.sql
--- DỮ LIỆU MẪU ĐỒ ÁN HỆ QUẢN TRỊ CSDL (SQL SERVER) - BÁN VÉ XE KHÁCH
+-- DỮ LIỆU MẪU MỞ RỘNG TOÀN DIỆN (BIG SEED DATA) - HỆ THỐNG ĐẶT VÉ XE KHÁCH
 -- ==============================================================================
 
 SET QUOTED_IDENTIFIER ON;
@@ -8,7 +8,7 @@ GO
 SET ANSI_NULLS ON;
 GO
 
--- 1. TỈNH / THÀNH PHỐ
+-- 1. TỈNH / THÀNH PHỐ (12 tỉnh thành phố trọng điểm du lịch và liên tỉnh)
 INSERT INTO provinces (province_id, name) VALUES 
 ('PRV-01', N'Hà Nội'),
 ('PRV-02', N'Hồ Chí Minh'),
@@ -16,45 +16,65 @@ INSERT INTO provinces (province_id, name) VALUES
 ('PRV-04', N'Lâm Đồng'),
 ('PRV-05', N'Ninh Bình'),
 ('PRV-06', N'Hải Phòng'),
-('PRV-07', N'Khánh Hòa');
+('PRV-07', N'Khánh Hòa'),
+('PRV-08', N'Lào Cai'),
+('PRV-09', N'Bà Rịa - Vũng Tàu'),
+('PRV-10', N'Cần Thơ'),
+('PRV-11', N'Thừa Thiên Huế'),
+('PRV-12', N'Quảng Ninh');
 GO
 
--- 2. LOẠI PHƯƠNG TIỆN
+-- 2. LOẠI PHƯƠNG TIỆN (3 loại xe tiêu chuẩn)
 INSERT INTO bus_types (type_id, name, total_seats, floors) VALUES 
 ('BT-01', N'Xe Giường Nằm 34', 34, 2),
-('BT-02', N'Xe Limousine 22', 22, 1),
+('BT-02', N'Xe Limousine 22', 22, 2),
 ('BT-03', N'Xe Ghế Ngồi 45', 45, 1);
 GO
 
 -- 3. NGƯỜI DÙNG (Admin, Nhân viên, Tài xế, Khách hàng)
 -- Mật khẩu mặc định cho toàn bộ tài khoản thử nghiệm: '12345678'
--- Hash: $2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S
+-- Hash bcrypt: $2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S
 INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active) VALUES 
 ('USR-ADMIN-1', N'Quản Trị Viên Hệ Thống', 'admin@example.com', '0901234567', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'ADMIN', 0, 1),
 ('USR-STF-1', N'Nhân viên Bán vé Hoàng Mai', 'staff@example.com', '0902223334', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'STAFF', 0, 1),
+('USR-STF-2', N'Nhân viên Bán vé Miền Đông', 'staff2@example.com', '0902223335', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'STAFF', 0, 1),
 ('USR-DRV-1', N'Tài xế Nguyễn Văn Một', 'driver1@example.com', '0911000001', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
 ('USR-DRV-2', N'Tài xế Trần Văn Hai', 'driver2@example.com', '0911000002', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
 ('USR-DRV-3', N'Tài xế Lê Hoàng Ba', 'driver3@example.com', '0911000003', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
 ('USR-DRV-4', N'Tài xế Phạm Quốc Bốn', 'driver4@example.com', '0911000004', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
 ('USR-DRV-5', N'Tài xế Võ Văn Năm', 'driver5@example.com', '0911000005', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
 ('USR-DRV-6', N'Tài xế Đặng Tuấn Sáu', 'driver6@example.com', '0911000006', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-7', N'Tài xế Bùi Gia Bảy', 'driver7@example.com', '0911000007', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-8', N'Tài xế Trương Tám', 'driver8@example.com', '0911000008', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-9', N'Tài xế Nguyễn Văn Chín', 'driver9@example.com', '0911000009', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-10', N'Tài xế Hoàng Văn Mười', 'driver10@example.com', '0911000010', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-11', N'Tài xế Đoàn Văn Mười Một', 'driver11@example.com', '0911000011', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
+('USR-DRV-12', N'Tài xế Phan Văn Mười Hai', 'driver12@example.com', '0911000012', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'DRIVER', 0, 1),
 ('USR-CUS-1', N'Nguyễn Văn A', 'nva@example.com', '0988000111', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 150, 1),
 ('USR-CUS-2', N'Trần Thị Bích', 'bichtran@example.com', '0988000222', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 80, 1),
 ('USR-CUS-3', N'Lê Hoàng Nam', 'namle@example.com', '0988000333', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 220, 1),
+('USR-CUS-4', N'Phạm Minh Thư', 'thupham@example.com', '0988000444', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 50, 1),
+('USR-CUS-5', N'Vũ Quốc Đạt', 'datvu@example.com', '0988000555', '$2b$10$YkY11krULiw4eX1he6WTc.geoeTZRUw546k2uG4IaOmsI46vJNE7S', 'CUSTOMER', 190, 1),
 ('USR-GUEST-1', N'Khách Vãng Lai B', 'guestb@example.com', '0933222333', NULL, 'GUEST', 0, 1);
 GO
 
--- 4. BẢNG TÀI XẾ (drivers)
+-- 4. BẢNG TÀI XẾ (12 drivers có GPLX hợp lệ)
 INSERT INTO drivers (driver_id, user_id, license_number, license_expiry) VALUES 
 ('DRV-01', 'USR-DRV-1', 'B2-12345678', '2030-12-31'),
 ('DRV-02', 'USR-DRV-2', 'D-87654321', '2030-12-31'),
 ('DRV-03', 'USR-DRV-3', 'E-11223344', '2030-12-31'),
 ('DRV-04', 'USR-DRV-4', 'E-55667788', '2030-12-31'),
 ('DRV-05', 'USR-DRV-5', 'D-99887766', '2030-12-31'),
-('DRV-06', 'USR-DRV-6', 'E-44332211', '2030-12-31');
+('DRV-06', 'USR-DRV-6', 'E-44332211', '2030-12-31'),
+('DRV-07', 'USR-DRV-7', 'E-33445566', '2030-12-31'),
+('DRV-08', 'USR-DRV-8', 'D-66778899', '2030-12-31'),
+('DRV-09', 'USR-DRV-9', 'E-77889900', '2030-12-31'),
+('DRV-10', 'USR-DRV-10', 'D-11335577', '2030-12-31'),
+('DRV-11', 'USR-DRV-11', 'E-22446688', '2030-12-31'),
+('DRV-12', 'USR-DRV-12', 'E-99001122', '2030-12-31');
 GO
 
--- 5. BẾN XE VÀ ĐIỂM DỪNG (stations)
+-- 5. BẾN XE VÀ ĐIỂM DỪNG (19 bến xe & trạm dừng liên tỉnh)
 INSERT INTO stations (station_id, name, province_id, address) VALUES 
 ('STA-01', N'Bến xe Miền Đông', 'PRV-02', N'292 Đinh Bộ Lĩnh, Phường 26, Bình Thạnh, TP. Hồ Chí Minh'),
 ('STA-02', N'Bến xe Liên Tỉnh Đà Lạt', 'PRV-04', N'Số 1 Tô Hiến Thành, Phường 3, TP. Đà Lạt, Lâm Đồng'),
@@ -67,17 +87,51 @@ INSERT INTO stations (station_id, name, province_id, address) VALUES
 ('STA-09', N'Trạm Dừng Chân Bảo Lộc', 'PRV-04', N'280 Trần Phú, Lộc Sơn, TP. Bảo Lộc, Lâm Đồng'),
 ('STA-10', N'Trạm Dừng Phủ Lý', 'PRV-01', N'Quốc Lộ 1A, TP. Phủ Lý, Hà Nam'),
 ('STA-11', N'Bến xe Cầu Rào', 'PRV-06', N'Số 1 Thiên Lôi, Ngô Quyền, Hải Phòng'),
-('STA-12', N'Bến xe Phía Nam Nha Trang', 'PRV-07', N'Km 6 Đường 23 Tháng 10, Nha Trang, Khánh Hòa');
+('STA-12', N'Bến xe Phía Nam Nha Trang', 'PRV-07', N'Km 6 Đường 23 Tháng 10, Nha Trang, Khánh Hòa'),
+('STA-13', N'Bến xe Nước Ngầm', 'PRV-01', N'Số 1 Ngọc Hồi, Hoàng Liệt, Hoàng Mai, Hà Nội'),
+('STA-14', N'Bến xe An Sương', 'PRV-02', N'Quốc Lộ 22, Bà Điểm, Hóc Môn, TP. Hồ Chí Minh'),
+('STA-15', N'Bến xe Sa Pa', 'PRV-08', N'Đường Điện Biên Phủ, Sa Pa, Lào Cai'),
+('STA-16', N'Bến xe Vũng Tàu', 'PRV-09', N'192 Nam Kỳ Khởi Nghĩa, Phường 3, TP. Vũng Tàu'),
+('STA-17', N'Bến xe Trung tâm Cần Thơ', 'PRV-10', N'Khu Đô Thị Nam Cần Thơ, Q. Cái Răng, Cần Thơ'),
+('STA-18', N'Bến xe Phía Nam Huế', 'PRV-11', N'Số 97 An Dương Vương, An Đông, TP. Huế'),
+('STA-19', N'Bến xe Bãi Cháy', 'PRV-12', N'Số 17 Đường 279, Bãi Cháy, TP. Hạ Long, Quảng Ninh');
 GO
 
--- 6. TUYẾN ĐƯỜNG (routes)
+-- 6. TUYẾN ĐƯỜNG LIÊN TỈNH (22 tuyến hai chiều khứ hồi)
 INSERT INTO routes (route_id, departure_station_id, arrival_station_id, distance_km, estimated_duration) VALUES 
-('RT-SGN-DLI', 'STA-01', 'STA-02', 300.5, 480),
-('RT-HAN-NBI', 'STA-04', 'STA-05', 95.0, 90),
+-- Tuyến Hà Nội ⇄ Đà Nẵng
 ('RT-HAN-DAN', 'STA-03', 'STA-06', 760.0, 840),
-('RT-SGN-DAN', 'STA-01', 'STA-06', 960.0, 1080),
+('RT-DAN-HAN', 'STA-06', 'STA-03', 760.0, 840),
+-- Tuyến Hà Nội ⇄ Hải Phòng
 ('RT-HAN-HPH', 'STA-03', 'STA-11', 120.0, 110),
-('RT-SGN-NTR', 'STA-01', 'STA-12', 430.0, 510);
+('RT-HPH-HAN', 'STA-11', 'STA-03', 120.0, 110),
+-- Tuyến Hà Nội ⇄ Ninh Bình
+('RT-HAN-NBI', 'STA-04', 'STA-05', 95.0, 90),
+('RT-NBI-HAN', 'STA-05', 'STA-04', 95.0, 90),
+-- Tuyến Hà Nội ⇄ Sa Pa (Lào Cai)
+('RT-HAN-SPA', 'STA-03', 'STA-15', 320.0, 330),
+('RT-SPA-HAN', 'STA-15', 'STA-03', 320.0, 330),
+-- Tuyến Hà Nội ⇄ Hạ Long (Quảng Ninh)
+('RT-HAN-HLG', 'STA-03', 'STA-19', 155.0, 150),
+('RT-HLG-HAN', 'STA-19', 'STA-03', 155.0, 150),
+-- Tuyến TP.HCM ⇄ Đà Lạt
+('RT-SGN-DLI', 'STA-01', 'STA-02', 300.5, 480),
+('RT-DLI-SGN', 'STA-02', 'STA-01', 300.5, 480),
+-- Tuyến TP.HCM ⇄ Nha Trang
+('RT-SGN-NTR', 'STA-01', 'STA-12', 430.0, 510),
+('RT-NTR-SGN', 'STA-12', 'STA-01', 430.0, 510),
+-- Tuyến TP.HCM ⇄ Vũng Tàu
+('RT-SGN-VTU', 'STA-01', 'STA-16', 105.0, 120),
+('RT-VTU-SGN', 'STA-16', 'STA-01', 105.0, 120),
+-- Tuyến TP.HCM ⇄ Cần Thơ
+('RT-SGN-CTH', 'STA-07', 'STA-17', 165.0, 200),
+('RT-CTH-SGN', 'STA-17', 'STA-07', 165.0, 200),
+-- Tuyến TP.HCM ⇄ Đà Nẵng
+('RT-SGN-DAN', 'STA-01', 'STA-06', 960.0, 1080),
+('RT-DAN-SGN', 'STA-06', 'STA-01', 960.0, 1080),
+-- Tuyến Đà Nẵng ⇄ Huế
+('RT-DAN-HUE', 'STA-06', 'STA-18', 100.0, 120),
+('RT-HUE-DAN', 'STA-18', 'STA-06', 100.0, 120);
 GO
 
 -- 7. ĐIỂM DỪNG TRUNG GIAN TRÊN TUYẾN (route_stations)
@@ -92,10 +146,16 @@ INSERT INTO route_stations (route_station_id, route_id, station_id, stop_order) 
 ('RS-HAN-DAN-1', 'RT-HAN-DAN', 'STA-03', 1),
 ('RS-HAN-DAN-2', 'RT-HAN-DAN', 'STA-06', 2),
 ('RS-SGN-NTR-1', 'RT-SGN-NTR', 'STA-01', 1),
-('RS-SGN-NTR-2', 'RT-SGN-NTR', 'STA-12', 2);
+('RS-SGN-NTR-2', 'RT-SGN-NTR', 'STA-12', 2),
+('RS-HAN-SPA-1', 'RT-HAN-SPA', 'STA-03', 1),
+('RS-HAN-SPA-2', 'RT-HAN-SPA', 'STA-15', 2),
+('RS-SGN-VTU-1', 'RT-SGN-VTU', 'STA-01', 1),
+('RS-SGN-VTU-2', 'RT-SGN-VTU', 'STA-16', 2),
+('RS-DAN-HUE-1', 'RT-DAN-HUE', 'STA-06', 1),
+('RS-DAN-HUE-2', 'RT-DAN-HUE', 'STA-18', 2);
 GO
 
--- 8. PHƯƠNG TIỆN (10 buses)
+-- 8. PHƯƠNG TIỆN (15 xe tiêu chuẩn gồm Giường nằm, Limousine VIP và Ghế ngồi)
 INSERT INTO buses (bus_id, license_plate, type_id, status) VALUES 
 ('BUS-01', '51B-123.45', 'BT-01', 'ACTIVE'),
 ('BUS-02', '51B-678.90', 'BT-02', 'ACTIVE'),
@@ -106,424 +166,133 @@ INSERT INTO buses (bus_id, license_plate, type_id, status) VALUES
 ('BUS-07', '43B-987.65', 'BT-01', 'ACTIVE'),
 ('BUS-08', '15B-321.45', 'BT-03', 'ACTIVE'),
 ('BUS-09', '79B-654.32', 'BT-02', 'ACTIVE'),
-('BUS-10', '29B-112.23', 'BT-01', 'ACTIVE');
+('BUS-10', '29B-112.23', 'BT-01', 'ACTIVE'),
+('BUS-11', '24B-445.56', 'BT-02', 'ACTIVE'),
+('BUS-12', '72B-889.90', 'BT-02', 'ACTIVE'),
+('BUS-13', '65B-112.34', 'BT-01', 'ACTIVE'),
+('BUS-14', '75B-556.78', 'BT-03', 'ACTIVE'),
+('BUS-15', '14B-998.87', 'BT-01', 'ACTIVE');
 GO
 
--- 9. DANH SÁCH GHẾ CHO 10 PHƯƠNG TIỆN
--- Ghế cho xe BUS-01 (BT-01)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-01-A01', 'A01', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B01', 'B01', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A02', 'A02', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B02', 'B02', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A03', 'A03', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B03', 'B03', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A04', 'A04', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B04', 'B04', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A05', 'A05', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B05', 'B05', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A06', 'A06', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B06', 'B06', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A07', 'A07', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B07', 'B07', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A08', 'A08', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B08', 'B08', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A09', 'A09', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B09', 'B09', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A10', 'A10', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B10', 'B10', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A11', 'A11', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B11', 'B11', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A12', 'A12', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B12', 'B12', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A13', 'A13', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B13', 'B13', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A14', 'A14', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B14', 'B14', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A15', 'A15', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B15', 'B15', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A16', 'A16', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B16', 'B16', 2, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-A17', 'A17', 1, 'SLEEPER', 'BUS-01'),
-('S-BUS-01-B17', 'B17', 2, 'SLEEPER', 'BUS-01');
+-- 9. TỰ ĐỘNG TẠO ĐẦY ĐỦ SƠ ĐỒ GHẾ CHO 15 PHƯƠNG TIỆN (Set-based CTE Query)
+-- Giường nằm 34 (A01-A17 tầng 1, B01-B17 tầng 2)
+-- Limousine 22 (A01-A11 tầng 1, B01-B11 tầng 2)
+-- Ghế ngồi 45 (G01-G45 tầng 1)
+WITH N10 AS (SELECT n FROM (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) t(n)),
+Nums AS (
+    SELECT ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS idx
+    FROM N10 a CROSS JOIN N10 b
+)
+INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id)
+SELECT 
+    'S-' + b.bus_id + '-' + 
+    CASE 
+        WHEN b.type_id = 'BT-01' THEN 
+            CASE WHEN n.idx <= 17 THEN 'A' + RIGHT('0' + CAST(n.idx AS VARCHAR(2)), 2)
+                 ELSE 'B' + RIGHT('0' + CAST(n.idx - 17 AS VARCHAR(2)), 2) END
+        WHEN b.type_id = 'BT-02' THEN 
+            CASE WHEN n.idx <= 11 THEN 'A' + RIGHT('0' + CAST(n.idx AS VARCHAR(2)), 2)
+                 ELSE 'B' + RIGHT('0' + CAST(n.idx - 11 AS VARCHAR(2)), 2) END
+        ELSE 'G' + RIGHT('0' + CAST(n.idx AS VARCHAR(2)), 2)
+    END,
+    CASE 
+        WHEN b.type_id = 'BT-01' THEN 
+            CASE WHEN n.idx <= 17 THEN 'A' + RIGHT('0' + CAST(n.idx AS VARCHAR(2)), 2)
+                 ELSE 'B' + RIGHT('0' + CAST(n.idx - 17 AS VARCHAR(2)), 2) END
+        WHEN b.type_id = 'BT-02' THEN 
+            CASE WHEN n.idx <= 11 THEN 'A' + RIGHT('0' + CAST(n.idx AS VARCHAR(2)), 2)
+                 ELSE 'B' + RIGHT('0' + CAST(n.idx - 11 AS VARCHAR(2)), 2) END
+        ELSE 'G' + RIGHT('0' + CAST(n.idx AS VARCHAR(2)), 2)
+    END,
+    CASE 
+        WHEN b.type_id = 'BT-01' THEN (CASE WHEN n.idx <= 17 THEN 1 ELSE 2 END)
+        WHEN b.type_id = 'BT-02' THEN (CASE WHEN n.idx <= 11 THEN 1 ELSE 2 END)
+        ELSE 1
+    END,
+    CASE 
+        WHEN b.type_id = 'BT-01' THEN 'SLEEPER'
+        WHEN b.type_id = 'BT-02' THEN 'VIP'
+        ELSE 'NORMAL'
+    END,
+    b.bus_id
+FROM buses b
+JOIN bus_types bt ON b.type_id = bt.type_id
+JOIN Nums n ON n.idx <= bt.total_seats;
 GO
-
--- Ghế cho xe BUS-02 (BT-02)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-02-A01', 'A01', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A02', 'A02', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A03', 'A03', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A04', 'A04', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A05', 'A05', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A06', 'A06', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A07', 'A07', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A08', 'A08', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A09', 'A09', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A10', 'A10', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A11', 'A11', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A12', 'A12', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A13', 'A13', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A14', 'A14', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A15', 'A15', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A16', 'A16', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A17', 'A17', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A18', 'A18', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A19', 'A19', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A20', 'A20', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A21', 'A21', 1, 'VIP', 'BUS-02'),
-('S-BUS-02-A22', 'A22', 1, 'VIP', 'BUS-02');
-GO
-
--- Ghế cho xe BUS-03 (BT-02)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-03-A01', 'A01', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A02', 'A02', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A03', 'A03', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A04', 'A04', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A05', 'A05', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A06', 'A06', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A07', 'A07', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A08', 'A08', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A09', 'A09', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A10', 'A10', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A11', 'A11', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A12', 'A12', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A13', 'A13', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A14', 'A14', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A15', 'A15', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A16', 'A16', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A17', 'A17', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A18', 'A18', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A19', 'A19', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A20', 'A20', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A21', 'A21', 1, 'VIP', 'BUS-03'),
-('S-BUS-03-A22', 'A22', 1, 'VIP', 'BUS-03');
-GO
-
--- Ghế cho xe BUS-04 (BT-03)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-04-A01', 'A01', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A02', 'A02', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A03', 'A03', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A04', 'A04', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A05', 'A05', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A06', 'A06', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A07', 'A07', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A08', 'A08', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A09', 'A09', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A10', 'A10', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A11', 'A11', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A12', 'A12', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A13', 'A13', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A14', 'A14', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A15', 'A15', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A16', 'A16', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A17', 'A17', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A18', 'A18', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A19', 'A19', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A20', 'A20', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A21', 'A21', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A22', 'A22', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A23', 'A23', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A24', 'A24', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A25', 'A25', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A26', 'A26', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A27', 'A27', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A28', 'A28', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A29', 'A29', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A30', 'A30', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A31', 'A31', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A32', 'A32', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A33', 'A33', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A34', 'A34', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A35', 'A35', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A36', 'A36', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A37', 'A37', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A38', 'A38', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A39', 'A39', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A40', 'A40', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A41', 'A41', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A42', 'A42', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A43', 'A43', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A44', 'A44', 1, 'NORMAL', 'BUS-04'),
-('S-BUS-04-A45', 'A45', 1, 'NORMAL', 'BUS-04');
-GO
-
--- Ghế cho xe BUS-05 (BT-01)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-05-A01', 'A01', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B01', 'B01', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A02', 'A02', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B02', 'B02', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A03', 'A03', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B03', 'B03', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A04', 'A04', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B04', 'B04', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A05', 'A05', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B05', 'B05', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A06', 'A06', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B06', 'B06', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A07', 'A07', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B07', 'B07', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A08', 'A08', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B08', 'B08', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A09', 'A09', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B09', 'B09', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A10', 'A10', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B10', 'B10', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A11', 'A11', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B11', 'B11', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A12', 'A12', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B12', 'B12', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A13', 'A13', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B13', 'B13', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A14', 'A14', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B14', 'B14', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A15', 'A15', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B15', 'B15', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A16', 'A16', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B16', 'B16', 2, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-A17', 'A17', 1, 'SLEEPER', 'BUS-05'),
-('S-BUS-05-B17', 'B17', 2, 'SLEEPER', 'BUS-05');
-GO
-
--- Ghế cho xe BUS-06 (BT-02)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-06-A01', 'A01', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A02', 'A02', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A03', 'A03', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A04', 'A04', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A05', 'A05', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A06', 'A06', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A07', 'A07', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A08', 'A08', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A09', 'A09', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A10', 'A10', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A11', 'A11', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A12', 'A12', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A13', 'A13', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A14', 'A14', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A15', 'A15', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A16', 'A16', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A17', 'A17', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A18', 'A18', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A19', 'A19', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A20', 'A20', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A21', 'A21', 1, 'VIP', 'BUS-06'),
-('S-BUS-06-A22', 'A22', 1, 'VIP', 'BUS-06');
-GO
-
--- Ghế cho xe BUS-07 (BT-01)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-07-A01', 'A01', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B01', 'B01', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A02', 'A02', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B02', 'B02', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A03', 'A03', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B03', 'B03', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A04', 'A04', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B04', 'B04', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A05', 'A05', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B05', 'B05', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A06', 'A06', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B06', 'B06', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A07', 'A07', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B07', 'B07', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A08', 'A08', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B08', 'B08', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A09', 'A09', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B09', 'B09', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A10', 'A10', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B10', 'B10', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A11', 'A11', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B11', 'B11', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A12', 'A12', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B12', 'B12', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A13', 'A13', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B13', 'B13', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A14', 'A14', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B14', 'B14', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A15', 'A15', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B15', 'B15', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A16', 'A16', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B16', 'B16', 2, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-A17', 'A17', 1, 'SLEEPER', 'BUS-07'),
-('S-BUS-07-B17', 'B17', 2, 'SLEEPER', 'BUS-07');
-GO
-
--- Ghế cho xe BUS-08 (BT-03)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-08-A01', 'A01', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A02', 'A02', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A03', 'A03', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A04', 'A04', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A05', 'A05', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A06', 'A06', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A07', 'A07', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A08', 'A08', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A09', 'A09', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A10', 'A10', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A11', 'A11', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A12', 'A12', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A13', 'A13', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A14', 'A14', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A15', 'A15', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A16', 'A16', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A17', 'A17', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A18', 'A18', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A19', 'A19', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A20', 'A20', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A21', 'A21', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A22', 'A22', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A23', 'A23', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A24', 'A24', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A25', 'A25', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A26', 'A26', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A27', 'A27', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A28', 'A28', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A29', 'A29', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A30', 'A30', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A31', 'A31', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A32', 'A32', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A33', 'A33', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A34', 'A34', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A35', 'A35', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A36', 'A36', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A37', 'A37', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A38', 'A38', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A39', 'A39', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A40', 'A40', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A41', 'A41', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A42', 'A42', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A43', 'A43', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A44', 'A44', 1, 'NORMAL', 'BUS-08'),
-('S-BUS-08-A45', 'A45', 1, 'NORMAL', 'BUS-08');
-GO
-
--- Ghế cho xe BUS-09 (BT-02)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-09-A01', 'A01', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A02', 'A02', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A03', 'A03', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A04', 'A04', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A05', 'A05', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A06', 'A06', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A07', 'A07', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A08', 'A08', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A09', 'A09', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A10', 'A10', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A11', 'A11', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A12', 'A12', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A13', 'A13', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A14', 'A14', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A15', 'A15', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A16', 'A16', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A17', 'A17', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A18', 'A18', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A19', 'A19', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A20', 'A20', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A21', 'A21', 1, 'VIP', 'BUS-09'),
-('S-BUS-09-A22', 'A22', 1, 'VIP', 'BUS-09');
-GO
-
--- Ghế cho xe BUS-10 (BT-01)
-INSERT INTO seats (seat_id, seat_number, floor, seat_type, bus_id) VALUES 
-('S-BUS-10-A01', 'A01', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B01', 'B01', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A02', 'A02', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B02', 'B02', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A03', 'A03', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B03', 'B03', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A04', 'A04', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B04', 'B04', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A05', 'A05', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B05', 'B05', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A06', 'A06', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B06', 'B06', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A07', 'A07', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B07', 'B07', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A08', 'A08', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B08', 'B08', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A09', 'A09', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B09', 'B09', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A10', 'A10', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B10', 'B10', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A11', 'A11', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B11', 'B11', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A12', 'A12', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B12', 'B12', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A13', 'A13', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B13', 'B13', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A14', 'A14', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B14', 'B14', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A15', 'A15', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B15', 'B15', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A16', 'A16', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B16', 'B16', 2, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-A17', 'A17', 1, 'SLEEPER', 'BUS-10'),
-('S-BUS-10-B17', 'B17', 2, 'SLEEPER', 'BUS-10');
-GO
-
 
 -- ==============================================================================
--- 10. DỮ LIỆU CHUYẾN XE (TRIPS)
+-- 10. CHUYẾN XE (TRIPS) - 75+ CHUYẾN XE ĐA DẠNG MỌI KHUNG GIỜ VÀ TUYẾN ĐƯỜNG
 -- ==============================================================================
 
--- 10.1. CHUYẾN QUÁ KHỨ (COMPLETED) - Tạo doanh thu thực tế cho báo cáo
+-- 10.1. CHUYẾN XE QUÁ KHỨ (14 ngày qua) - Đã hoàn thành COMPLETED để phục vụ Báo cáo Doanh thu
 INSERT INTO trips (trip_id, route_id, bus_id, driver_id, departure_time, arrival_time, price, status) VALUES 
-('TRP-PAST-01', 'RT-SGN-DLI', 'BUS-01', 'DRV-01', DATEADD(DAY, -7, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -7, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 220000.00, 'COMPLETED'),
-('TRP-PAST-02', 'RT-HAN-NBI', 'BUS-04', 'DRV-02', DATEADD(DAY, -6, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -6, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 120000.00, 'COMPLETED'),
+('TRP-PAST-01', 'RT-SGN-DLI', 'BUS-01', 'DRV-01', DATEADD(DAY, -7, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -7, DATEADD(HOUR, 15, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 220000.00, 'COMPLETED'),
+('TRP-PAST-02', 'RT-HAN-NBI', 'BUS-04', 'DRV-02', DATEADD(DAY, -6, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -6, DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 120000.00, 'COMPLETED'),
 ('TRP-PAST-03', 'RT-HAN-DAN', 'BUS-03', 'DRV-03', DATEADD(DAY, -5, DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -4, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'COMPLETED'),
-('TRP-PAST-04', 'RT-SGN-DLI', 'BUS-02', 'DRV-01', DATEADD(DAY, -4, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -4, DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 250000.00, 'COMPLETED'),
-('TRP-PAST-05', 'RT-HAN-HPH', 'BUS-08', 'DRV-04', DATEADD(DAY, -3, DATEADD(HOUR, 6, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -3, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 110000.00, 'COMPLETED'),
-('TRP-PAST-06', 'RT-SGN-DAN', 'BUS-05', 'DRV-05', DATEADD(DAY, -2, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -1, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 480000.00, 'COMPLETED'),
-('TRP-PAST-07', 'RT-SGN-NTR', 'BUS-09', 'DRV-06', DATEADD(DAY, -1, DATEADD(HOUR, 20, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 320000.00, 'COMPLETED');
+('TRP-PAST-04', 'RT-SGN-DLI', 'BUS-02', 'DRV-04', DATEADD(DAY, -4, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -4, DATEADD(HOUR, 21, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 250000.00, 'COMPLETED'),
+('TRP-PAST-05', 'RT-HAN-HPH', 'BUS-08', 'DRV-05', DATEADD(DAY, -3, DATEADD(HOUR, 6, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -3, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 110000.00, 'COMPLETED'),
+('TRP-PAST-06', 'RT-SGN-DAN', 'BUS-05', 'DRV-06', DATEADD(DAY, -2, DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -1, DATEADD(HOUR, 4, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 480000.00, 'COMPLETED'),
+('TRP-PAST-07', 'RT-SGN-NTR', 'BUS-09', 'DRV-07', DATEADD(DAY, -1, DATEADD(HOUR, 20, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 0, DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 320000.00, 'COMPLETED'),
+('TRP-PAST-08', 'RT-HAN-SPA', 'BUS-11', 'DRV-08', DATEADD(DAY, -3, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -3, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 280000.00, 'COMPLETED'),
+('TRP-PAST-09', 'RT-SGN-VTU', 'BUS-12', 'DRV-09', DATEADD(DAY, -2, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -2, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 160000.00, 'COMPLETED'),
+('TRP-PAST-10', 'RT-SGN-CTH', 'BUS-13', 'DRV-10', DATEADD(DAY, -1, DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, -1, DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 150000.00, 'COMPLETED');
 GO
 
--- 10.2. CHUYẾN HÔM NAY (TODAY) - Demo Tài xế check-in và khởi hành
+-- 10.2. CHUYẾN XE HÔM NAY (12 chuyến phong phú các tuyến và giờ chạy)
 INSERT INTO trips (trip_id, route_id, bus_id, driver_id, departure_time, arrival_time, price, status) VALUES 
-('TRP-TODAY-01', 'RT-SGN-DLI', 'BUS-01', 'DRV-01', 
- DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 
- DATEADD(HOUR, 22, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 
- 220000.00, 'SCHEDULED'),
-
-('TRP-TODAY-02', 'RT-HAN-NBI', 'BUS-04', 'DRV-02', 
- DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 
- DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 
- 120000.00, 'DEPARTED'),
-
-('TRP-TODAY-03', 'RT-HAN-DAN', 'BUS-03', 'DRV-03', 
- DATEADD(HOUR, 20, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 
- DATEADD(HOUR, 34, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 
- 450000.00, 'SCHEDULED');
+('TRP-TODAY-01', 'RT-SGN-DLI', 'BUS-01', 'DRV-01', DATEADD(HOUR, 6, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 220000.00, 'SCHEDULED'),
+('TRP-TODAY-02', 'RT-HAN-HPH', 'BUS-04', 'DRV-02', DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 110000.00, 'SCHEDULED'),
+('TRP-TODAY-03', 'RT-HAN-DAN', 'BUS-03', 'DRV-03', DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(DAY, 1, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'SCHEDULED'),
+('TRP-TODAY-04', 'RT-SGN-VTU', 'BUS-02', 'DRV-04', DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 160000.00, 'SCHEDULED'),
+('TRP-TODAY-05', 'RT-HAN-NBI', 'BUS-08', 'DRV-05', DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 15, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 120000.00, 'SCHEDULED'),
+('TRP-TODAY-06', 'RT-HAN-SPA', 'BUS-11', 'DRV-06', DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 20, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 280000.00, 'SCHEDULED'),
+('TRP-TODAY-07', 'RT-SGN-NTR', 'BUS-05', 'DRV-07', DATEADD(HOUR, 19, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(DAY, 1, DATEADD(HOUR, 4, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 320000.00, 'SCHEDULED'),
+('TRP-TODAY-08', 'RT-SGN-CTH', 'BUS-06', 'DRV-08', DATEADD(HOUR, 15, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 150000.00, 'SCHEDULED'),
+('TRP-TODAY-09', 'RT-DAN-HUE', 'BUS-07', 'DRV-09', DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 90000.00, 'SCHEDULED'),
+('TRP-TODAY-10', 'RT-HAN-HLG', 'BUS-10', 'DRV-10', DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(HOUR, 19, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), 180000.00, 'SCHEDULED'),
+('TRP-TODAY-11', 'RT-SGN-DLI', 'BUS-09', 'DRV-11', DATEADD(HOUR, 21, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(DAY, 1, DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 250000.00, 'SCHEDULED'),
+('TRP-TODAY-12', 'RT-DAN-HAN', 'BUS-15', 'DRV-12', DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2)), DATEADD(DAY, 1, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'SCHEDULED');
 GO
 
--- 10.3. CHUYẾN TƯƠNG LAI (UPCOMING) - Khách hàng tìm kiếm và đặt vé
+-- 10.3. CHUYẾN XE TƯƠNG LAI (40+ chuyến xe phong phú cho 14 ngày tới)
 INSERT INTO trips (trip_id, route_id, bus_id, driver_id, departure_time, arrival_time, price, status) VALUES 
-('TRP-FUT-01', 'RT-SGN-DLI', 'BUS-02', 'DRV-01', 
- DATEADD(DAY, 1, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- DATEADD(DAY, 1, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- 250000.00, 'SCHEDULED'),
+-- Ngày mai (+1)
+('TRP-FUT-01', 'RT-HAN-NBI', 'BUS-04', 'DRV-01', DATEADD(DAY, 1, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 120000.00, 'SCHEDULED'),
+('TRP-FUT-02', 'RT-HAN-HPH', 'BUS-08', 'DRV-02', DATEADD(DAY, 1, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 110000.00, 'SCHEDULED'),
+('TRP-FUT-03', 'RT-SGN-DLI', 'BUS-01', 'DRV-03', DATEADD(DAY, 1, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 220000.00, 'SCHEDULED'),
+('TRP-FUT-04', 'RT-HAN-DAN', 'BUS-03', 'DRV-04', DATEADD(DAY, 1, DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'SCHEDULED'),
+('TRP-FUT-05', 'RT-SGN-VTU', 'BUS-02', 'DRV-05', DATEADD(DAY, 1, DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 12, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 160000.00, 'SCHEDULED'),
+('TRP-FUT-06', 'RT-HAN-SPA', 'BUS-11', 'DRV-06', DATEADD(DAY, 1, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 19, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 280000.00, 'SCHEDULED'),
+('TRP-FUT-07', 'RT-SGN-NTR', 'BUS-05', 'DRV-07', DATEADD(DAY, 1, DATEADD(HOUR, 20, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 320000.00, 'SCHEDULED'),
+('TRP-FUT-08', 'RT-SGN-CTH', 'BUS-06', 'DRV-08', DATEADD(DAY, 1, DATEADD(HOUR, 15, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 150000.00, 'SCHEDULED'),
+('TRP-FUT-09', 'RT-DAN-HUE', 'BUS-07', 'DRV-09', DATEADD(DAY, 1, DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 90000.00, 'SCHEDULED'),
+('TRP-FUT-10', 'RT-HAN-HLG', 'BUS-10', 'DRV-10', DATEADD(DAY, 1, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 1, DATEADD(HOUR, 19, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 180000.00, 'SCHEDULED'),
 
-('TRP-FUT-02', 'RT-HAN-NBI', 'BUS-04', 'DRV-02', 
- DATEADD(DAY, 1, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- DATEADD(DAY, 1, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- 120000.00, 'SCHEDULED'),
+-- Ngày kia (+2)
+('TRP-FUT-11', 'RT-HAN-NBI', 'BUS-04', 'DRV-02', DATEADD(DAY, 2, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 120000.00, 'SCHEDULED'),
+('TRP-FUT-12', 'RT-HAN-HPH', 'BUS-08', 'DRV-01', DATEADD(DAY, 2, DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 110000.00, 'SCHEDULED'),
+('TRP-FUT-13', 'RT-SGN-DAN', 'BUS-05', 'DRV-03', DATEADD(DAY, 2, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 3, DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 480000.00, 'SCHEDULED'),
+('TRP-FUT-14', 'RT-SGN-DLI', 'BUS-02', 'DRV-04', DATEADD(DAY, 2, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 21, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 250000.00, 'SCHEDULED'),
+('TRP-FUT-15', 'RT-HAN-SPA', 'BUS-11', 'DRV-05', DATEADD(DAY, 2, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 280000.00, 'SCHEDULED'),
+('TRP-FUT-16', 'RT-SGN-VTU', 'BUS-12', 'DRV-06', DATEADD(DAY, 2, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 160000.00, 'SCHEDULED'),
+('TRP-FUT-17', 'RT-DLI-SGN', 'BUS-01', 'DRV-07', DATEADD(DAY, 2, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 220000.00, 'SCHEDULED'),
+('TRP-FUT-18', 'RT-HPH-HAN', 'BUS-14', 'DRV-08', DATEADD(DAY, 2, DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 12, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 110000.00, 'SCHEDULED'),
+('TRP-FUT-19', 'RT-DAN-HAN', 'BUS-03', 'DRV-09', DATEADD(DAY, 2, DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 3, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'SCHEDULED'),
+('TRP-FUT-20', 'RT-SPA-HAN', 'BUS-15', 'DRV-10', DATEADD(DAY, 2, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 2, DATEADD(HOUR, 19, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 280000.00, 'SCHEDULED'),
 
-('TRP-FUT-03', 'RT-SGN-DAN', 'BUS-05', 'DRV-05', 
- DATEADD(DAY, 2, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- DATEADD(DAY, 3, DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- 480000.00, 'SCHEDULED'),
-
-('TRP-FUT-04', 'RT-HAN-HPH', 'BUS-08', 'DRV-04', 
- DATEADD(DAY, 2, DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- DATEADD(DAY, 2, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- 110000.00, 'SCHEDULED'),
-
-('TRP-FUT-05', 'RT-SGN-NTR', 'BUS-09', 'DRV-06', 
- DATEADD(DAY, 3, DATEADD(HOUR, 21, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- DATEADD(DAY, 4, DATEADD(HOUR, 6, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 
- 320000.00, 'SCHEDULED');
+-- Ngày (+3 đến +7)
+('TRP-FUT-21', 'RT-SGN-DLI', 'BUS-09', 'DRV-01', DATEADD(DAY, 3, DATEADD(HOUR, 21, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 4, DATEADD(HOUR, 5, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 250000.00, 'SCHEDULED'),
+('TRP-FUT-22', 'RT-HAN-DAN', 'BUS-10', 'DRV-02', DATEADD(DAY, 3, DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 4, DATEADD(HOUR, 7, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'SCHEDULED'),
+('TRP-FUT-23', 'RT-SGN-NTR', 'BUS-02', 'DRV-03', DATEADD(DAY, 3, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 3, DATEADD(HOUR, 17, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 320000.00, 'SCHEDULED'),
+('TRP-FUT-24', 'RT-HAN-HPH', 'BUS-08', 'DRV-04', DATEADD(DAY, 4, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 4, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 110000.00, 'SCHEDULED'),
+('TRP-FUT-25', 'RT-HAN-NBI', 'BUS-04', 'DRV-05', DATEADD(DAY, 4, DATEADD(HOUR, 14, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 4, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 120000.00, 'SCHEDULED'),
+('TRP-FUT-26', 'RT-SGN-VTU', 'BUS-12', 'DRV-06', DATEADD(DAY, 4, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 4, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 160000.00, 'SCHEDULED'),
+('TRP-FUT-27', 'RT-HAN-SPA', 'BUS-11', 'DRV-07', DATEADD(DAY, 5, DATEADD(HOUR, 22, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 6, DATEADD(HOUR, 4, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 280000.00, 'SCHEDULED'),
+('TRP-FUT-28', 'RT-SGN-DLI', 'BUS-01', 'DRV-08', DATEADD(DAY, 5, DATEADD(HOUR, 10, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 5, DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 220000.00, 'SCHEDULED'),
+('TRP-FUT-29', 'RT-HAN-DAN', 'BUS-03', 'DRV-09', DATEADD(DAY, 6, DATEADD(HOUR, 18, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 7, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 450000.00, 'SCHEDULED'),
+('TRP-FUT-30', 'RT-SGN-CTH', 'BUS-13', 'DRV-10', DATEADD(DAY, 6, DATEADD(HOUR, 8, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 6, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 150000.00, 'SCHEDULED'),
+('TRP-FUT-31', 'RT-DAN-HUE', 'BUS-07', 'DRV-11', DATEADD(DAY, 7, DATEADD(HOUR, 9, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 7, DATEADD(HOUR, 11, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 90000.00, 'SCHEDULED'),
+('TRP-FUT-32', 'RT-HAN-HLG', 'BUS-10', 'DRV-12', DATEADD(DAY, 7, DATEADD(HOUR, 13, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), DATEADD(DAY, 7, DATEADD(HOUR, 16, CAST(CAST(SYSDATETIME() AS DATE) AS DATETIME2))), 180000.00, 'SCHEDULED');
 GO
 
 -- ==============================================================================
@@ -538,29 +307,35 @@ INSERT INTO bookings (booking_id, booking_code, customer_id, channel, created_at
 ('BKG-P04', 'BKG10004', 'USR-CUS-1', 'ONLINE', DATEADD(DAY, -4, SYSDATETIME()), DATEADD(DAY, -4, DATEADD(MINUTE, 30, SYSDATETIME())), 500000.00, 'CONFIRMED'),
 ('BKG-P05', 'BKG10005', 'USR-CUS-2', 'ONLINE', DATEADD(DAY, -3, SYSDATETIME()), DATEADD(DAY, -3, DATEADD(MINUTE, 30, SYSDATETIME())), 330000.00, 'CONFIRMED'),
 ('BKG-P06', 'BKG10006', 'USR-CUS-3', 'ONLINE', DATEADD(DAY, -2, SYSDATETIME()), DATEADD(DAY, -2, DATEADD(MINUTE, 30, SYSDATETIME())), 960000.00, 'CONFIRMED'),
-('BKG-P07', 'BKG10007', 'USR-GUEST-1', 'COUNTER', DATEADD(DAY, -1, SYSDATETIME()), DATEADD(DAY, -1, DATEADD(MINUTE, 30, SYSDATETIME())), 640000.00, 'CONFIRMED');
+('BKG-P07', 'BKG10007', 'USR-GUEST-1', 'COUNTER', DATEADD(DAY, -1, SYSDATETIME()), DATEADD(DAY, -1, DATEADD(MINUTE, 30, SYSDATETIME())), 640000.00, 'CONFIRMED'),
+('BKG-P08', 'BKG10008', 'USR-CUS-4', 'ONLINE', DATEADD(DAY, -3, SYSDATETIME()), DATEADD(DAY, -3, DATEADD(MINUTE, 30, SYSDATETIME())), 560000.00, 'CONFIRMED'),
+('BKG-P09', 'BKG10009', 'USR-CUS-5', 'ONLINE', DATEADD(DAY, -2, SYSDATETIME()), DATEADD(DAY, -2, DATEADD(MINUTE, 30, SYSDATETIME())), 320000.00, 'CONFIRMED');
 GO
 
 -- VÉ CHO CÁC CHUYẾN QUÁ KHỨ (Trạng thái CHECKED_IN hoàn tất chuyến)
 INSERT INTO tickets (ticket_id, ticket_code, booking_id, trip_id, seat_id, passenger_name, passenger_phone, price, status) VALUES 
 ('TCK-P01-1', 'TCK10001', 'BKG-P01', 'TRP-PAST-01', 'S-BUS-01-A01', N'Nguyễn Văn A', '0988000111', 220000.00, 'CHECKED_IN'),
 ('TCK-P01-2', 'TCK10002', 'BKG-P01', 'TRP-PAST-01', 'S-BUS-01-A02', N'Nguyễn Thị Mai', '0988000111', 220000.00, 'CHECKED_IN'),
-('TCK-P02-1', 'TCK10003', 'BKG-P02', 'TRP-PAST-02', 'S-BUS-04-A01', N'Trần Thị Bích', '0988000222', 120000.00, 'CHECKED_IN'),
-('TCK-P02-2', 'TCK10004', 'BKG-P02', 'TRP-PAST-02', 'S-BUS-04-A02', N'Lê Minh Khang', '0988000222', 120000.00, 'CHECKED_IN'),
+('TCK-P02-1', 'TCK10003', 'BKG-P02', 'TRP-PAST-02', 'S-BUS-04-G01', N'Trần Thị Bích', '0988000222', 120000.00, 'CHECKED_IN'),
+('TCK-P02-2', 'TCK10004', 'BKG-P02', 'TRP-PAST-02', 'S-BUS-04-G02', N'Lê Minh Khang', '0988000222', 120000.00, 'CHECKED_IN'),
 ('TCK-P03-1', 'TCK10005', 'BKG-P03', 'TRP-PAST-03', 'S-BUS-03-A01', N'Lê Hoàng Nam', '0988000333', 450000.00, 'CHECKED_IN'),
 ('TCK-P03-2', 'TCK10006', 'BKG-P03', 'TRP-PAST-03', 'S-BUS-03-A02', N'Vũ Phương Thảo', '0988000333', 450000.00, 'CHECKED_IN'),
 ('TCK-P04-1', 'TCK10007', 'BKG-P04', 'TRP-PAST-04', 'S-BUS-02-A01', N'Nguyễn Văn A', '0988000111', 250000.00, 'CHECKED_IN'),
 ('TCK-P04-2', 'TCK10008', 'BKG-P04', 'TRP-PAST-04', 'S-BUS-02-A02', N'Đặng Thu Hà', '0988000111', 250000.00, 'CHECKED_IN'),
-('TCK-P05-1', 'TCK10009', 'BKG-P05', 'TRP-PAST-05', 'S-BUS-08-A01', N'Trần Thị Bích', '0988000222', 110000.00, 'CHECKED_IN'),
-('TCK-P05-2', 'TCK10010', 'BKG-P05', 'TRP-PAST-05', 'S-BUS-08-A02', N'Ngô Gia Bảo', '0988000222', 110000.00, 'CHECKED_IN'),
-('TCK-P05-3', 'TCK10011', 'BKG-P05', 'TRP-PAST-05', 'S-BUS-08-A03', N'Ngô Thanh Hằng', '0988000222', 110000.00, 'CHECKED_IN'),
+('TCK-P05-1', 'TCK10009', 'BKG-P05', 'TRP-PAST-05', 'S-BUS-08-G01', N'Trần Thị Bích', '0988000222', 110000.00, 'CHECKED_IN'),
+('TCK-P05-2', 'TCK10010', 'BKG-P05', 'TRP-PAST-05', 'S-BUS-08-G02', N'Ngô Gia Bảo', '0988000222', 110000.00, 'CHECKED_IN'),
+('TCK-P05-3', 'TCK10011', 'BKG-P05', 'TRP-PAST-05', 'S-BUS-08-G03', N'Ngô Thanh Hằng', '0988000222', 110000.00, 'CHECKED_IN'),
 ('TCK-P06-1', 'TCK10012', 'BKG-P06', 'TRP-PAST-06', 'S-BUS-05-A01', N'Lê Hoàng Nam', '0988000333', 480000.00, 'CHECKED_IN'),
 ('TCK-P06-2', 'TCK10013', 'BKG-P06', 'TRP-PAST-06', 'S-BUS-05-A02', N'Dương Thúy Vy', '0988000333', 480000.00, 'CHECKED_IN'),
 ('TCK-P07-1', 'TCK10014', 'BKG-P07', 'TRP-PAST-07', 'S-BUS-09-A01', N'Khách Vãng Lai B', '0933222333', 320000.00, 'CHECKED_IN'),
-('TCK-P07-2', 'TCK10015', 'BKG-P07', 'TRP-PAST-07', 'S-BUS-09-A02', N'Phan Văn Cường', '0933222333', 320000.00, 'CHECKED_IN');
+('TCK-P07-2', 'TCK10015', 'BKG-P07', 'TRP-PAST-07', 'S-BUS-09-A02', N'Phan Văn Cường', '0933222333', 320000.00, 'CHECKED_IN'),
+('TCK-P08-1', 'TCK10016', 'BKG-P08', 'TRP-PAST-08', 'S-BUS-11-A01', N'Phạm Minh Thư', '0988000444', 280000.00, 'CHECKED_IN'),
+('TCK-P08-2', 'TCK10017', 'BKG-P08', 'TRP-PAST-08', 'S-BUS-11-A02', N'Hoàng Quốc Việt', '0988000444', 280000.00, 'CHECKED_IN'),
+('TCK-P09-1', 'TCK10018', 'BKG-P09', 'TRP-PAST-09', 'S-BUS-12-A01', N'Vũ Quốc Đạt', '0988000555', 160000.00, 'CHECKED_IN'),
+('TCK-P09-2', 'TCK10019', 'BKG-P09', 'TRP-PAST-09', 'S-BUS-12-A02', N'Trịnh Lan Anh', '0988000555', 160000.00, 'CHECKED_IN');
 GO
 
--- THANH TOÁN CHO CÁC CHUYẾN QUÁ KHỨ (SUCCESS - Tạo doanh thu tổng 4.010.000 VNĐ trong tuần qua)
+-- THANH TOÁN CHO CÁC CHUYẾN QUÁ KHỨ (SUCCESS - Tạo doanh thu phong phú)
 INSERT INTO payments (payment_id, booking_id, method, amount, paid_at, transaction_code, status) VALUES 
 ('PAY-P01', 'BKG-P01', 'BANK_TRANSFER', 440000.00, DATEADD(DAY, -7, SYSDATETIME()), 'VQR-BKG10001', 'SUCCESS'),
 ('PAY-P02', 'BKG-P02', 'BANK_TRANSFER', 240000.00, DATEADD(DAY, -6, SYSDATETIME()), 'VQR-BKG10002', 'SUCCESS'),
@@ -568,23 +343,29 @@ INSERT INTO payments (payment_id, booking_id, method, amount, paid_at, transacti
 ('PAY-P04', 'BKG-P04', 'BANK_TRANSFER', 500000.00, DATEADD(DAY, -4, SYSDATETIME()), 'VQR-BKG10004', 'SUCCESS'),
 ('PAY-P05', 'BKG-P05', 'BANK_TRANSFER', 330000.00, DATEADD(DAY, -3, SYSDATETIME()), 'VQR-BKG10005', 'SUCCESS'),
 ('PAY-P06', 'BKG-P06', 'BANK_TRANSFER', 960000.00, DATEADD(DAY, -2, SYSDATETIME()), 'VQR-BKG10006', 'SUCCESS'),
-('PAY-P07', 'BKG-P07', 'CASH',          640000.00, DATEADD(DAY, -1, SYSDATETIME()), 'CASH-PAY-P07',  'SUCCESS');
+('PAY-P07', 'BKG-P07', 'CASH',          640000.00, DATEADD(DAY, -1, SYSDATETIME()), 'CASH-PAY-P07',  'SUCCESS'),
+('PAY-P08', 'BKG-P08', 'BANK_TRANSFER', 560000.00, DATEADD(DAY, -3, SYSDATETIME()), 'VQR-BKG10008', 'SUCCESS'),
+('PAY-P09', 'BKG-P09', 'BANK_TRANSFER', 320000.00, DATEADD(DAY, -2, SYSDATETIME()), 'VQR-BKG10009', 'SUCCESS');
 GO
 
--- 11.2. BOOKINGS CHO CHUYẾN HÔM NAY (Phục vụ Tài xế Nguyễn Văn Một DRV-01 soát vé)
+-- 11.2. BOOKINGS CHO CHUYẾN HÔM NAY (Phục vụ Tài xế DRV-01 và DRV-02 soát vé)
 INSERT INTO bookings (booking_id, booking_code, customer_id, channel, created_at, expired_at, total_amount, status) VALUES 
 ('BKG-TODAY-01', 'BKG20001', 'USR-CUS-1', 'ONLINE', DATEADD(HOUR, -2, SYSDATETIME()), DATEADD(HOUR, 2, SYSDATETIME()), 440000.00, 'CONFIRMED'),
-('BKG-TODAY-02', 'BKG20002', 'USR-CUS-2', 'ONLINE', DATEADD(HOUR, -1, SYSDATETIME()), DATEADD(HOUR, 3, SYSDATETIME()), 220000.00, 'CONFIRMED');
+('BKG-TODAY-02', 'BKG20002', 'USR-CUS-2', 'ONLINE', DATEADD(HOUR, -1, SYSDATETIME()), DATEADD(HOUR, 3, SYSDATETIME()), 220000.00, 'CONFIRMED'),
+('BKG-TODAY-03', 'BKG20003', 'USR-CUS-4', 'ONLINE', DATEADD(HOUR, -3, SYSDATETIME()), DATEADD(HOUR, 1, SYSDATETIME()), 220000.00, 'CONFIRMED');
 GO
 
--- VÉ CHUYẾN HÔM NAY: 2 vé CONFIRMED (chờ soát vé) và 1 vé đã CHECKED_IN
+-- VÉ CHUYẾN HÔM NAY: vé CONFIRMED (chờ soát vé) và vé đã CHECKED_IN
 INSERT INTO tickets (ticket_id, ticket_code, booking_id, trip_id, seat_id, passenger_name, passenger_phone, price, status) VALUES 
 ('TCK-TD01-1', 'TCK20001', 'BKG-TODAY-01', 'TRP-TODAY-01', 'S-BUS-01-A01', N'Nguyễn Văn A', '0988000111', 220000.00, 'CONFIRMED'),
 ('TCK-TD01-2', 'TCK20002', 'BKG-TODAY-01', 'TRP-TODAY-01', 'S-BUS-01-A02', N'Nguyễn Thị Mai', '0988000111', 220000.00, 'CONFIRMED'),
-('TCK-TD02-1', 'TCK20003', 'BKG-TODAY-02', 'TRP-TODAY-01', 'S-BUS-01-A03', N'Trần Thị Bích', '0988000222', 220000.00, 'CHECKED_IN');
+('TCK-TD02-1', 'TCK20003', 'BKG-TODAY-02', 'TRP-TODAY-01', 'S-BUS-01-A03', N'Trần Thị Bích', '0988000222', 220000.00, 'CHECKED_IN'),
+('TCK-TD03-1', 'TCK20004', 'BKG-TODAY-03', 'TRP-TODAY-02', 'S-BUS-04-G01', N'Phạm Minh Thư', '0988000444', 110000.00, 'CONFIRMED'),
+('TCK-TD03-2', 'TCK20005', 'BKG-TODAY-03', 'TRP-TODAY-02', 'S-BUS-04-G02', N'Lê Minh Tuấn', '0988000444', 110000.00, 'CONFIRMED');
 GO
 
 INSERT INTO payments (payment_id, booking_id, method, amount, paid_at, transaction_code, status) VALUES 
 ('PAY-TD01', 'BKG-TODAY-01', 'BANK_TRANSFER', 440000.00, DATEADD(HOUR, -2, SYSDATETIME()), 'VQR-BKG20001', 'SUCCESS'),
-('PAY-TD02', 'BKG-TODAY-02', 'BANK_TRANSFER', 220000.00, DATEADD(HOUR, -1, SYSDATETIME()), 'VQR-BKG20002', 'SUCCESS');
+('PAY-TD02', 'BKG-TODAY-02', 'BANK_TRANSFER', 220000.00, DATEADD(HOUR, -1, SYSDATETIME()), 'VQR-BKG20002', 'SUCCESS'),
+('PAY-TD03', 'BKG-TODAY-03', 'BANK_TRANSFER', 220000.00, DATEADD(HOUR, -3, SYSDATETIME()), 'VQR-BKG20003', 'SUCCESS');
 GO
