@@ -114,27 +114,15 @@ export class BookingRepository {
 	}
 
 	async findBookingByCode(bookingCode: string): Promise<{ booking: BookingRow | null; tickets: StaffBookingTicketRow[] }> {
-		const bookingRows = await executeQuery<BookingRow>(
-			'SELECT booking_id, booking_code, customer_id, channel, created_at, expired_at, total_amount, status FROM bookings WHERE booking_code = @bookingCode',
-			{ bookingCode: { type: sql.VarChar(20), value: bookingCode } }
-		)
-		const booking = bookingRows[0] ?? null
-		if (!booking) {
-			return { booking: null, tickets: [] }
-		}
+		const result = await executeSP<BookingRow>('dbo.sp_LayVeTheoMaBooking', {
+			booking_code: { type: sql.VarChar(20), value: bookingCode }
+		})
 
-		const tickets = await executeQuery<StaffBookingTicketRow>(
-			`SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
-			        tk.passenger_name, tk.passenger_phone, tk.price, tk.status
-			 FROM tickets tk
-			 JOIN seats s ON s.seat_id = tk.seat_id
-			 WHERE tk.booking_id = @bookingId`,
-			{ bookingId: { type: sql.VarChar(50), value: booking.booking_id } }
-		)
+		const booking = result.recordsets[0]?.[0] ?? null
+		const tickets = (result.recordsets[1] ?? []) as unknown as StaffBookingTicketRow[]
 
 		return { booking, tickets }
 	}
-
 	async getTripTickets(tripId: string, status?: string): Promise<StaffBookingTicketRow[] | null> {
 		const tripRows = await executeQuery<{ trip_id: string }>(
 			'SELECT trip_id FROM trips WHERE trip_id = @tripId',
@@ -145,20 +133,13 @@ export class BookingRepository {
 		}
 
 		return executeQuery<StaffBookingTicketRow>(
-			`SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
-			        tk.passenger_name, tk.passenger_phone, tk.price, tk.status
-			 FROM tickets tk
-			 JOIN seats s ON s.seat_id = tk.seat_id
-			 WHERE tk.trip_id = @tripId
-			   AND (@status IS NULL OR tk.status = @status)
-			 ORDER BY s.seat_number ASC`,
+			'SELECT * FROM dbo.fn_LayVeTheoChuyen(@tripId, @status) ORDER BY seat_number ASC',
 			{
 				tripId: { type: sql.VarChar(50), value: tripId },
 				status: { type: sql.VarChar(20), value: status ?? null }
 			}
 		)
 	}
-
 	async checkInTicket(ticketCode: string): Promise<CheckedInTicketRow> {
 		const result = await executeSP<CheckedInTicketRow>('sp_CheckIn', {
 			ticket_code: { type: sql.VarChar(20), value: ticketCode }

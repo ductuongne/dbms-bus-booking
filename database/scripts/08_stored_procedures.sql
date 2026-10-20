@@ -1211,3 +1211,81 @@ END;
 GO
 
 
+
+-- 28. sp_LayDanhSachChuyenAdmin: danh sách chuyến quản trị kèm thông tin ghế và phân trang
+CREATE OR ALTER PROCEDURE dbo.sp_LayDanhSachChuyenAdmin
+    @date VARCHAR(10) = NULL,
+    @status VARCHAR(20) = NULL,
+    @routeId VARCHAR(50) = NULL,
+    @offset INT = 0,
+    @limit INT = 10
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @offset < 0 SET @offset = 0;
+    IF @limit < 1 SET @limit = 10;
+
+    SELECT
+        t.trip_id,
+        t.route_id,
+        t.bus_id,
+        t.driver_id,
+        t.departure_time,
+        t.arrival_time,
+        t.price,
+        t.status,
+        (SELECT COUNT(*) FROM seats s WHERE s.bus_id = t.bus_id) AS total_seats,
+        (SELECT COUNT(DISTINCT tk.seat_id)
+         FROM tickets tk
+         WHERE tk.trip_id = t.trip_id AND tk.status = 'CONFIRMED'
+        ) AS booked_seats,
+        (SELECT COUNT(DISTINCT tk.seat_id)
+         FROM tickets tk
+         JOIN bookings b ON b.booking_id = tk.booking_id
+         WHERE tk.trip_id = t.trip_id AND tk.status = 'PENDING' AND b.expired_at > SYSDATETIME()
+        ) AS pending_seats,
+        COUNT(*) OVER() AS totalCount
+    FROM trips t
+    WHERE (@date IS NULL OR CAST(t.departure_time AS DATE) = TRY_CAST(@date AS DATE))
+      AND (@status IS NULL OR t.status = @status)
+      AND (@routeId IS NULL OR t.route_id = @routeId)
+    ORDER BY t.departure_time ASC, t.trip_id ASC
+    OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;
+END;
+GO
+
+-- 29. sp_LayVeTheoMaBooking: lấy thông tin booking và danh sách vé theo mã booking
+CREATE OR ALTER PROCEDURE dbo.sp_LayVeTheoMaBooking
+    @booking_code VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @booking_id VARCHAR(50);
+    SELECT @booking_id = booking_id FROM bookings WHERE booking_code = @booking_code;
+
+    -- Recordset 1: Thông tin booking
+    SELECT booking_id, booking_code, customer_id, channel, created_at, expired_at, total_amount, status
+    FROM bookings
+    WHERE booking_code = @booking_code;
+
+    -- Recordset 2: Danh sách vé
+    IF @booking_id IS NOT NULL
+    BEGIN
+        SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
+               tk.passenger_name, tk.passenger_phone, tk.price, tk.status
+        FROM tickets tk
+        JOIN seats s ON s.seat_id = tk.seat_id
+        WHERE tk.booking_id = @booking_id;
+    END
+    ELSE
+    BEGIN
+        SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
+               tk.passenger_name, tk.passenger_phone, tk.price, tk.status
+        FROM tickets tk
+        JOIN seats s ON s.seat_id = tk.seat_id
+        WHERE 1 = 0;
+    END
+END;
+GO
