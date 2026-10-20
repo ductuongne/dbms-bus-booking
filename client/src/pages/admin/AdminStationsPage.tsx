@@ -11,8 +11,10 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Badge from '../../components/common/Badge';
+import { useToast } from '../../hooks/useToast';
 
 export const AdminStationsPage: React.FC = () => {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [stations, setStations] = useState<StationDetailView[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,24 +97,25 @@ export const AdminStationsPage: React.FC = () => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa bến xe "${name}"?`)) return;
     try {
       await stationService.deleteStation(stationId);
+      toastSuccess(`Đã xóa bến xe "${name}"`);
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xóa bến xe (có thể đang có tuyến đường gắn với bến này)');
+      toastError(err instanceof Error ? err.message : 'Không thể xóa bến xe (có thể đang có tuyến đường gắn với bến này)');
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stationName.trim()) {
-      alert('Vui lòng nhập tên bến xe');
+      toastError('Vui lòng nhập tên bến xe');
       return;
     }
     if (!provinceId) {
-      alert('Vui lòng chọn tỉnh/thành phố');
+      toastError('Vui lòng chọn tỉnh/thành phố');
       return;
     }
     if (!address.trim()) {
-      alert('Vui lòng nhập địa chỉ bến xe');
+      toastError('Vui lòng nhập địa chỉ bến xe');
       return;
     }
 
@@ -125,6 +128,7 @@ export const AdminStationsPage: React.FC = () => {
           address: address.trim(),
         };
         await stationService.updateStation(editingStation.id, payload);
+        toastSuccess('Cập nhật bến xe thành công');
       } else {
         const payload: CreateStationPayload = {
           name: stationName.trim(),
@@ -132,11 +136,12 @@ export const AdminStationsPage: React.FC = () => {
           address: address.trim(),
         };
         await stationService.createStation(payload);
+        toastSuccess('Thêm bến xe mới thành công');
       }
       setShowModal(false);
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi lưu bến xe');
+      toastError(err instanceof Error ? err.message : 'Lỗi khi lưu bến xe');
     } finally {
       setIsSubmitting(false);
     }

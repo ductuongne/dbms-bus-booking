@@ -35,19 +35,25 @@ GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE TO Role_Admin;
 GO
 
 -- 3. PHÂN QUYỀN Role_TaiXe (Tài xế - Nguyên tắc Đặc quyền Tối thiểu)
--- CẤM TUYỆT ĐỐI (DENY) thao tác trên các bảng Đặt vé, Vé và Thanh toán/Doanh thu
-DENY SELECT, INSERT, UPDATE, DELETE ON bookings TO Role_TaiXe;
-DENY SELECT, INSERT, UPDATE, DELETE ON tickets TO Role_TaiXe;
+-- Tài xế không được thao tác trên bảng Doanh thu/Thanh toán và không được tự ý xóa/thay đổi vé
 DENY SELECT, INSERT, UPDATE, DELETE ON payments TO Role_TaiXe;
+DENY INSERT, DELETE ON bookings TO Role_TaiXe;
+DENY INSERT, DELETE ON tickets TO Role_TaiXe;
 GO
 
--- CẤP QUYỀN (GRANT) cho Tài xế: Chỉ xem dữ liệu danh mục cần thiết và View phân công
+-- CẤP QUYỀN (GRANT) cho Tài xế: Xem dữ liệu hành trình, danh sách vé hành khách và điều khiển trạng thái chuyến
 GRANT SELECT ON buses TO Role_TaiXe;
 GRANT SELECT ON routes TO Role_TaiXe;
 GRANT SELECT ON stations TO Role_TaiXe;
 GRANT SELECT ON trips TO Role_TaiXe;
+GRANT SELECT ON tickets TO Role_TaiXe;
+GRANT SELECT ON seats TO Role_TaiXe;
 GO
 
+IF OBJECT_ID('dbo.sp_CheckIn', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_CheckIn TO Role_TaiXe;
+IF OBJECT_ID('dbo.sp_DoiTrangThaiChuyen', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_DoiTrangThaiChuyen TO Role_TaiXe;
 IF OBJECT_ID('vw_LichPhanCongTaiXe', 'V') IS NOT NULL
 BEGIN
     GRANT SELECT ON vw_LichPhanCongTaiXe TO Role_TaiXe;
@@ -92,6 +98,12 @@ IF OBJECT_ID('dbo.sp_ThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_ThanhToan TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_LayVeTheoMaBooking', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_LayVeTheoMaBooking TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_DangKyKhachHang', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_DangKyKhachHang TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_CapNhatGuestThanhKhachHang', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_CapNhatGuestThanhKhachHang TO Role_KhachHang;
 GO
 
 -- ==============================================================================

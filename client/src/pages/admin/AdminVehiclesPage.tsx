@@ -15,8 +15,10 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Badge from '../../components/common/Badge';
+import { useToast } from '../../hooks/useToast';
 
 export const AdminVehiclesPage: React.FC = () => {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [buses, setBuses] = useState<BusListItemView[]>([]);
   const [busTypes, setBusTypes] = useState<BusType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +89,7 @@ export const AdminVehiclesPage: React.FC = () => {
       const detail = await busService.getBusById(busId);
       setViewingBusDetail(detail);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xem sơ đồ ghế');
+      toastError(err instanceof Error ? err.message : 'Không thể xem sơ đồ ghế');
     }
   };
 
@@ -99,8 +101,9 @@ export const AdminVehiclesPage: React.FC = () => {
       setBuses((prev) =>
         prev.map((b) => (b.id === bus.id ? { ...b, status: nextStatus } : b))
       );
+      toastSuccess(`Đã chuyển xe sang trạng thái ${nextStatus === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}`);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể đổi trạng thái xe');
+      toastError(err instanceof Error ? err.message : 'Không thể đổi trạng thái xe');
     }
   };
 
@@ -115,9 +118,10 @@ export const AdminVehiclesPage: React.FC = () => {
     }
     try {
       await busService.deleteBus(busId);
+      toastSuccess(`Đã xóa xe biển số ${licensePlate}`);
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xóa xe');
+      toastError(err instanceof Error ? err.message : 'Không thể xóa xe');
     }
   };
 
@@ -159,11 +163,11 @@ export const AdminVehiclesPage: React.FC = () => {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLicensePlate.trim()) {
-      alert('Vui lòng nhập biển số xe');
+      toastError('Vui lòng nhập biển số xe');
       return;
     }
     if (!newTypeId) {
-      alert('Vui lòng chọn loại xe');
+      toastError('Vui lòng chọn loại xe');
       return;
     }
 
@@ -179,9 +183,9 @@ export const AdminVehiclesPage: React.FC = () => {
       setShowCreateModal(false);
       setNewLicensePlate('');
       setReloadKey((k) => k + 1);
-      alert('Tạo xe và tự động sinh toàn bộ sơ đồ ghế thành công!');
+      toastSuccess('Tạo xe và tự động sinh toàn bộ sơ đồ ghế thành công!');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo xe');
+      toastError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo xe');
     } finally {
       setIsSubmitting(false);
     }

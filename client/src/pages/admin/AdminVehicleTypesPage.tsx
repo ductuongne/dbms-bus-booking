@@ -11,8 +11,10 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Badge from '../../components/common/Badge';
+import { useToast } from '../../hooks/useToast';
 
 export const AdminVehicleTypesPage: React.FC = () => {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [busTypes, setBusTypes] = useState<BusType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,16 +73,17 @@ export const AdminVehicleTypesPage: React.FC = () => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa loại xe "${name}"?`)) return;
     try {
       await busService.deleteBusType(typeId);
+      toastSuccess(`Đã xóa loại xe "${name}"`);
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xóa loại xe (có thể đang có xe gắn với loại này)');
+      toastError(err instanceof Error ? err.message : 'Không thể xóa loại xe (có thể đang có xe gắn với loại này)');
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typeName.trim()) {
-      alert('Vui lòng nhập tên loại xe');
+      toastError('Vui lòng nhập tên loại xe');
       return;
     }
 
@@ -93,6 +96,7 @@ export const AdminVehicleTypesPage: React.FC = () => {
           floors: Number(floors),
         };
         await busService.updateBusType(editingType.id, payload);
+        toastSuccess('Cập nhật loại xe thành công');
       } else {
         const payload: CreateBusTypePayload = {
           name: typeName.trim(),
@@ -100,11 +104,12 @@ export const AdminVehicleTypesPage: React.FC = () => {
           floors: Number(floors),
         };
         await busService.createBusType(payload);
+        toastSuccess('Tạo loại xe mới thành công');
       }
       setShowModal(false);
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi lưu loại xe');
+      toastError(err instanceof Error ? err.message : 'Lỗi khi lưu loại xe');
     } finally {
       setIsSubmitting(false);
     }

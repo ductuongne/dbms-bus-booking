@@ -45,6 +45,8 @@ const AdminIndexRedirect: React.FC = () => {
   return <Navigate to="/" replace />;
 };
 
+import TicketLookupPage from './pages/TicketLookupPage';
+
 export const App: React.FC = () => {
   return (
     <ToastProvider>
@@ -57,6 +59,8 @@ export const App: React.FC = () => {
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/payment" element={<PaymentPage />} />
               <Route path="/routes" element={<RoutesPage />} />
+              <Route path="/tra-cuu-ve" element={<TicketLookupPage />} />
+              <Route path="/lookup" element={<TicketLookupPage />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
             </Route>
 

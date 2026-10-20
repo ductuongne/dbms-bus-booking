@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { RouteListItem } from '../../../../services/route.service';
 import type { BusListItemView } from '../../../../types';
 import type { CreateTripPayload } from '../../../../services/trip.service';
+import { userService, type DriverOption } from '../../../../services/user.service';
 import { Modal, Input, Button } from '../../../../components/common';
 import { useToast } from '../../../../hooks/useToast';
 
@@ -21,20 +22,39 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
   onSubmit,
 }) => {
   const { error: toastError } = useToast();
+  const [drivers, setDrivers] = useState<DriverOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formRouteId, setFormRouteId] = useState(routes[0]?.id || '');
   const [formBusId, setFormBusId] = useState(buses[0]?.id || '');
-  const [formDriverId, setFormDriverId] = useState('USR-00000000-0000-0000-0000-000000000003');
+  const [formDriverId, setFormDriverId] = useState('');
   const [formDepartureTime, setFormDepartureTime] = useState('');
   const [formArrivalTime, setFormArrivalTime] = useState('');
   const [formPrice, setFormPrice] = useState<number>(250000);
+
+  useEffect(() => {
+    let ignore = false;
+    userService
+      .getDrivers()
+      .then((data) => {
+        if (!ignore && data && data.length > 0) {
+          setDrivers(data);
+          setFormDriverId((prev) => prev || data[0].driverId);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const routeId = formRouteId || routes[0]?.id;
     const busId = formBusId || buses[0]?.id;
+    const driverId = formDriverId || drivers[0]?.driverId;
 
-    if (!routeId || !busId || !formDepartureTime || !formArrivalTime || !formPrice) {
+    if (!routeId || !busId || !driverId || !formDepartureTime || !formArrivalTime || !formPrice) {
       toastError('Vui lòng điền đầy đủ thông tin chuyến xe!');
       return;
     }
@@ -44,7 +64,7 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
       await onSubmit({
         route_id: routeId,
         bus_id: busId,
-        driver_id: formDriverId,
+        driver_id: driverId,
         departure_time: new Date(formDepartureTime).toISOString(),
         arrival_time: new Date(formArrivalTime).toISOString(),
         price: Number(formPrice),
@@ -59,13 +79,13 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Thêm chuyến xe mới" size="lg">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 text-left">
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Tuyến đường</label>
           <select
             value={formRouteId || routes[0]?.id || ''}
             onChange={(e) => setFormRouteId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F]"
             required
           >
             {routes.map((r) => (
@@ -82,7 +102,7 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
             <select
               value={formBusId || buses[0]?.id || ''}
               onChange={(e) => setFormBusId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F]"
               required
             >
               {buses.map((b) => (
@@ -94,13 +114,23 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Mã tài xế (User ID)</label>
-            <Input
-              value={formDriverId}
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Tài xế phân công</label>
+            <select
+              value={formDriverId || drivers[0]?.driverId || ''}
               onChange={(e) => setFormDriverId(e.target.value)}
-              placeholder="VD: USR-00000000-0000-0000-0000-000000000003"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F]"
               required
-            />
+            >
+              {drivers.length === 0 ? (
+                <option value="">Đang tải danh sách tài xế...</option>
+              ) : (
+                drivers.map((d) => (
+                  <option key={d.driverId} value={d.driverId}>
+                    {d.driverId}: {d.fullName} ({d.phone} - GPLX: {d.licenseNumber})
+                  </option>
+                ))
+              )}
+            </select>
           </div>
         </div>
 

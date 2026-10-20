@@ -64,7 +64,7 @@ export interface StaffTicketItem {
   passenger_name: string;
   passenger_phone: string;
   price: number;
-  status: 'ISSUED' | 'CHECKED_IN' | 'CANCELLED' | 'PENDING';
+  status: 'CONFIRMED' | 'CHECKED_IN' | 'CANCELLED' | 'PENDING' | 'EXPIRED' | 'ISSUED';
 }
 
 export interface BookingLookupResponse {

@@ -81,10 +81,10 @@ export const HomePage: React.FC = () => {
   };
 
   const popularRoutes = [
-    { from: 'Hà Nội', to: 'Ninh Bình', price: 150000, duration: '1g 15ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
-    { from: 'Hà Nội', to: 'Hải Phòng', price: 120000, duration: '1g 30ph', image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80' },
-    { from: 'TP. Hồ Chí Minh', to: 'Lâm Đồng', price: 280000, duration: '7g 30ph', image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&q=80' },
-    { from: 'Đà Nẵng', to: 'Quảng Ninh', price: 350000, duration: '12g 00ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Ninh Bình', price: 120000, duration: '1g 30ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Hải Phòng', price: 110000, duration: '1g 50ph', image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80' },
+    { from: 'Hồ Chí Minh', to: 'Lâm Đồng', price: 220000, duration: '8g 00ph', image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Đà Nẵng', price: 450000, duration: '14g 00ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
   ];
 
   return (

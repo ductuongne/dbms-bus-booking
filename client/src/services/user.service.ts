@@ -7,12 +7,28 @@ export interface UserApiResponse<T> {
   data: T;
 }
 
+export interface DriverOption {
+  driverId: string;
+  userId: string;
+  fullName: string;
+  phone: string;
+  licenseNumber: string;
+}
+
 export const userService = {
   /**
    * Lấy danh sách toàn bộ người dùng trong hệ thống (Dành cho ADMIN)
    */
   getAllUsers: async (): Promise<AdminUser[]> => {
     const res = await api.get<UserApiResponse<AdminUser[]>>('/private/admin/users');
+    return res.data || [];
+  },
+
+  /**
+   * Lấy danh sách tài xế hợp lệ phục vụ phân công chuyến xe
+   */
+  getDrivers: async (): Promise<DriverOption[]> => {
+    const res = await api.get<UserApiResponse<DriverOption[]>>('/private/admin/drivers');
     return res.data || [];
   },
 

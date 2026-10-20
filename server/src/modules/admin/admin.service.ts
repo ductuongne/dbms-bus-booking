@@ -65,9 +65,22 @@ export async function updateUserStatus(
 	await adminRepository.updateStatus(userId, isActive)
 }
 
+export async function listDrivers(): Promise<
+	{
+		driverId: string
+		userId: string
+		fullName: string
+		phone: string
+		licenseNumber: string
+	}[]
+> {
+	return await adminRepository.listDrivers()
+}
+
 export const adminService = {
 	listUsers,
 	createUser,
 	updateUser,
 	updateUserStatus,
+	listDrivers,
 }

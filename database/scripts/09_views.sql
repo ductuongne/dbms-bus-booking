@@ -206,7 +206,9 @@ AS
         COUNT(*) AS payment_count,
         SUM(p.amount) AS total_revenue
     FROM payments p
+    JOIN bookings bk ON bk.booking_id = p.booking_id
     WHERE p.status = 'SUCCESS'
+      AND bk.status <> 'CANCELLED'
     GROUP BY CAST(p.paid_at AS DATE), p.method;
 GO
 
@@ -221,12 +223,14 @@ AS
         COUNT(tk.ticket_id) AS tickets_sold,
         SUM(tk.price) AS revenue
     FROM payments p
+    JOIN bookings bk ON bk.booking_id = p.booking_id
     JOIN tickets tk ON tk.booking_id = p.booking_id
     JOIN trips t ON t.trip_id = tk.trip_id
     JOIN routes r ON r.route_id = t.route_id
     JOIN stations ds ON ds.station_id = r.departure_station_id
     JOIN stations ast ON ast.station_id = r.arrival_station_id
     WHERE p.status = 'SUCCESS'
+      AND bk.status <> 'CANCELLED'
       AND tk.status IN ('CONFIRMED', 'CHECKED_IN')
     GROUP BY CAST(p.paid_at AS DATE), r.route_id, ds.name, ast.name;
 GO

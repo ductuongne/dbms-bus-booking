@@ -17,6 +17,9 @@ adminRouter.use(verifyJWT, checkRole(['ADMIN']))
 // ENDPOINT 1: GET /users → List users
 adminRouter.get('/users', adminController.listUsers)
 
+// ENDPOINT: GET /drivers → List drivers for assignment
+adminRouter.get('/drivers', adminController.listDrivers)
+
 // ENDPOINT 2: POST /users → Create user
 adminRouter.post(
 	'/users',

@@ -5,6 +5,7 @@ import {
   Ticket,
   Navigation,
   Phone,
+  Search,
   User,
   ShieldCheck,
   CalendarClock,
@@ -76,6 +77,18 @@ export const Header: React.FC = () => {
           >
             <Navigation className="w-4 h-4 text-slate-500" />
             <span>Tuyến đường</span>
+          </Link>
+
+          <Link
+            to="/tra-cuu-ve"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              currentPath.startsWith('/tra-cuu-ve')
+                ? 'bg-blue-50 text-[#1E3A5F] font-semibold'
+                : 'hover:bg-slate-100 text-slate-700'
+            }`}
+          >
+            <Search className="w-4 h-4 text-slate-500" />
+            <span>Tra cứu vé</span>
           </Link>
 
           <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
@@ -201,6 +214,15 @@ export const Header: React.FC = () => {
           >
             <Navigation className="w-5 h-5 text-[#1E3A5F]" />
             <span>Mạng lưới tuyến đường</span>
+          </Link>
+
+          <Link
+            to="/tra-cuu-ve"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-2 p-2.5 rounded-lg hover:bg-slate-50 font-medium text-slate-800"
+          >
+            <Search className="w-5 h-5 text-[#1E3A5F]" />
+            <span>Tra cứu vé</span>
           </Link>
 
           <div className="flex items-center gap-2 p-2.5 text-xs text-slate-600 bg-slate-50 rounded-lg">

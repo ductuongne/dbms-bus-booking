@@ -25,8 +25,10 @@ import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
+import { useToast } from '../../hooks/useToast';
 
 export const AdminRoutesPage: React.FC = () => {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [routes, setRoutes] = useState<RouteListItem[]>([]);
   const [stations, setStations] = useState<StationDetailView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +127,7 @@ export const AdminRoutesPage: React.FC = () => {
       setIntermediateStops(intermediate);
       setShowModal(true);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể tải thông tin chỉnh sửa tuyến');
+      toastError(err instanceof Error ? err.message : 'Không thể tải thông tin chỉnh sửa tuyến');
     }
   };
 
@@ -134,7 +136,7 @@ export const AdminRoutesPage: React.FC = () => {
       const detail = await routeService.getRouteById(routeId);
       setViewingDetail(detail);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xem chi tiết tuyến');
+      toastError(err instanceof Error ? err.message : 'Không thể xem chi tiết tuyến');
     }
   };
 
@@ -142,9 +144,10 @@ export const AdminRoutesPage: React.FC = () => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa tuyến đường ${routeId}?`)) return;
     try {
       await routeService.deleteRoute(routeId);
+      toastSuccess('Đã xóa tuyến đường thành công');
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xóa tuyến (có thể đã có chuyến xe vận hành)');
+      toastError(err instanceof Error ? err.message : 'Không thể xóa tuyến (có thể đã có chuyến xe vận hành)');
     }
   };
 
@@ -194,15 +197,15 @@ export const AdminRoutesPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!departureStationId || !arrivalStationId) {
-      alert('Vui lòng chọn bến xuất phát và bến đến');
+      toastError('Vui lòng chọn bến xuất phát và bến đến');
       return;
     }
     if (departureStationId === arrivalStationId) {
-      alert('Bến xuất phát và bến đến không được trùng nhau');
+      toastError('Bến xuất phát và bến đến không được trùng nhau');
       return;
     }
     if (distanceKm <= 0 || estimatedDuration <= 0) {
-      alert('Khoảng cách và thời gian ước tính phải lớn hơn 0');
+      toastError('Khoảng cách và thời gian ước tính phải lớn hơn 0');
       return;
     }
 
@@ -240,9 +243,9 @@ export const AdminRoutesPage: React.FC = () => {
 
       setShowModal(false);
       setReloadKey((k) => k + 1);
-      alert('Lưu tuyến đường và danh sách trạm dừng thành công!');
+      toastSuccess('Lưu tuyến đường và danh sách trạm dừng thành công!');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi lưu tuyến đường');
+      toastError(err instanceof Error ? err.message : 'Lỗi khi lưu tuyến đường');
     } finally {
       setIsSubmitting(false);
     }

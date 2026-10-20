@@ -40,9 +40,9 @@ RETURN
         SELECT TOP 1 tk.status
         FROM tickets tk JOIN bookings b ON b.booking_id = tk.booking_id
         WHERE tk.trip_id = @tripId AND tk.seat_id = s.seat_id
-          AND (tk.status = 'CONFIRMED'
+          AND (tk.status IN ('CONFIRMED', 'CHECKED_IN')
                OR (tk.status = 'PENDING' AND b.expired_at > SYSDATETIME()))
-        ORDER BY CASE WHEN tk.status = 'CONFIRMED' THEN 0 ELSE 1 END
+        ORDER BY CASE WHEN tk.status = 'CHECKED_IN' THEN 0 WHEN tk.status = 'CONFIRMED' THEN 1 ELSE 2 END
     ) a
 );
 GO
@@ -99,11 +99,13 @@ AS
 BEGIN
     DECLARE @total DECIMAL(14,2);
 
-    SELECT @total = ISNULL(SUM(amount), 0)
-    FROM payments
-    WHERE status = 'SUCCESS'
-      AND paid_at >= CAST(@from_date AS DATETIME2)
-      AND paid_at < DATEADD(DAY, 1, CAST(@to_date AS DATETIME2));
+    SELECT @total = ISNULL(SUM(p.amount), 0)
+    FROM payments p
+    JOIN bookings bk ON bk.booking_id = p.booking_id
+    WHERE p.status = 'SUCCESS'
+      AND bk.status <> 'CANCELLED'
+      AND p.paid_at >= CAST(@from_date AS DATETIME2)
+      AND p.paid_at < DATEADD(DAY, 1, CAST(@to_date AS DATETIME2));
 
     RETURN @total;
 END;
@@ -144,14 +146,16 @@ AS
 RETURN
 (
     SELECT
-        CAST(paid_at AS DATE) AS report_date,
+        CAST(p.paid_at AS DATE) AS report_date,
         COUNT(*) AS payment_count,
-        SUM(amount) AS total_revenue
-    FROM payments
-    WHERE status = 'SUCCESS'
-      AND paid_at >= CAST(@from_date AS DATETIME2)
-      AND paid_at < DATEADD(DAY, 1, CAST(@to_date AS DATETIME2))
-    GROUP BY CAST(paid_at AS DATE)
+        SUM(p.amount) AS total_revenue
+    FROM payments p
+    JOIN bookings bk ON bk.booking_id = p.booking_id
+    WHERE p.status = 'SUCCESS'
+      AND bk.status <> 'CANCELLED'
+      AND p.paid_at >= CAST(@from_date AS DATETIME2)
+      AND p.paid_at < DATEADD(DAY, 1, CAST(@to_date AS DATETIME2))
+    GROUP BY CAST(p.paid_at AS DATE)
 );
 GO
 

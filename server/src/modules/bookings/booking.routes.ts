@@ -37,11 +37,9 @@ router.post(
 	bookingController.cancelBooking.bind(bookingController)
 )
 
-// Staff, Admin & Driver operations
+// Tra cứu thông tin vé và booking (công khai cho hành khách tra cứu qua mã đơn)
 router.get(
 	'/lookup/:bookingCode',
-	verifyJWT,
-	checkRole(['STAFF', 'ADMIN', 'DRIVER']),
 	validateRequest({ params: bookingCodeParamsSchema }),
 	bookingController.getBookingByCode.bind(bookingController)
 )

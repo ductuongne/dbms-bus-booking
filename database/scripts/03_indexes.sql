@@ -58,7 +58,7 @@ GO
 
 -- Concurrency & Business Indexes (GĐ1)
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'uq_tickets_trip_seat_active' AND object_id = OBJECT_ID('tickets'))
-    CREATE UNIQUE INDEX uq_tickets_trip_seat_active ON tickets(trip_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED');
+    CREATE UNIQUE INDEX uq_tickets_trip_seat_active ON tickets(trip_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN');
 GO
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_bookings_pending_expired' AND object_id = OBJECT_ID('bookings'))
     CREATE INDEX idx_bookings_pending_expired ON bookings(expired_at) WHERE status = 'PENDING';
