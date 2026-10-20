@@ -261,3 +261,29 @@ AS
 GO
 
 
+
+-- ==============================================================================
+-- 13. vw_DriverTrips: chuyến đi của tài xế kèm thông tin tuyến, trạm, tỉnh, xe
+--     Dùng cho getDriverTrips (filter WHERE user_id = @userId + tùy chọn ngày)
+-- ==============================================================================
+CREATE OR ALTER VIEW dbo.vw_DriverTrips
+AS
+    SELECT
+        t.trip_id,
+        t.route_id,
+        t.bus_id,
+        t.driver_id,
+        t.departure_time,
+        t.arrival_time,
+        t.price,
+        t.status,
+        v.departure_station,
+        v.arrival_station,
+        v.departure_province,
+        v.arrival_province,
+        v.bus_type,
+        d.user_id
+    FROM trips t
+    JOIN drivers d ON d.driver_id = t.driver_id
+    JOIN dbo.vw_ChiTietChuyenDi v ON v.trip_id = t.trip_id;
+GO

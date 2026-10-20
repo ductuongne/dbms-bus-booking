@@ -156,3 +156,30 @@ RETURN
 GO
 
 
+
+-- 8. fn_LayVeTheoChuyen: danh sách vé kèm số ghế theo chuyến và trạng thái vé
+CREATE OR ALTER FUNCTION dbo.fn_LayVeTheoChuyen(
+    @tripId VARCHAR(50),
+    @status VARCHAR(20) = NULL
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        tk.ticket_id, 
+        tk.ticket_code, 
+        tk.booking_id, 
+        tk.trip_id, 
+        tk.seat_id, 
+        s.seat_number,
+        tk.passenger_name, 
+        tk.passenger_phone, 
+        tk.price, 
+        tk.status
+    FROM tickets tk
+    JOIN seats s ON s.seat_id = tk.seat_id
+    WHERE tk.trip_id = @tripId
+      AND (@status IS NULL OR tk.status = @status)
+);
+GO

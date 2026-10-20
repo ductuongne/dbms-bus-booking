@@ -1,4 +1,5 @@
-import { getPool, sql } from '../../config/db.js'
+import { sql } from '../../config/db.js'
+import { executeQuery } from '../../database/query.js'
 import type {
 	AdminUserResponseDto,
 	CreateAdminUserData,
@@ -15,10 +16,7 @@ function isSqlUniqueViolation(err: unknown): boolean {
 }
 
 export async function findAll(): Promise<AdminUserResponseDto[]> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	const result = await request.query<AdminUserResponseDto>(
+	return executeQuery<AdminUserResponseDto>(
 		`SELECT user_id AS userId,
 		        full_name AS fullName,
 		        email,
@@ -29,17 +27,12 @@ export async function findAll(): Promise<AdminUserResponseDto[]> {
 		 FROM users
 		 ORDER BY user_id DESC`
 	)
-	return result.recordset
 }
 
 export async function findById(
 	userId: string
 ): Promise<AdminUserResponseDto | null> {
-	const pool = await getPool()
-	const request = pool.request()
-	request.input('userId', sql.VarChar(50), userId)
-
-	const result = await request.query<AdminUserResponseDto>(
+	const rows = await executeQuery<AdminUserResponseDto>(
 		`SELECT user_id AS userId,
 		        full_name AS fullName,
 		        email,
@@ -48,27 +41,25 @@ export async function findById(
 		        loyalty_points AS loyaltyPoints,
 		        is_active AS isActive
 		 FROM users
-		 WHERE user_id = @userId`
+		 WHERE user_id = @userId`,
+		{ userId: { type: sql.VarChar(50), value: userId } }
 	)
-	const row = result.recordset[0]
-	return row ?? null
+	return rows[0] ?? null
 }
 
 export async function create(data: CreateAdminUserData): Promise<void> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), data.userId)
-	request.input('fullName', sql.NVarChar(100), data.fullName)
-	request.input('email', sql.VarChar(100), data.email)
-	request.input('phone', sql.VarChar(20), data.phone)
-	request.input('passwordHash', sql.VarChar(255), data.passwordHash)
-	request.input('role', sql.VarChar(20), data.role)
-
 	try {
-		await request.query(
+		await executeQuery(
 			`INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active)
-			 VALUES (@userId, @fullName, @email, @phone, @passwordHash, @role, 0, 1)`
+			 VALUES (@userId, @fullName, @email, @phone, @passwordHash, @role, 0, 1)`,
+			{
+				userId: { type: sql.VarChar(50), value: data.userId },
+				fullName: { type: sql.NVarChar(100), value: data.fullName },
+				email: { type: sql.VarChar(100), value: data.email },
+				phone: { type: sql.VarChar(20), value: data.phone },
+				passwordHash: { type: sql.VarChar(255), value: data.passwordHash },
+				role: { type: sql.VarChar(20), value: data.role },
+			}
 		)
 	} catch (err: unknown) {
 		if (isSqlUniqueViolation(err)) {
@@ -98,26 +89,24 @@ export async function update(
 	userId: string,
 	data: UpdateAdminUserData
 ): Promise<void> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), userId)
-	request.input('fullName', sql.NVarChar(100), data.fullName)
-	request.input('email', sql.VarChar(100), data.email)
-	request.input('phone', sql.VarChar(20), data.phone)
-	request.input('role', sql.VarChar(20), data.role)
-
 	try {
-		const result = await request.query(
+		const rows = await executeQuery<{ user_id: string }>(
 			`UPDATE users
 			 SET full_name = @fullName,
 			     email = @email,
 			     phone = @phone,
 			     role = @role
-			 WHERE user_id = @userId`
+			 OUTPUT inserted.user_id
+			 WHERE user_id = @userId`,
+			{
+				userId: { type: sql.VarChar(50), value: userId },
+				fullName: { type: sql.NVarChar(100), value: data.fullName },
+				email: { type: sql.VarChar(100), value: data.email },
+				phone: { type: sql.VarChar(20), value: data.phone },
+				role: { type: sql.VarChar(20), value: data.role },
+			}
 		)
-		const affected = result.rowsAffected[0]
-		if (affected === undefined || affected === 0) {
+		if (rows.length === 0) {
 			throw new AppError(404, 'Không tìm thấy người dùng!')
 		}
 	} catch (err: unknown) {
@@ -151,19 +140,17 @@ export async function updateStatus(
 	userId: string,
 	isActive: boolean
 ): Promise<void> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), userId)
-	request.input('isActive', sql.Bit, isActive ? 1 : 0)
-
-	const result = await request.query(
+	const rows = await executeQuery<{ user_id: string }>(
 		`UPDATE users
 		 SET is_active = @isActive
-		 WHERE user_id = @userId`
+		 OUTPUT inserted.user_id
+		 WHERE user_id = @userId`,
+		{
+			userId: { type: sql.VarChar(50), value: userId },
+			isActive: { type: sql.Bit, value: isActive ? 1 : 0 },
+		}
 	)
-	const affected = result.rowsAffected[0]
-	if (affected === undefined || affected === 0) {
+	if (rows.length === 0) {
 		throw new AppError(404, 'Không tìm thấy người dùng!')
 	}
 }

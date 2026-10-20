@@ -125,41 +125,14 @@ export class TripRepository {
 		return result.recordset[0]!
 	}
 	async getAdminTrips(filters: AdminTripsQuery): Promise<AdminTripListRow[]> {
-		const query = `
-			SELECT
-				t.trip_id,
-				t.route_id,
-				t.bus_id,
-				t.driver_id,
-				t.departure_time,
-				t.arrival_time,
-				t.price,
-				t.status,
-				(SELECT COUNT(*) FROM seats s WHERE s.bus_id = t.bus_id) AS total_seats,
-				(SELECT COUNT(DISTINCT tk.seat_id)
-				 FROM tickets tk
-				 WHERE tk.trip_id = t.trip_id AND tk.status = 'CONFIRMED'
-				) AS booked_seats,
-				(SELECT COUNT(DISTINCT tk.seat_id)
-				 FROM tickets tk
-				 JOIN bookings b ON b.booking_id = tk.booking_id
-				 WHERE tk.trip_id = t.trip_id AND tk.status = 'PENDING' AND b.expired_at > SYSDATETIME()
-				) AS pending_seats,
-				COUNT(*) OVER() AS totalCount
-			FROM trips t
-			WHERE (@date IS NULL OR CAST(t.departure_time AS DATE) = @date)
-			  AND (@status IS NULL OR t.status = @status)
-			  AND (@routeId IS NULL OR t.route_id = @routeId)
-			ORDER BY t.departure_time ASC, t.trip_id ASC
-			OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;
-		`
-		return executeQuery<AdminTripListRow>(query, {
+		const result = await executeSP<AdminTripListRow>('dbo.sp_LayDanhSachChuyenAdmin', {
 			date: { type: sql.VarChar(10), value: filters.date ?? null },
 			status: { type: sql.VarChar(20), value: filters.status ?? null },
 			routeId: { type: sql.VarChar(50), value: filters.routeId ?? null },
 			offset: { type: sql.Int, value: (filters.page - 1) * filters.limit },
 			limit: { type: sql.Int, value: filters.limit }
 		})
+		return result.recordset
 	}
 	async updateTrip(tripId: string, input: UpdateTripInput): Promise<TripRow> {
 		const result = await executeSP<TripRow>('sp_SuaChuyen', {
@@ -188,25 +161,23 @@ export class TripRepository {
 	async getDriverTrips(userId: string, date?: string): Promise<DriverTripRow[]> {
 		const query = `
 			SELECT
-				t.trip_id,
-				t.route_id,
-				t.bus_id,
-				t.driver_id,
-				t.departure_time,
-				t.arrival_time,
-				t.price,
-				t.status,
-				v.departure_station,
-				v.arrival_station,
-				v.departure_province,
-				v.arrival_province,
-				v.bus_type
-			FROM trips t
-			JOIN drivers d ON d.driver_id = t.driver_id
-			JOIN dbo.vw_ChiTietChuyenDi v ON v.trip_id = t.trip_id
-			WHERE d.user_id = @userId
-			  AND (@date IS NULL OR CAST(t.departure_time AS DATE) = @date)
-			ORDER BY t.departure_time ASC;
+				trip_id,
+				route_id,
+				bus_id,
+				driver_id,
+				departure_time,
+				arrival_time,
+				price,
+				status,
+				departure_station,
+				arrival_station,
+				departure_province,
+				arrival_province,
+				bus_type
+			FROM dbo.vw_DriverTrips
+			WHERE user_id = @userId
+			  AND (@date IS NULL OR CAST(departure_time AS DATE) = @date)
+			ORDER BY departure_time ASC;
 		`
 		return executeQuery<DriverTripRow>(query, {
 			userId: { type: sql.VarChar(50), value: userId },
@@ -216,5 +187,3 @@ export class TripRepository {
 }
 
 export const tripRepository = new TripRepository()
-
-

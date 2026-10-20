@@ -1,15 +1,11 @@
-import { getPool, sql } from '../../config/db.js'
+import { sql } from '../../config/db.js'
+import { executeQuery } from '../../database/query.js'
 import type { DriverScheduleDto } from '../../types/index.js'
 
 export async function findSchedulesByUserId(
 	userId: string
 ): Promise<DriverScheduleDto[]> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), userId)
-
-	const result = await request.query<DriverScheduleDto>(
+	return executeQuery<DriverScheduleDto>(
 		`SELECT trip_id AS tripId,
 		        driver_id AS driverId,
 		        user_id AS userId,
@@ -28,10 +24,9 @@ export async function findSchedulesByUserId(
 		        total_seats AS totalSeats
 		 FROM vw_LichPhanCongTaiXe
 		 WHERE user_id = @userId
-		 ORDER BY departure_time ASC`
+		 ORDER BY departure_time ASC`,
+		{ userId: { type: sql.VarChar(50), value: userId } }
 	)
-
-	return result.recordset
 }
 
 export const driverRepository = {
