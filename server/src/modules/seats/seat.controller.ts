@@ -1,2 +1,0 @@
-// Controller for Seats module
-
