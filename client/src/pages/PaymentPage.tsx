@@ -14,6 +14,7 @@ import type { BookingCheckoutView } from '../types';
 import { formatCurrency, formatFullDateVN } from '../utils';
 import { bookingService } from '../services/booking.service';
 import { paymentService } from '../services/payment.service';
+import { VIETQR_CONFIG } from '../constants';
 import { useToast } from '../hooks/useToast';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -44,12 +45,26 @@ export const PaymentPage: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<'BANK_TRANSFER' | 'CASH'>('BANK_TRANSFER');
   const totalAmount = checkoutData?.totalAmount || checkoutData?.finalAmount || 0;
   const [secondsLeft, setSecondsLeft] = useState(
-    checkoutData?.payment.countdownSeconds || 900
+    checkoutData?.payment?.countdownSeconds || VIETQR_CONFIG.DEFAULT_COUNTDOWN_SECONDS || 900
   );
   const [isCopiedAccount, setIsCopiedAccount] = useState(false);
   const [isCopiedContent, setIsCopiedContent] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+
+  // Thông tin thanh toán VietQR với cơ chế fallback tự động
+  const bankName = checkoutData?.payment?.bankName || VIETQR_CONFIG.DEFAULT_BANK;
+  const accountNumber = checkoutData?.payment?.accountNumber || VIETQR_CONFIG.ACCOUNT_NUMBER;
+  const accountName = checkoutData?.payment?.accountName || VIETQR_CONFIG.ACCOUNT_NAME;
+  const transferContent = checkoutData?.payment?.transferContent || (checkoutData ? `Daisy Booking ${checkoutData.bookingCode}` : '');
+
+  // Tính toán URL ảnh VietQR chuẩn xác, tự động fallback nếu URL trước đó bị thiếu tham số
+  const rawQrUrl = checkoutData?.payment?.qrImageUrl || '';
+  const qrImageUrl = (rawQrUrl && !rawQrUrl.includes('/image/--') && !rawQrUrl.includes('/image/-'))
+    ? rawQrUrl
+    : `https://img.vietqr.io/image/${VIETQR_CONFIG.BANK_BIN}-${accountNumber}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(
+        transferContent
+      )}&accountName=${encodeURIComponent(accountName)}`;
 
   // Real-time Countdown Timer (đếm ngược giữ chỗ tự động)
   useEffect(() => {
@@ -328,30 +343,40 @@ export const PaymentPage: React.FC = () => {
                   </div>
 
                   {/* QR Image */}
-                  <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-xs mb-6 max-w-[260px] w-full">
+                  <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-xs mb-6 max-w-[260px] w-full flex flex-col items-center">
                     <img
-                      src={checkoutData.payment.qrImageUrl}
+                      src={qrImageUrl}
                       alt="Mã QR thanh toán VietQR"
                       className="w-full h-auto rounded-lg"
+                      onError={(e) => {
+                        // Fallback sang QR generator tiêu chuẩn nếu vietqr.io gặp sự cố mạng
+                        const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+                          `2|99|${accountNumber}|${accountName}||0|0|${totalAmount}|${transferContent}|transfer_myqr`
+                        )}`;
+                        if (e.currentTarget.src !== fallbackUrl) {
+                          e.currentTarget.src = fallbackUrl;
+                        }
+                      }}
                     />
+                    <p className="text-[11px] text-slate-500 mt-2 font-medium">Quét bằng ứng dụng ngân hàng / MoMo</p>
                   </div>
 
                   {/* Chi tiết chuyển khoản */}
                   <div className="w-full max-w-md bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3 text-xs mb-6">
                     <div className="flex justify-between items-center py-1 border-b border-slate-200">
                       <span className="text-slate-500">Ngân hàng:</span>
-                      <span className="font-bold text-slate-800">{checkoutData.payment.bankName}</span>
+                      <span className="font-bold text-slate-800">{bankName}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-slate-200">
                       <span className="text-slate-500">Số tài khoản:</span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-slate-900 text-sm">
-                          {checkoutData.payment.accountNumber}
+                          {accountNumber}
                         </span>
                         <button
                           type="button"
-                          onClick={() => handleCopy(checkoutData.payment.accountNumber, 'account')}
+                          onClick={() => handleCopy(accountNumber, 'account')}
                           title="Sao chép số tài khoản"
                           className="p-1 rounded-sm hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
                         >
@@ -362,7 +387,7 @@ export const PaymentPage: React.FC = () => {
 
                     <div className="flex justify-between items-center py-1 border-b border-slate-200">
                       <span className="text-slate-500">Chủ tài khoản:</span>
-                      <span className="font-bold text-slate-800">{checkoutData.payment.accountName}</span>
+                      <span className="font-bold text-slate-800">{accountName}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-slate-200">
@@ -376,11 +401,11 @@ export const PaymentPage: React.FC = () => {
                       <span className="text-slate-500">Nội dung chuyển khoản:</span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-[#1E3A5F]">
-                          {checkoutData.payment.transferContent}
+                          {transferContent}
                         </span>
                         <button
                           type="button"
-                          onClick={() => handleCopy(checkoutData.payment.transferContent, 'content')}
+                          onClick={() => handleCopy(transferContent, 'content')}
                           title="Sao chép nội dung chuyển khoản"
                           className="p-1 rounded-sm hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
                         >
