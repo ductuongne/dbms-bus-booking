@@ -43,13 +43,7 @@ def reset_database():
         scripts_dir = os.path.join(os.path.dirname(__file__), 'scripts')
         
         # Get all .sql files and sort them alphabetically
-        files = sorted([
-            f for f in os.listdir(scripts_dir)
-            if f.endswith('.sql')
-            and f != '11_backup_restore.sql'
-            and f != '07_permissions.sql'
-        ])
-                
+        files = sorted([f for f in os.listdir(scripts_dir) if f.endswith('.sql')])
 
         for file in files:
             print(f"Executing {file}...")

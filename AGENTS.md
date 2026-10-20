@@ -16,8 +16,8 @@ Hệ thống đặt vé xe khách theo mô hình monorepo.
 
 | Thư mục | Công nghệ chính / Vai trò |
 |---|---|
-| `client/` | React + TypeScript + Vite, giao diện người dùng |
-| `server/` | Express + TypeScript, API và nghiệp vụ |
+| `frontend/` | React + TypeScript + Vite, giao diện người dùng |
+| `backend/` | Express + TypeScript, API và nghiệp vụ |
 | `database/` | SQL Server, chứa sơ đồ và file `.sql` (schema, data seed) |
 | `.agents/` | `rules/` là quy định bắt buộc, `skills/` là kỹ năng agent có thể dùng |
 
