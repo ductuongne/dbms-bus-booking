@@ -42,7 +42,6 @@ export const PaymentPage: React.FC = () => {
     return null;
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'BANK_TRANSFER' | 'CASH'>('BANK_TRANSFER');
   const totalAmount = checkoutData?.totalAmount || checkoutData?.finalAmount || 0;
   const [secondsLeft, setSecondsLeft] = useState(
     checkoutData?.payment?.countdownSeconds || VIETQR_CONFIG.DEFAULT_COUNTDOWN_SECONDS || 900
@@ -124,31 +123,25 @@ export const PaymentPage: React.FC = () => {
   const handleConfirmPayment = async () => {
     try {
       setIsConfirming(true);
-      // Bước 1: Xác nhận đơn đặt vé với phương thức thanh toán đã chọn
+      // Bước 1: Xác nhận đơn đặt vé với phương thức thanh toán VietQR
       await bookingService.confirmBooking(checkoutData.bookingId, {
         booking_code: checkoutData.bookingCode,
         phone: checkoutData.passenger.phone,
-        payment_method: paymentMethod,
+        payment_method: 'BANK_TRANSFER',
       });
 
       // Bước 2: Gọi thủ tục thanh toán ACID (sp_ThanhToan)
       await paymentService.payBooking(checkoutData.bookingId, {
         booking_code: checkoutData.bookingCode,
         phone: checkoutData.passenger.phone,
-        method: paymentMethod,
+        method: 'BANK_TRANSFER',
         transaction_code:
-          paymentMethod === 'BANK_TRANSFER'
-            ? checkoutData.payment.transferContent || `VQR-${checkoutData.bookingCode}`
-            : undefined,
+          checkoutData.payment.transferContent || `VQR-${checkoutData.bookingCode}`,
       });
 
       setIsPaid(true);
       sessionStorage.removeItem('current_checkout_data');
-      success(
-        paymentMethod === 'BANK_TRANSFER'
-          ? `Thanh toán thành công! Vé điện tử đã gửi tới ${checkoutData.passenger.email}`
-          : `Đặt vé thành công! Bạn có thể thanh toán tiền mặt khi lên xe.`
-      );
+      success(`Thanh toán thành công! Vé điện tử đã gửi tới ${checkoutData.passenger.email}`);
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -223,7 +216,7 @@ export const PaymentPage: React.FC = () => {
 
             <div className="space-y-1">
               <h1 className="text-2xl font-black text-slate-900">
-                {paymentMethod === 'BANK_TRANSFER' ? 'Thanh toán thành công!' : 'Đặt vé thành công!'}
+                Thanh toán thành công!
               </h1>
               <p className="text-xs text-slate-500">
                 Mã đơn hàng: <strong className="font-mono text-slate-900">{checkoutData.bookingCode}</strong>
@@ -241,9 +234,7 @@ export const PaymentPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Phương thức:</span>
-                <span className="font-bold">
-                  {paymentMethod === 'BANK_TRANSFER' ? 'Chuyển khoản VietQR' : 'Tiền mặt khi lên xe'}
-                </span>
+                <span className="font-bold">Chuyển khoản VietQR</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Ghế ngồi:</span>
@@ -277,168 +268,120 @@ export const PaymentPage: React.FC = () => {
               {/* Lựa chọn phương thức thanh toán */}
               <div className="w-full mb-6">
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  Chọn phương thức thanh toán
+                  Phương thức thanh toán
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('BANK_TRANSFER')}
-                    className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                      paymentMethod === 'BANK_TRANSFER'
-                        ? 'border-[#1E3A5F] bg-blue-50/40 ring-2 ring-[#1E3A5F]/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
+                  <div
+                    className="p-3.5 rounded-xl border border-[#1E3A5F] bg-blue-50/40 ring-2 ring-[#1E3A5F]/20 text-left flex items-center gap-3 select-none"
                   >
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                        paymentMethod === 'BANK_TRANSFER'
-                          ? 'bg-[#1E3A5F] text-white'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#1E3A5F] text-white">
                       <QrCode className="w-5 h-5" />
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 leading-tight">Chuyển khoản VietQR</h4>
                       <p className="text-[11px] text-slate-500 mt-0.5">Quét mã ngân hàng tự động</p>
                     </div>
-                  </button>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('CASH')}
-                    className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                      paymentMethod === 'CASH'
-                        ? 'border-[#1E3A5F] bg-blue-50/40 ring-2 ring-[#1E3A5F]/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
+                  <div
+                    className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-left flex items-center gap-3 opacity-40 cursor-not-allowed select-none"
+                    title="Phương thức tiền mặt tạm thời chưa áp dụng"
                   >
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                        paymentMethod === 'CASH'
-                          ? 'bg-[#1E3A5F] text-white'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-slate-200 text-slate-400">
                       <Banknote className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 leading-tight">Tiền mặt tại quầy / xe</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Thanh toán khi lên xe</p>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-slate-500 leading-tight">Tiền mặt tại quầy / xe</h4>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Thanh toán khi lên xe</p>
                     </div>
-                  </button>
+                  </div>
                 </div>
               </div>
 
-              {paymentMethod === 'BANK_TRANSFER' ? (
-                <>
-                  <div className="text-center space-y-1 mb-6">
-                    <Badge variant="brand" size="md">
-                      Cổng thanh toán tự động VietQR
-                    </Badge>
-                    <h2 className="text-xl font-bold text-slate-900 mt-2">Quét mã QR để thanh toán</h2>
-                    <p className="text-xs text-slate-500">
-                      Mở ứng dụng ngân hàng bất kỳ để quét mã QR và thanh toán giữ chỗ tức thì
-                    </p>
-                  </div>
+              <div className="text-center space-y-1 mb-6">
+                <Badge variant="brand" size="md">
+                  Cổng thanh toán tự động VietQR
+                </Badge>
+                <h2 className="text-xl font-bold text-slate-900 mt-2">Quét mã QR để thanh toán</h2>
+                <p className="text-xs text-slate-500">
+                  Mở ứng dụng ngân hàng bất kỳ để quét mã QR và thanh toán giữ chỗ tức thì
+                </p>
+              </div>
 
-                  {/* QR Image */}
-                  <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-xs mb-6 max-w-[260px] w-full flex flex-col items-center">
-                    <img
-                      src={qrImageUrl}
-                      alt="Mã QR thanh toán VietQR"
-                      className="w-full h-auto rounded-lg"
-                      onError={(e) => {
-                        // Fallback sang QR generator tiêu chuẩn nếu vietqr.io gặp sự cố mạng
-                        const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-                          `2|99|${accountNumber}|${accountName}||0|0|${totalAmount}|${transferContent}|transfer_myqr`
-                        )}`;
-                        if (e.currentTarget.src !== fallbackUrl) {
-                          e.currentTarget.src = fallbackUrl;
-                        }
-                      }}
-                    />
-                    <p className="text-[11px] text-slate-500 mt-2 font-medium">Quét bằng ứng dụng ngân hàng / MoMo</p>
-                  </div>
+              {/* QR Image */}
+              <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-xs mb-6 max-w-[260px] w-full flex flex-col items-center">
+                <img
+                  src={qrImageUrl}
+                  alt="Mã QR thanh toán VietQR"
+                  className="w-full h-auto rounded-lg"
+                  onError={(e) => {
+                    // Fallback sang QR generator tiêu chuẩn nếu vietqr.io gặp sự cố mạng
+                    const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+                      `2|99|${accountNumber}|${accountName}||0|0|${totalAmount}|${transferContent}|transfer_myqr`
+                    )}`;
+                    if (e.currentTarget.src !== fallbackUrl) {
+                      e.currentTarget.src = fallbackUrl;
+                    }
+                  }}
+                />
+                <p className="text-[11px] text-slate-500 mt-2 font-medium">Quét bằng ứng dụng ngân hàng</p>
+              </div>
 
-                  {/* Chi tiết chuyển khoản */}
-                  <div className="w-full max-w-md bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3 text-xs mb-6">
-                    <div className="flex justify-between items-center py-1 border-b border-slate-200">
-                      <span className="text-slate-500">Ngân hàng:</span>
-                      <span className="font-bold text-slate-800">{bankName}</span>
-                    </div>
+              {/* Chi tiết chuyển khoản */}
+              <div className="w-full max-w-md bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3 text-xs mb-6">
+                <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                  <span className="text-slate-500">Ngân hàng:</span>
+                  <span className="font-bold text-slate-800">{bankName}</span>
+                </div>
 
-                    <div className="flex justify-between items-center py-1 border-b border-slate-200">
-                      <span className="text-slate-500">Số tài khoản:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900 text-sm">
-                          {accountNumber}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(accountNumber, 'account')}
-                          title="Sao chép số tài khoản"
-                          className="p-1 rounded-sm hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-                        >
-                          {isCopiedAccount ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center py-1 border-b border-slate-200">
-                      <span className="text-slate-500">Chủ tài khoản:</span>
-                      <span className="font-bold text-slate-800">{accountName}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center py-1 border-b border-slate-200">
-                      <span className="text-slate-500">Số tiền:</span>
-                      <span className="font-bold text-[#C2410C] text-sm">
-                        {formatCurrency(totalAmount)}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-[#1E3A5F]">
-                          {transferContent}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(transferContent, 'content')}
-                          title="Sao chép nội dung chuyển khoản"
-                          className="p-1 rounded-sm hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-                        >
-                          {isCopiedContent ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                /* Giao diện Thanh toán Tiền mặt */
-                <div className="w-full space-y-4 mb-6">
-                  <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 space-y-2">
-                    <div className="flex items-center gap-2 font-bold text-sm text-amber-900">
-                      <Banknote className="w-5 h-5 text-amber-600" />
-                      Quy trình thanh toán tiền mặt
-                    </div>
-                    <p className="leading-relaxed text-slate-700">
-                      Bạn đã chọn phương thức <strong>Thanh toán tiền mặt</strong>. Khi nhấn nút xác nhận bên dưới:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-slate-600 pl-1">
-                      <li>Hệ thống sẽ xác nhận đặt chỗ của bạn và cấp mã vé điện tử chính thức.</li>
-                      <li>Bạn sẽ thanh toán số tiền <strong>{formatCurrency(totalAmount)}</strong> trực tiếp cho nhân viên hoặc tài xế khi lên xe.</li>
-                      <li>Vui lòng có mặt tại bến xe trước giờ khởi hành ít nhất 15 phút.</li>
-                    </ul>
-                  </div>
-
-                  <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Số tiền cần thanh toán khi lên xe:</span>
-                    <span className="text-base font-bold text-[#C2410C]">{formatCurrency(totalAmount)}</span>
+                <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                  <span className="text-slate-500">Số tài khoản:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-900 text-sm">
+                      {accountNumber}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(accountNumber, 'account')}
+                      title="Sao chép số tài khoản"
+                      className="p-1 rounded-sm hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                    >
+                      {isCopiedAccount ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
                 </div>
-              )}
+
+                <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                  <span className="text-slate-500">Chủ tài khoản:</span>
+                  <span className="font-bold text-slate-800">{accountName}</span>
+                </div>
+
+                <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                  <span className="text-slate-500">Số tiền:</span>
+                  <span className="font-bold text-[#C2410C] text-sm">
+                    {formatCurrency(totalAmount)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-slate-500">Nội dung chuyển khoản:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-[#1E3A5F]">
+                      {transferContent}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(transferContent, 'content')}
+                      title="Sao chép nội dung chuyển khoản"
+                      className="p-1 rounded-sm hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                    >
+                      {isCopiedContent ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               {/* Nút bấm xác nhận */}
               <div className="w-full max-w-md">
@@ -449,9 +392,7 @@ export const PaymentPage: React.FC = () => {
                   isLoading={isConfirming}
                   disabled={secondsLeft <= 0}
                 >
-                  {paymentMethod === 'BANK_TRANSFER'
-                    ? 'Tôi đã hoàn tất chuyển khoản VietQR'
-                    : 'Xác nhận đặt chỗ & Thanh toán tiền mặt'}
+                  Tôi đã hoàn tất chuyển khoản VietQR
                 </Button>
               </div>
             </main>

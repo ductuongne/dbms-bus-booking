@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express'
 import {
 	bookingCodeParamsSchema,
 	bookingIdParamsSchema,
+	bookingPhoneParamsSchema,
 	cancelBookingBodySchema,
 	checkInTicketBodySchema,
 	confirmBookingBodySchema,
@@ -54,6 +55,16 @@ export class BookingController {
 		}
 	}
 
+	async getBookingsByPhone(req: Request, res: Response, next: NextFunction): Promise<void> {
+		try {
+			const { phone } = bookingPhoneParamsSchema.parse(req.params)
+			const result = await bookingService.getBookingsByPhone(phone)
+			res.status(200).json(result)
+		} catch (error) {
+			next(error)
+		}
+	}
+
 	async getTripTickets(req: Request, res: Response, next: NextFunction): Promise<void> {
 		try {
 			const { tripId } = tripTicketsParamsSchema.parse(req.params)
@@ -77,4 +88,3 @@ export class BookingController {
 }
 
 export const bookingController = new BookingController()
-

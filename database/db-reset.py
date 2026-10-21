@@ -80,8 +80,8 @@ def reset_database():
             '04_functions.sql',
             '05_transactions.sql',
             '06_triggers.sql',
-            '08_stored_procedures.sql',
             '09_views.sql',
+            '08_stored_procedures.sql',
             '10_seed_data.sql',
             '07_permissions.sql',
         ]

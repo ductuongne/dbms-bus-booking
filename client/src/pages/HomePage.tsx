@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Bus,
   ArrowLeftRight,
@@ -52,14 +52,15 @@ function getRouteImage(destination: string): string {
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Khởi tạo ngày theo giờ địa phương (ERR-05)
   const todayStr = toLocalISODate(new Date());
   const [provinces, setProvinces] = useState<Province[]>(mockProvinces);
   const [realRoutes, setRealRoutes] = useState<RouteListItem[]>([]);
-  const [origin, setOrigin] = useState('Hà Nội');
-  const [destination, setDestination] = useState('Ninh Bình');
-  const [travelDate, setTravelDate] = useState(todayStr);
+  const [origin, setOrigin] = useState(() => searchParams.get('from') || 'Hà Nội');
+  const [destination, setDestination] = useState(() => searchParams.get('to') || 'Hải Phòng');
+  const [travelDate, setTravelDate] = useState(() => searchParams.get('date') || todayStr);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -71,6 +72,13 @@ export const HomePage: React.FC = () => {
         ]);
         if (provList.length > 0) {
           setProvinces(provList);
+          // Đảm bảo state origin & destination luôn khớp với các option thực tế, tránh lỗi lệch DOM vs state
+          setOrigin((prev) => (provList.some((p) => p.name === prev) ? prev : provList[0].name));
+          setDestination((prev) => {
+            if (provList.some((p) => p.name === prev)) return prev;
+            const diff = provList.find((p) => p.name !== provList[0].name) || provList[1] || provList[0];
+            return diff.name;
+          });
         }
         setRealRoutes(routeList);
       } catch {
@@ -79,7 +87,6 @@ export const HomePage: React.FC = () => {
     }
     loadRealData();
   }, []);
-
 
   const handleSwap = () => {
     setOrigin(destination);
@@ -113,8 +120,8 @@ export const HomePage: React.FC = () => {
   };
 
   const popularRoutes = [
-    { from: 'Hà Nội', to: 'Ninh Bình', price: 120000, duration: '1g 30ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
     { from: 'Hà Nội', to: 'Hải Phòng', price: 110000, duration: '1g 50ph', image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Lào Cai', price: 280000, duration: '5g 30ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
     { from: 'Hồ Chí Minh', to: 'Lâm Đồng', price: 220000, duration: '8g 00ph', image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&q=80' },
     { from: 'Hà Nội', to: 'Đà Nẵng', price: 450000, duration: '14g 00ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
   ];
@@ -398,7 +405,6 @@ export const HomePage: React.FC = () => {
 
       {/* Cam kết dịch vụ (3 cột, B6.1.A) */}
       <section className="bg-slate-100/60 border-t border-slate-200 py-14 mt-auto">
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-10">
             <h2 className="text-xl font-bold text-slate-900">Tại sao nên đặt vé tại Daisy Booking?</h2>

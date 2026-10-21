@@ -6,7 +6,7 @@ import { busRouter, adminBusRouter, adminBusTypeRouter } from './buses/bus.route
 import { stationRouter, provinceRouter, adminStationRouter } from './stations/station.routes'
 import { routeRouter, adminRouteRouter } from './routes/route.routes'
 import reportRoutes from './reports/report.routes'
-
+import { verifyJWT, checkRole } from '../middlewares/auth.middleware.js'
 const appRouter = Router()
 
 // Trips & Bookings
@@ -25,7 +25,6 @@ appRouter.use('/buses', busRouter)
 // ==========================================
 // ADMIN MANAGEMENT ENDPOINTS
 // ==========================================
-import { verifyJWT, checkRole } from '../middlewares/auth.middleware.js'
 
 const adminRouter = Router()
 adminRouter.use(verifyJWT)

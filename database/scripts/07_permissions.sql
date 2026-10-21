@@ -98,8 +98,8 @@ IF OBJECT_ID('dbo.sp_ThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_ThanhToan TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_KhachHang;
-IF OBJECT_ID('dbo.sp_LayVeTheoMaBooking', 'P') IS NOT NULL
-    GRANT EXECUTE ON dbo.sp_LayVeTheoMaBooking TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_LayThongTinVe', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_LayThongTinVe TO Role_KhachHang, Role_NhanVien;
 IF OBJECT_ID('dbo.sp_DangKyKhachHang', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_DangKyKhachHang TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_CapNhatGuestThanhKhachHang', 'P') IS NOT NULL

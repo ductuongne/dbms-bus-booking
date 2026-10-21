@@ -33,24 +33,38 @@ AS
     JOIN provinces ap ON ap.province_id = ast.province_id;
 GO
 
--- 2. vw_ChiTietVe (chi tiết vé: ghế, chuyến, booking)
+-- 2. vw_ChiTietVe (chi tiết vé: ghế, chuyến, booking, lộ trình)
 CREATE OR ALTER VIEW dbo.vw_ChiTietVe
 AS
     SELECT
         tk.ticket_id,
         tk.ticket_code,
-        s.seat_number,
-        tk.price,
-        tk.status,
-        tk.passenger_name,
-        tk.passenger_phone,
+        tk.booking_id,
         bk.booking_code,
         bk.expired_at,
-        t.departure_time
+        tk.trip_id,
+        tk.seat_id,
+        s.seat_number,
+        tk.passenger_name,
+        tk.passenger_phone,
+        tk.price,
+        tk.status,
+        t.departure_time,
+        t.arrival_time,
+        r.route_id,
+        s_dep.name AS departure_station,
+        s_arr.name AS arrival_station,
+        p_dep.name AS departure_province,
+        p_arr.name AS arrival_province
     FROM tickets tk
     JOIN bookings bk ON bk.booking_id = tk.booking_id
     JOIN seats s ON s.seat_id = tk.seat_id
-    JOIN trips t ON t.trip_id = tk.trip_id;
+    JOIN trips t ON t.trip_id = tk.trip_id
+    JOIN routes r ON r.route_id = t.route_id
+    JOIN stations s_dep ON s_dep.station_id = r.departure_station_id
+    JOIN stations s_arr ON s_arr.station_id = r.arrival_station_id
+    JOIN provinces p_dep ON p_dep.province_id = s_dep.province_id
+    JOIN provinces p_arr ON p_arr.province_id = s_arr.province_id;
 GO
 
 -- 3. vw_LichPhanCongTaiXe (Lịch phân công tài xế)
