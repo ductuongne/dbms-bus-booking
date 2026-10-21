@@ -12,10 +12,12 @@ import {
 	type AuthContextType,
 } from './auth.context'
 
+const USER_STORAGE_KEY = 'auth_user'
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	// Khởi tạo lazy state tức thời từ localStorage khi Mount (F5) không gây cascading re-renders
+	// 1. Khôi phục Token từ localStorage khi F5
 	const [token, setToken] = useState<string | null>(() => {
 		const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY)
 		if (!storedToken) return null
@@ -23,48 +25,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		return decoded ? storedToken : null
 	})
 
+	// 2. Khôi phục đầy đủ User (gồm fullName, phone, email) từ localStorage khi F5
 	const [user, setUser] = useState<AuthUser | null>(() => {
 		const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY)
 		if (!storedToken) return null
+
 		const decoded = decodeTokenSafely(storedToken)
-		return decoded
-			? {
-					userId: decoded.userId,
-					role: decoded.role,
-				}
-			: null
+		if (!decoded) return null
+
+		// Ưu tiên đọc từ auth_user đã lưu trong localStorage
+		const storedUser = localStorage.getItem(USER_STORAGE_KEY)
+		if (storedUser) {
+			try {
+				return JSON.parse(storedUser) as AuthUser
+			} catch {
+				// Nếu lỗi parse thì fallback về dữ liệu decode từ token
+			}
+		}
+
+		return {
+			userId: decoded.userId,
+			role: decoded.role,
+		}
 	})
 
 	const [isInitialized] = useState<boolean>(true)
 
-	// Đăng nhập: Lưu access & refresh token vào storage, giải mã và cập nhật state
+	// 3. Khi Đăng nhập: Lưu cả token và đối tượng user vào localStorage
 	const login = useCallback((newToken: string, explicitUser?: AuthUser, newRefreshToken?: string) => {
 		localStorage.setItem(TOKEN_STORAGE_KEY, newToken)
 		if (newRefreshToken) {
 			localStorage.setItem('refresh_token', newRefreshToken)
 		}
+
 		const decoded = decodeTokenSafely(newToken)
 		setToken(newToken)
+
 		if (explicitUser) {
+			localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(explicitUser))
 			setUser(explicitUser)
 		} else if (decoded) {
-			setUser({
+			const fallbackUser: AuthUser = {
 				userId: decoded.userId,
 				role: decoded.role,
-			})
+			}
+			localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(fallbackUser))
+			setUser(fallbackUser)
 		}
 	}, [])
 
-	// Đăng xuất: Xóa token khỏi storage, reset state
+	// 4. Khi Đăng xuất: Xóa sạch cả user và token
 	const logout = useCallback(() => {
 		localStorage.removeItem(TOKEN_STORAGE_KEY)
 		localStorage.removeItem('refresh_token')
+		localStorage.removeItem(USER_STORAGE_KEY)
 		setToken(null)
 		setUser(null)
 	}, [])
 
-
-	// Lắng nghe sự kiện auth:logout từ Axios Response Interceptor (khi server trả 401)
 	useEffect(() => {
 		const handleSyncLogout = () => {
 			logout()
