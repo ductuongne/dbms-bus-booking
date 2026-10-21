@@ -143,7 +143,7 @@ export const SearchResultsPage: React.FC = () => {
 
   const todayStr = toLocalISODate(new Date());
   const origin = searchParams.get('from') || 'Hà Nội';
-  const destination = searchParams.get('to') || 'Ninh Bình';
+  const destination = searchParams.get('to') || 'Hải Phòng';
   const date = searchParams.get('date') || todayStr;
 
   // Filter states
