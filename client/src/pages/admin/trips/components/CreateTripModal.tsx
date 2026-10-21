@@ -30,6 +30,11 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
   const [formDepartureTime, setFormDepartureTime] = useState('');
   const [formArrivalTime, setFormArrivalTime] = useState('');
   const [formPrice, setFormPrice] = useState<number>(250000);
+  const [minDepartureIso] = useState<string>(() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 1);
+    return d.toISOString().slice(0, 16);
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -59,14 +64,37 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
       return;
     }
 
+    const depDate = new Date(formDepartureTime);
+    const arrDate = new Date(formArrivalTime);
+
+    if (isNaN(depDate.getTime()) || isNaN(arrDate.getTime())) {
+      toastError('Thời gian khởi hành hoặc thời gian đến không hợp lệ!');
+      return;
+    }
+
+    if (depDate.getTime() <= Date.now()) {
+      toastError('Thời gian khởi hành phải sau thời điểm hiện tại!');
+      return;
+    }
+
+    if (arrDate.getTime() <= depDate.getTime()) {
+      toastError('Thời gian đến dự kiến phải sau thời gian khởi hành!');
+      return;
+    }
+
+    if (isNaN(formPrice) || formPrice <= 0) {
+      toastError('Giá vé cơ bản phải là số dương lớn hơn 0 VNĐ!');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit({
         route_id: routeId,
         bus_id: busId,
         driver_id: driverId,
-        departure_time: new Date(formDepartureTime).toISOString(),
-        arrival_time: new Date(formArrivalTime).toISOString(),
+        departure_time: depDate.toISOString(),
+        arrival_time: arrDate.toISOString(),
         price: Number(formPrice),
       });
       onClose();
@@ -140,6 +168,15 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
             <Input
               type="datetime-local"
               value={formDepartureTime}
+              min={minDepartureIso}
+              onKeyDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                try {
+                  (e.currentTarget as HTMLInputElement).showPicker?.();
+                } catch {
+                  // Fallback
+                }
+              }}
               onChange={(e) => setFormDepartureTime(e.target.value)}
               required
             />
@@ -149,6 +186,15 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
             <Input
               type="datetime-local"
               value={formArrivalTime}
+              min={formDepartureTime || minDepartureIso}
+              onKeyDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                try {
+                  (e.currentTarget as HTMLInputElement).showPicker?.();
+                } catch {
+                  // Fallback
+                }
+              }}
               onChange={(e) => setFormArrivalTime(e.target.value)}
               required
             />
@@ -161,8 +207,8 @@ export const CreateTripModal: React.FC<CreateTripModalProps> = ({
             type="number"
             min="10000"
             step="10000"
-            value={formPrice}
-            onChange={(e) => setFormPrice(Number(e.target.value))}
+            value={isNaN(formPrice) || formPrice === 0 ? '' : formPrice}
+            onChange={(e) => setFormPrice(e.target.value === '' ? 0 : Number(e.target.value))}
             placeholder="VD: 250000"
             required
           />

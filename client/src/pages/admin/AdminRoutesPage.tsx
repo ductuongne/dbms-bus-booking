@@ -204,8 +204,26 @@ export const AdminRoutesPage: React.FC = () => {
       toastError('Bến xuất phát và bến đến không được trùng nhau');
       return;
     }
-    if (distanceKm <= 0 || estimatedDuration <= 0) {
-      toastError('Khoảng cách và thời gian ước tính phải lớn hơn 0');
+    if (!distanceKm || isNaN(distanceKm) || distanceKm <= 0 || !estimatedDuration || isNaN(estimatedDuration) || estimatedDuration <= 0) {
+      toastError('Khoảng cách và thời gian ước tính phải là số hợp lệ lớn hơn 0');
+      return;
+    }
+
+    // Validate intermediate stops uniqueness and validity
+    for (let i = 0; i < intermediateStops.length; i++) {
+      const stop = intermediateStops[i];
+      if (!stop.stationId) {
+        toastError(`Vui lòng chọn trạm cho điểm dừng thứ ${i + 1}`);
+        return;
+      }
+      if (stop.stationId === departureStationId || stop.stationId === arrivalStationId) {
+        toastError('Trạm dừng trung gian không được trùng với bến xuất phát hoặc bến đến');
+        return;
+      }
+    }
+    const intermediateStationIds = intermediateStops.map((s) => s.stationId);
+    if (new Set(intermediateStationIds).size !== intermediateStationIds.length) {
+      toastError('Các trạm dừng trung gian không được trùng lặp nhau');
       return;
     }
 
@@ -509,8 +527,11 @@ export const AdminRoutesPage: React.FC = () => {
               step="0.1"
               min="1"
               required
-              value={distanceKm}
-              onChange={(e) => setDistanceKm(Number(e.target.value))}
+              value={isNaN(distanceKm) || distanceKm === 0 ? '' : distanceKm}
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                setDistanceKm(isNaN(val) ? 0 : val);
+              }}
             />
 
             <div>
@@ -519,9 +540,12 @@ export const AdminRoutesPage: React.FC = () => {
                 type="number"
                 min="10"
                 required
-                value={estimatedDuration}
-                onChange={(e) => setEstimatedDuration(Number(e.target.value))}
-                helperText={`≈ ${formatDuration(estimatedDuration)}`}
+                value={isNaN(estimatedDuration) || estimatedDuration === 0 ? '' : estimatedDuration}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                  setEstimatedDuration(isNaN(val) ? 0 : val);
+                }}
+                helperText={`≈ ${formatDuration(estimatedDuration || 0)}`}
               />
             </div>
           </div>
