@@ -6,6 +6,7 @@ import { bookingController } from './booking.controller'
 import {
 	bookingCodeParamsSchema,
 	bookingIdParamsSchema,
+	bookingPhoneParamsSchema,
 	cancelBookingBodySchema,
 	checkInTicketBodySchema,
 	confirmBookingBodySchema,
@@ -44,6 +45,15 @@ router.get(
 	bookingController.getBookingByCode.bind(bookingController)
 )
 
+// Tra cứu danh sách đơn đặt vé theo số điện thoại (cho nhân viên, admin, tài xế)
+router.get(
+	'/by-phone/:phone',
+	verifyJWT,
+	checkRole(['STAFF', 'ADMIN', 'DRIVER']),
+	validateRequest({ params: bookingPhoneParamsSchema }),
+	bookingController.getBookingsByPhone.bind(bookingController)
+)
+
 router.get(
 	'/trips/:tripId/tickets',
 	verifyJWT,
@@ -61,5 +71,3 @@ router.post(
 )
 
 export default router
-
-

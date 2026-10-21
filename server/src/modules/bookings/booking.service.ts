@@ -138,23 +138,33 @@ export class BookingService {
 	}
 
 	async getBookingByCode(bookingCode: string): Promise<Record<string, unknown>> {
-		const { booking, tickets } = await bookingRepository.findBookingByCode(bookingCode)
-		if (!booking) {
+		const item = await bookingRepository.findBookingByCode(bookingCode)
+		if (!item) {
 			throw new AppError(404, 'Booking không tồn tại')
 		}
 
 		return {
 			booking: {
-				booking_id: booking.booking_id,
-				booking_code: booking.booking_code,
-				customer_id: booking.customer_id,
-				channel: booking.channel,
-				created_at: formatLocalDateTime(booking.created_at),
-				expired_at: formatLocalDateTime(booking.expired_at),
-				total_amount: Number(booking.total_amount),
-				status: booking.status
+				booking_id: item.booking.booking_id,
+				booking_code: item.booking.booking_code,
+				customer_id: item.booking.customer_id,
+				customer_name: item.booking.customer_name,
+				customer_phone: item.booking.customer_phone,
+				channel: item.booking.channel,
+				created_at: formatLocalDateTime(item.booking.created_at),
+				expired_at: formatLocalDateTime(item.booking.expired_at),
+				total_amount: Number(item.booking.total_amount),
+				status: item.booking.status,
+				trip_summary: item.booking.trip_summary
+					? {
+							departure_time: item.booking.trip_summary.departure_time
+								? formatLocalDateTime(item.booking.trip_summary.departure_time)
+								: undefined,
+							route_name: item.booking.trip_summary.route_name
+					  }
+					: undefined
 			},
-			tickets: tickets.map((t: StaffBookingTicketRow) => ({
+			tickets: item.tickets.map((t: StaffBookingTicketRow) => ({
 				ticket_id: t.ticket_id,
 				ticket_code: t.ticket_code,
 				seat_id: t.seat_id,
@@ -165,6 +175,47 @@ export class BookingService {
 				status: t.status
 			}))
 		}
+	}
+
+	async getBookingsByPhone(phone: string): Promise<Record<string, unknown>[]> {
+		const cleanPhone = phone.trim()
+		if (!cleanPhone) {
+			throw new AppError(400, 'Số điện thoại không hợp lệ')
+		}
+
+		const results = await bookingRepository.findBookingsByPhone(cleanPhone)
+		return results.map((item) => ({
+			booking: {
+				booking_id: item.booking.booking_id,
+				booking_code: item.booking.booking_code,
+				customer_id: item.booking.customer_id,
+				customer_name: item.booking.customer_name,
+				customer_phone: item.booking.customer_phone,
+				channel: item.booking.channel,
+				created_at: formatLocalDateTime(item.booking.created_at),
+				expired_at: formatLocalDateTime(item.booking.expired_at),
+				total_amount: Number(item.booking.total_amount),
+				status: item.booking.status,
+				trip_summary: item.booking.trip_summary
+					? {
+							departure_time: item.booking.trip_summary.departure_time
+								? formatLocalDateTime(item.booking.trip_summary.departure_time)
+								: undefined,
+							route_name: item.booking.trip_summary.route_name
+					  }
+					: undefined
+			},
+			tickets: item.tickets.map((t) => ({
+				ticket_id: t.ticket_id,
+				ticket_code: t.ticket_code,
+				seat_id: t.seat_id,
+				seat_number: t.seat_number,
+				passenger_name: t.passenger_name,
+				passenger_phone: t.passenger_phone,
+				price: Number(t.price),
+				status: t.status
+			}))
+		}))
 	}
 
 	async getTripTickets(tripId: string, status?: string): Promise<Record<string, unknown>[]> {
@@ -199,4 +250,3 @@ export class BookingService {
 }
 
 export const bookingService = new BookingService()
-

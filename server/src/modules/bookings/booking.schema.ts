@@ -37,6 +37,10 @@ export const bookingCodeParamsSchema = z.object({
 	bookingCode: z.string().trim().min(1, 'bookingCode là bắt buộc')
 })
 
+export const bookingPhoneParamsSchema = z.object({
+	phone: z.string().trim().min(1, 'phone là bắt buộc')
+})
+
 export const tripTicketsParamsSchema = z.object({
 	tripId: z.string().trim().min(1, 'tripId là bắt buộc')
 })
@@ -55,7 +59,7 @@ export type ConfirmBookingBody = z.infer<typeof confirmBookingBodySchema>
 export type CancelBookingBody = z.infer<typeof cancelBookingBodySchema>
 export type BookingIdParams = z.infer<typeof bookingIdParamsSchema>
 export type BookingCodeParams = z.infer<typeof bookingCodeParamsSchema>
+export type BookingPhoneParams = z.infer<typeof bookingPhoneParamsSchema>
 export type TripTicketsParams = z.infer<typeof tripTicketsParamsSchema>
 export type TripTicketsQuery = z.infer<typeof tripTicketsQuerySchema>
 export type CheckInTicketBody = z.infer<typeof checkInTicketBodySchema>
-

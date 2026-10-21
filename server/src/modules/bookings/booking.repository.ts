@@ -52,6 +52,33 @@ export interface BookingWithTickets {
 	tickets: TicketRow[]
 }
 
+export interface TripSummary {
+	departure_time?: Date | undefined
+	route_name?: string | undefined
+}
+
+export interface PhoneBookingRow extends BookingRow {
+	customer_name?: string | undefined
+	customer_phone?: string | undefined
+}
+
+export interface BookingWithDetails {
+	booking: PhoneBookingRow & {
+		trip_summary?: TripSummary | undefined
+	}
+	tickets: StaffBookingTicketRow[]
+}
+
+interface RawSpTicketRow extends StaffBookingTicketRow {
+	departure_time?: Date | undefined
+	arrival_time?: Date | undefined
+	route_id?: string | undefined
+	departure_station?: string | undefined
+	arrival_station?: string | undefined
+	departure_province?: string | undefined
+	arrival_province?: string | undefined
+}
+
 export interface HoldBookingInput {
 	customerId: string | null
 	tripId: string
@@ -65,6 +92,51 @@ function splitResult(recordsets: BookingRow[][]): BookingWithTickets {
 	const tickets = (recordsets[1] ?? []) as unknown as TicketRow[]
 
 	return { booking, tickets }
+}
+
+function processSpLayThongTinVeResult(
+	recordsets: [PhoneBookingRow[], RawSpTicketRow[]]
+): BookingWithDetails[] {
+	const bookingRows = recordsets[0] ?? []
+	const ticketRows = recordsets[1] ?? []
+
+	const ticketsByBooking = new Map<string, RawSpTicketRow[]>()
+	for (const t of ticketRows) {
+		const list = ticketsByBooking.get(t.booking_id) || []
+		list.push(t)
+		ticketsByBooking.set(t.booking_id, list)
+	}
+
+	return bookingRows.map((b) => {
+		const tickets = ticketsByBooking.get(b.booking_id) || []
+		const firstTicket = tickets[0]
+		const trip_summary: TripSummary | undefined =
+			firstTicket?.departure_province && firstTicket?.arrival_province
+				? {
+						departure_time: firstTicket.departure_time,
+						route_name: `${firstTicket.departure_province} (${firstTicket.departure_station}) → ${firstTicket.arrival_province} (${firstTicket.arrival_station})`
+				  }
+				: undefined
+
+		return {
+			booking: {
+				...b,
+				trip_summary
+			},
+			tickets: tickets.map((t) => ({
+				ticket_id: t.ticket_id,
+				ticket_code: t.ticket_code,
+				booking_id: t.booking_id,
+				trip_id: t.trip_id,
+				seat_id: t.seat_id,
+				seat_number: t.seat_number,
+				passenger_name: t.passenger_name,
+				passenger_phone: t.passenger_phone,
+				price: Number(t.price),
+				status: t.status
+			}))
+		}
+	})
 }
 
 export class BookingRepository {
@@ -113,16 +185,29 @@ export class BookingRepository {
 		return splitResult(result.recordsets)
 	}
 
-	async findBookingByCode(bookingCode: string): Promise<{ booking: BookingRow | null; tickets: StaffBookingTicketRow[] }> {
-		const result = await executeSP<BookingRow>('dbo.sp_LayVeTheoMaBooking', {
-			booking_code: { type: sql.VarChar(20), value: bookingCode }
+	async findBookingByCode(bookingCode: string): Promise<BookingWithDetails | null> {
+		const result = await executeSP<PhoneBookingRow>('dbo.sp_LayThongTinVe', {
+			booking_code: { type: sql.VarChar(20), value: bookingCode },
+			phone: { type: sql.VarChar(20), value: null }
 		})
 
-		const booking = result.recordsets[0]?.[0] ?? null
-		const tickets = (result.recordsets[1] ?? []) as unknown as StaffBookingTicketRow[]
-
-		return { booking, tickets }
+		const items = processSpLayThongTinVeResult(
+			result.recordsets as [PhoneBookingRow[], RawSpTicketRow[]]
+		)
+		return items[0] ?? null
 	}
+
+	async findBookingsByPhone(phone: string): Promise<BookingWithDetails[]> {
+		const result = await executeSP<PhoneBookingRow>('dbo.sp_LayThongTinVe', {
+			booking_code: { type: sql.VarChar(20), value: null },
+			phone: { type: sql.VarChar(20), value: phone }
+		})
+
+		return processSpLayThongTinVeResult(
+			result.recordsets as [PhoneBookingRow[], RawSpTicketRow[]]
+		)
+	}
+
 	async getTripTickets(tripId: string, status?: string): Promise<StaffBookingTicketRow[] | null> {
 		const tripRows = await executeQuery<{ trip_id: string }>(
 			'SELECT trip_id FROM trips WHERE trip_id = @tripId',
@@ -140,6 +225,7 @@ export class BookingRepository {
 			}
 		)
 	}
+
 	async checkInTicket(ticketCode: string): Promise<CheckedInTicketRow> {
 		const result = await executeSP<CheckedInTicketRow>('sp_CheckIn', {
 			ticket_code: { type: sql.VarChar(20), value: ticketCode }
@@ -149,4 +235,3 @@ export class BookingRepository {
 }
 
 export const bookingRepository = new BookingRepository()
-
