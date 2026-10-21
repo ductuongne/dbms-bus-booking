@@ -56,7 +56,7 @@ export const AdminVehiclesPage: React.FC = () => {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu xe từ SQL Server');
+          setError(err instanceof Error ? err.message : 'Không thể tải danh sách phương tiện');
         }
       } finally {
         if (!ignore) {
@@ -260,7 +260,7 @@ export const AdminVehiclesPage: React.FC = () => {
         {loading ? (
           <div className="py-20 text-center space-y-2">
             <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-gray-500">Đang tải danh sách xe từ SQL Server...</p>
+            <p className="text-xs text-gray-500">Đang tải danh sách phương tiện...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center text-rose-600 text-xs">{error}</div>
@@ -347,7 +347,7 @@ export const AdminVehiclesPage: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Thêm Xe Mới & Sinh Sơ Đồ Ghế Tự Động"
-        description="Transaction SQL Server Atomic: Tạo xe + Tự động sinh danh sách ghế tương ứng"
+        description="Tạo mới phương tiện và tự động khởi tạo danh sách ghế tương ứng"
         maxWidth="xl"
       >
         <form onSubmit={handleCreateSubmit} className="space-y-6">
@@ -458,7 +458,7 @@ export const AdminVehiclesPage: React.FC = () => {
               seats={viewingBusDetail.seats}
               floors={viewingBusDetail.floors}
               interactive={false}
-              title={`Sơ đồ ghế thực tế từ CSDL (${viewingBusDetail.seats.length} ghế)`}
+              title={`Sơ đồ chỗ ngồi thực tế (${viewingBusDetail.seats.length} ghế)`}
             />
 
             <div className="pt-4 border-t border-gray-100 flex justify-end">

@@ -204,12 +204,12 @@ export const ReportsPage: React.FC = () => {
             Báo cáo Kế toán &amp; Thống kê Doanh thu
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tổng hợp dữ liệu doanh số thanh toán thực tế và sản lượng chuyến xe qua các Stored Procedures CSDL
+            Tổng hợp doanh số bán vé thực tế và sản lượng vận hành chuyến xe theo kỳ báo cáo
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="brand" size="md">
-            CSDL Microsoft SQL Server
+            Dữ liệu thời gian thực
           </Badge>
         </div>
       </div>
@@ -366,7 +366,7 @@ export const ReportsPage: React.FC = () => {
             <span className="text-xs text-slate-500 font-medium">Tỷ lệ lấp đầy bình quân</span>
             <div className="text-xl font-bold text-slate-900 mt-0.5">{occupancyRate}%</div>
             <span className="text-[11px] text-green-600 font-semibold flex items-center gap-0.5 mt-0.5">
-              <ArrowUpRight className="w-3 h-3" /> Tính từ fn_TyLeLapDay
+              <ArrowUpRight className="w-3 h-3" /> Hiệu suất khai thác ghế
             </span>
           </div>
         </Card>
@@ -380,7 +380,7 @@ export const ReportsPage: React.FC = () => {
               Biểu đồ doanh thu bán vé ({fromDate} → {toDate})
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Thống kê doanh số thực tế từ bảng payments và sp_BaoCaoDoanhThu
+              Biến động doanh thu thanh toán thành công theo từng ngày
             </p>
           </div>
           <Badge variant="brand" size="md">
@@ -463,7 +463,7 @@ export const ReportsPage: React.FC = () => {
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <div>
             <h2 className="text-base font-bold text-slate-900">Hiệu quả doanh thu theo tuyến đường</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Xếp hạng theo sản lượng vé và doanh số (sp_BaoCaoDoanhThuTuyen)</p>
+            <p className="text-xs text-slate-500 mt-0.5">Xếp hạng theo sản lượng vé bán ra và tổng doanh thu thực tế</p>
           </div>
         </div>
 

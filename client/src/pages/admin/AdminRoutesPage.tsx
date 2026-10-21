@@ -411,7 +411,7 @@ export const AdminRoutesPage: React.FC = () => {
             <div>
               <h4 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#1E3A5F]" />
-                <span>Trình tự trạm dừng (SQL Server Ordered Stops)</span>
+                <span>Trình tự các trạm dừng đón/trả khách</span>
               </h4>
 
               <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200">
@@ -472,7 +472,7 @@ export const AdminRoutesPage: React.FC = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editingRoute ? `Chỉnh Sửa Tuyến: ${editingRoute.id}` : 'Thêm Tuyến Đường Mới'}
-        description="Lưu tuyến đường và danh sách trạm dừng theo thứ tự vào SQL Server"
+        description="Thiết lập hành trình và danh sách trạm dừng theo thứ tự đón/trả"
         maxWidth="xl"
       >
         <form onSubmit={handleSubmit} className="space-y-5">
