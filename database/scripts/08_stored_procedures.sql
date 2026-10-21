@@ -1263,38 +1263,81 @@ BEGIN
 END;
 GO
 
--- 29. sp_LayVeTheoMaBooking: lấy thông tin booking và danh sách vé theo mã booking
-CREATE OR ALTER PROCEDURE dbo.sp_LayVeTheoMaBooking
-    @booking_code VARCHAR(20)
+-- 29. sp_LayThongTinVe: Tra cứu thông tin đơn đặt vé và danh sách vé theo mã booking hoặc số điện thoại
+CREATE OR ALTER PROCEDURE dbo.sp_LayThongTinVe
+    @booking_code VARCHAR(20) = NULL,
+    @phone VARCHAR(20) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @booking_id VARCHAR(50);
-    SELECT @booking_id = booking_id FROM bookings WHERE booking_code = @booking_code;
+    -- Bảng tạm lưu danh sách booking_id tìm được
+    DECLARE @MatchedBookings TABLE (
+        booking_id VARCHAR(50) PRIMARY KEY
+    );
 
-    -- Recordset 1: Thông tin booking
-    SELECT booking_id, booking_code, customer_id, channel, created_at, expired_at, total_amount, status
-    FROM bookings
-    WHERE booking_code = @booking_code;
+    IF @booking_code IS NOT NULL AND LTRIM(RTRIM(@booking_code)) <> ''
+    BEGIN
+        INSERT INTO @MatchedBookings (booking_id)
+        SELECT booking_id
+        FROM bookings
+        WHERE booking_code = LTRIM(RTRIM(@booking_code));
+    END
+    ELSE IF @phone IS NOT NULL AND LTRIM(RTRIM(@phone)) <> ''
+    BEGIN
+        DECLARE @CleanPhone VARCHAR(20) = LTRIM(RTRIM(@phone));
+        DECLARE @NormPhone VARCHAR(20) = REPLACE(REPLACE(@CleanPhone, '+84', '0'), ' ', '');
 
-    -- Recordset 2: Danh sách vé
-    IF @booking_id IS NOT NULL
-    BEGIN
-        SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
-               tk.passenger_name, tk.passenger_phone, tk.price, tk.status
-        FROM tickets tk
-        JOIN seats s ON s.seat_id = tk.seat_id
-        WHERE tk.booking_id = @booking_id;
+        INSERT INTO @MatchedBookings (booking_id)
+        SELECT DISTINCT b.booking_id
+        FROM bookings b
+        JOIN users u ON u.user_id = b.customer_id
+        LEFT JOIN tickets tk ON tk.booking_id = b.booking_id
+        WHERE u.phone = @CleanPhone
+           OR tk.passenger_phone = @CleanPhone
+           OR REPLACE(REPLACE(u.phone, '+84', '0'), ' ', '') = @NormPhone
+           OR REPLACE(REPLACE(tk.passenger_phone, '+84', '0'), ' ', '') = @NormPhone;
     END
-    ELSE
-    BEGIN
-        SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
-               tk.passenger_name, tk.passenger_phone, tk.price, tk.status
-        FROM tickets tk
-        JOIN seats s ON s.seat_id = tk.seat_id
-        WHERE 1 = 0;
-    END
+
+    -- Recordset 1: Thông tin booking (kèm thông tin khách hàng)
+    SELECT
+        b.booking_id,
+        b.booking_code,
+        b.customer_id,
+        b.channel,
+        b.created_at,
+        b.expired_at,
+        b.total_amount,
+        b.status,
+        u.full_name AS customer_name,
+        u.phone AS customer_phone
+    FROM bookings b
+    JOIN @MatchedBookings mb ON mb.booking_id = b.booking_id
+    JOIN users u ON u.user_id = b.customer_id
+    ORDER BY b.created_at DESC;
+
+    -- Recordset 2: Danh sách vé chi tiết từ view vw_ChiTietVe
+    SELECT
+        v.ticket_id,
+        v.ticket_code,
+        v.booking_id,
+        v.trip_id,
+        v.seat_id,
+        v.seat_number,
+        v.passenger_name,
+        v.passenger_phone,
+        v.price,
+        v.status,
+        v.departure_time,
+        v.arrival_time,
+        v.route_id,
+        v.departure_station,
+        v.arrival_station,
+        v.departure_province,
+        v.arrival_province
+    FROM dbo.vw_ChiTietVe v
+    JOIN @MatchedBookings mb ON mb.booking_id = v.booking_id
+    ORDER BY v.booking_id, v.seat_number ASC;
 END;
 GO
 

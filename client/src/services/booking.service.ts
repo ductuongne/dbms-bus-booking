@@ -72,11 +72,17 @@ export interface BookingLookupResponse {
     booking_id: string;
     booking_code: string;
     customer_id: string;
+    customer_name?: string;
+    customer_phone?: string;
     channel: string;
     created_at: string;
     expired_at: string;
     total_amount: number;
     status: string;
+    trip_summary?: {
+      departure_time?: string;
+      route_name?: string;
+    };
   };
   tickets: StaffTicketItem[];
 }
@@ -104,6 +110,10 @@ export const bookingService = {
     return api.get<BookingLookupResponse>(`/bookings/lookup/${bookingCode}`);
   },
 
+  getBookingsByPhone: (phone: string): Promise<BookingLookupResponse[]> => {
+    return api.get<BookingLookupResponse[]>(`/bookings/by-phone/${encodeURIComponent(phone.trim())}`);
+  },
+
   getTripTickets: (tripId: string, status?: string): Promise<StaffTicketItem[]> => {
     return api.get<StaffTicketItem[]>(`/bookings/trips/${tripId}/tickets`, { status });
   },
@@ -121,4 +131,3 @@ export const bookingService = {
 };
 
 export default bookingService;
-
