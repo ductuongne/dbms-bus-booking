@@ -25,6 +25,11 @@ export const Modal: React.FC<ModalProps> = ({
   const modalSize = size || maxWidth || 'md';
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -35,17 +40,17 @@ export const Modal: React.FC<ModalProps> = ({
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Bắt phím Escape
+    // Bắt phím Escape & Tab Trap
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
       // Focus trap
       if (e.key === 'Tab' && modalRef.current) {
         const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
         );
         if (focusableElements.length === 0) return;
 
@@ -68,13 +73,18 @@ export const Modal: React.FC<ModalProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
 
-    // Focus vào phần tử đầu tiên trong modal
+    // Focus vào phần tử nhập liệu hoặc tương tác đầu tiên trong modal khi mở
     const timer = setTimeout(() => {
       if (modalRef.current) {
-        const firstFocusable = modalRef.current.querySelector<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        firstFocusable?.focus();
+        if (!modalRef.current.contains(document.activeElement)) {
+          const firstInput = modalRef.current.querySelector<HTMLElement>(
+            'input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+          );
+          const firstFocusable = modalRef.current.querySelector<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          (firstInput || firstFocusable)?.focus();
+        }
       }
     }, 50);
 
@@ -82,11 +92,11 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timer);
-      if (previousActiveElement.current) {
+      if (previousActiveElement.current && typeof previousActiveElement.current.focus === 'function') {
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -139,4 +149,3 @@ export const Modal: React.FC<ModalProps> = ({
 };
 
 export default Modal;
-

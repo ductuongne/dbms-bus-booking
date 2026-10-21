@@ -10,6 +10,7 @@ export const DriverSchedulesPage: React.FC = () => {
   const { user } = useAuth();
   const [schedules, setSchedules] = useState<DriverScheduleDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
@@ -44,9 +45,9 @@ export const DriverSchedulesPage: React.FC = () => {
     };
   }, []);
 
-  // Thao tác làm mới thủ công
+  // Thao tác làm mới thủ công hoặc từ sự kiện cập nhật chuyến xe (không unmount UI hiện tại)
   const handleRefresh = useCallback(async () => {
-    setIsLoading(true);
+    setIsRefreshing(true);
     setError(null);
     try {
       const data = await driverService.getSchedules();
@@ -54,7 +55,7 @@ export const DriverSchedulesPage: React.FC = () => {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Lỗi kết nối mạng. Vui lòng kiểm tra lại.');
     } finally {
-      setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
@@ -88,9 +89,9 @@ export const DriverSchedulesPage: React.FC = () => {
         <Button
           variant="inverse"
           size="md"
-          icon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
+          icon={<RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />}
           onClick={handleRefresh}
-          disabled={isLoading}
+          disabled={isRefreshing || isLoading}
         >
           Làm mới lịch chạy
         </Button>

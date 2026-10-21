@@ -110,10 +110,9 @@ export const DriverTripCard: React.FC<DriverTripCardProps> = ({
 			await driverService.checkInTicket(ticketCode.trim())
 			success(`Hành khách có mã vé ${ticketCode.trim()} đã được xác nhận lên xe.`)
 			setCheckInCode('')
-			// Làm mới danh sách hành khách trong modal
+			// Làm mới danh sách hành khách trong modal (không làm mới thẻ lịch trình ngoài để tránh đóng modal)
 			const updated = await driverService.getTripPassengers(activeTrip.tripId)
 			setPassengers(updated)
-			onTripUpdated?.()
 		} catch (err: unknown) {
 			toastError(err instanceof Error ? err.message : 'Lỗi khi soát vé.')
 		} finally {

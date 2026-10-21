@@ -21,7 +21,7 @@ export const DriverLayout: React.FC = () => {
       <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-3">
           <Link
-            to="/driver/schedules"
+            to="/"
             className="flex items-center gap-2.5 text-lg font-black text-brand hover:opacity-90 transition-opacity"
           >
             <div className="w-8 h-8 rounded-xl bg-brand flex items-center justify-center text-white shadow-xs">
