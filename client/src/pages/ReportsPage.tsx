@@ -274,25 +274,54 @@ export const ReportsPage: React.FC = () => {
             <input
               type="date"
               value={fromDate}
-              max={todayIso}
+              max={toDate || todayIso}
+              onKeyDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {
+                  // Fallback for browsers not supporting showPicker
+                }
+              }}
               onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                const clamped = val > todayIso ? todayIso : val;
                 setIsLoading(true);
-                setFromDate(e.target.value);
+                setFromDate(clamped);
+                if (toDate && clamped > toDate) {
+                  setToDate(clamped);
+                }
                 setActivePreset('custom');
               }}
-              className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F]"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F] cursor-pointer select-none"
             />
             <span className="text-slate-500 font-medium">Đến:</span>
             <input
               type="date"
               value={toDate}
+              min={fromDate}
               max={todayIso}
+              onKeyDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {
+                  // Fallback for browsers not supporting showPicker
+                }
+              }}
               onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                const clamped = val > todayIso ? todayIso : val;
                 setIsLoading(true);
-                setToDate(e.target.value);
+                setToDate(clamped);
+                if (fromDate && clamped < fromDate) {
+                  setFromDate(clamped);
+                }
                 setActivePreset('custom');
               }}
-              className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F]"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#1E3A5F] cursor-pointer select-none"
             />
             <Button
               variant="secondary"

@@ -229,12 +229,13 @@ export const HomePage: React.FC = () => {
                   type="date"
                   value={travelDate}
                   min={todayStr}
+                  onKeyDown={(e) => e.preventDefault()}
                   onChange={(e) => setTravelDate(e.target.value)}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleOpenDatePicker();
                   }}
-                  className="w-full bg-transparent font-bold text-slate-900 text-sm focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent font-bold text-slate-900 text-sm focus:outline-none cursor-pointer select-none"
                 />
               </div>
 

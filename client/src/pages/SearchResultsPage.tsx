@@ -494,8 +494,17 @@ export const SearchResultsPage: React.FC = () => {
                 <input
                   type="date"
                   value={date}
+                  min={todayStr}
+                  onKeyDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker();
+                    } catch {
+                      // Fallback
+                    }
+                  }}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent font-bold text-slate-900 text-xs sm:text-sm focus:outline-none cursor-pointer select-none"
                 />
               </div>
             </div>
