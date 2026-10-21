@@ -86,6 +86,10 @@ export const AdminVehicleTypesPage: React.FC = () => {
       toastError('Vui lòng nhập tên loại xe');
       return;
     }
+    if (!totalSeats || isNaN(totalSeats) || totalSeats < 1 || totalSeats > 100) {
+      toastError('Tổng số ghế phải từ 1 đến 100');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -224,8 +228,11 @@ export const AdminVehicleTypesPage: React.FC = () => {
               min="1"
               max="100"
               required
-              value={totalSeats}
-              onChange={(e) => setTotalSeats(Number(e.target.value))}
+              value={isNaN(totalSeats) || totalSeats === 0 ? '' : totalSeats}
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                setTotalSeats(isNaN(val) ? 0 : val);
+              }}
             />
 
             <Select
