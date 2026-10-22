@@ -12,8 +12,10 @@ import {
 import { routeService, type RouteListItem } from '../services/route.service';
 import { stationService } from '../services/station.service';
 import type { RouteDetailView, Province } from '../types';
+import { useToast } from '../hooks/useToast';
 
 export const RoutesPage: React.FC = () => {
+  const { error: toastError } = useToast();
   const [routes, setRoutes] = useState<RouteListItem[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export const RoutesPage: React.FC = () => {
       const detail = await routeService.getRouteById(routeId);
       setActiveRouteDetail(detail);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xem chi tiết tuyến đường');
+      toastError(err instanceof Error ? err.message : 'Không thể xem chi tiết tuyến đường');
     }
   };
 

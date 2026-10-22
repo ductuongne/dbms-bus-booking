@@ -52,6 +52,33 @@ export interface BookingWithTickets {
 	tickets: TicketRow[]
 }
 
+export interface TripSummary {
+	departure_time?: Date | undefined
+	route_name?: string | undefined
+}
+
+export interface PhoneBookingRow extends BookingRow {
+	customer_name?: string | undefined
+	customer_phone?: string | undefined
+}
+
+export interface BookingWithDetails {
+	booking: PhoneBookingRow & {
+		trip_summary?: TripSummary | undefined
+	}
+	tickets: StaffBookingTicketRow[]
+}
+
+interface RawSpTicketRow extends StaffBookingTicketRow {
+	departure_time?: Date | undefined
+	arrival_time?: Date | undefined
+	route_id?: string | undefined
+	departure_station?: string | undefined
+	arrival_station?: string | undefined
+	departure_province?: string | undefined
+	arrival_province?: string | undefined
+}
+
 export interface HoldBookingInput {
 	customerId: string | null
 	tripId: string
@@ -65,6 +92,51 @@ function splitResult(recordsets: BookingRow[][]): BookingWithTickets {
 	const tickets = (recordsets[1] ?? []) as unknown as TicketRow[]
 
 	return { booking, tickets }
+}
+
+function processSpLayThongTinVeResult(
+	recordsets: [PhoneBookingRow[], RawSpTicketRow[]]
+): BookingWithDetails[] {
+	const bookingRows = recordsets[0] ?? []
+	const ticketRows = recordsets[1] ?? []
+
+	const ticketsByBooking = new Map<string, RawSpTicketRow[]>()
+	for (const t of ticketRows) {
+		const list = ticketsByBooking.get(t.booking_id) || []
+		list.push(t)
+		ticketsByBooking.set(t.booking_id, list)
+	}
+
+	return bookingRows.map((b) => {
+		const tickets = ticketsByBooking.get(b.booking_id) || []
+		const firstTicket = tickets[0]
+		const trip_summary: TripSummary | undefined =
+			firstTicket?.departure_province && firstTicket?.arrival_province
+				? {
+						departure_time: firstTicket.departure_time,
+						route_name: `${firstTicket.departure_province} (${firstTicket.departure_station}) → ${firstTicket.arrival_province} (${firstTicket.arrival_station})`
+				  }
+				: undefined
+
+		return {
+			booking: {
+				...b,
+				trip_summary
+			},
+			tickets: tickets.map((t) => ({
+				ticket_id: t.ticket_id,
+				ticket_code: t.ticket_code,
+				booking_id: t.booking_id,
+				trip_id: t.trip_id,
+				seat_id: t.seat_id,
+				seat_number: t.seat_number,
+				passenger_name: t.passenger_name,
+				passenger_phone: t.passenger_phone,
+				price: Number(t.price),
+				status: t.status
+			}))
+		}
+	})
 }
 
 export class BookingRepository {
@@ -113,26 +185,27 @@ export class BookingRepository {
 		return splitResult(result.recordsets)
 	}
 
-	async findBookingByCode(bookingCode: string): Promise<{ booking: BookingRow | null; tickets: StaffBookingTicketRow[] }> {
-		const bookingRows = await executeQuery<BookingRow>(
-			'SELECT booking_id, booking_code, customer_id, channel, created_at, expired_at, total_amount, status FROM bookings WHERE booking_code = @bookingCode',
-			{ bookingCode: { type: sql.VarChar(20), value: bookingCode } }
-		)
-		const booking = bookingRows[0] ?? null
-		if (!booking) {
-			return { booking: null, tickets: [] }
-		}
+	async findBookingByCode(bookingCode: string): Promise<BookingWithDetails | null> {
+		const result = await executeSP<PhoneBookingRow>('dbo.sp_LayThongTinVe', {
+			booking_code: { type: sql.VarChar(20), value: bookingCode },
+			phone: { type: sql.VarChar(20), value: null }
+		})
 
-		const tickets = await executeQuery<StaffBookingTicketRow>(
-			`SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
-			        tk.passenger_name, tk.passenger_phone, tk.price, tk.status
-			 FROM tickets tk
-			 JOIN seats s ON s.seat_id = tk.seat_id
-			 WHERE tk.booking_id = @bookingId`,
-			{ bookingId: { type: sql.VarChar(50), value: booking.booking_id } }
+		const items = processSpLayThongTinVeResult(
+			result.recordsets as [PhoneBookingRow[], RawSpTicketRow[]]
 		)
+		return items[0] ?? null
+	}
 
-		return { booking, tickets }
+	async findBookingsByPhone(phone: string): Promise<BookingWithDetails[]> {
+		const result = await executeSP<PhoneBookingRow>('dbo.sp_LayThongTinVe', {
+			booking_code: { type: sql.VarChar(20), value: null },
+			phone: { type: sql.VarChar(20), value: phone }
+		})
+
+		return processSpLayThongTinVeResult(
+			result.recordsets as [PhoneBookingRow[], RawSpTicketRow[]]
+		)
 	}
 
 	async getTripTickets(tripId: string, status?: string): Promise<StaffBookingTicketRow[] | null> {
@@ -145,13 +218,7 @@ export class BookingRepository {
 		}
 
 		return executeQuery<StaffBookingTicketRow>(
-			`SELECT tk.ticket_id, tk.ticket_code, tk.booking_id, tk.trip_id, tk.seat_id, s.seat_number,
-			        tk.passenger_name, tk.passenger_phone, tk.price, tk.status
-			 FROM tickets tk
-			 JOIN seats s ON s.seat_id = tk.seat_id
-			 WHERE tk.trip_id = @tripId
-			   AND (@status IS NULL OR tk.status = @status)
-			 ORDER BY s.seat_number ASC`,
+			'SELECT * FROM dbo.fn_LayVeTheoChuyen(@tripId, @status) ORDER BY seat_number ASC',
 			{
 				tripId: { type: sql.VarChar(50), value: tripId },
 				status: { type: sql.VarChar(20), value: status ?? null }
@@ -168,4 +235,3 @@ export class BookingRepository {
 }
 
 export const bookingRepository = new BookingRepository()
-

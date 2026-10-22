@@ -1,5 +1,7 @@
+// Vai trò người dùng (Role-Based Access Control)
 export type UserRole = 'CUSTOMER' | 'STAFF' | 'ADMIN' | 'DRIVER' | 'GUEST'
 
+// Thực thể người dùng từ cơ sở dữ liệu
 export interface UserRow {
 	user_id: string
 	full_name: string
@@ -11,6 +13,7 @@ export interface UserRow {
 	is_active: boolean
 }
 
+// DTO xác thực và đăng ký tài khoản khách hàng
 export interface RegisterDto {
 	fullName: string
 	phone: string
@@ -32,6 +35,7 @@ export interface UpdateGuestDto {
 	passwordHash: string
 }
 
+// DTO quản trị người dùng (Admin User Management)
 export interface AdminUserResponseDto {
 	userId: string
 	fullName: string
@@ -58,6 +62,7 @@ export interface UpdateAdminUserData {
 	role: UserRole
 }
 
+// DTO lịch trình và phân công tài xế
 export interface DriverScheduleDto {
 	tripId: string
 	driverId: string

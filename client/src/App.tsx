@@ -45,26 +45,30 @@ const AdminIndexRedirect: React.FC = () => {
   return <Navigate to="/" replace />;
 };
 
+import TicketLookupPage from './pages/TicketLookupPage';
+
 export const App: React.FC = () => {
   return (
     <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Nhóm Khách Hàng (Customer Layout) */}
+            {/* Phân hệ Khách hàng (Customer Layout) */}
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/payment" element={<PaymentPage />} />
               <Route path="/routes" element={<RoutesPage />} />
+              <Route path="/tra-cuu-ve" element={<TicketLookupPage />} />
+              <Route path="/lookup" element={<TicketLookupPage />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
             </Route>
 
-            {/* Đăng nhập & Đăng ký công khai */}
+            {/* Xác thực người dùng (Auth) */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
-            {/* Phân hệ Tài xế (Bảo vệ bởi ProtectedRoute - DRIVER) */}
+            {/* Phân hệ Tài xế (Driver Portal - Yêu cầu role DRIVER) */}
             <Route
               path="/driver"
               element={
@@ -78,7 +82,7 @@ export const App: React.FC = () => {
               <Route path="schedule" element={<Navigate to="/driver/schedules" replace />} />
             </Route>
 
-            {/* Nhóm Quản Trị Hệ Thống (Bảo vệ bởi ProtectedRoute - ADMIN & STAFF) */}
+            {/* Phân hệ Quản trị hệ thống (Admin Portal - Yêu cầu role ADMIN & STAFF) */}
             <Route
               path="/admin"
               element={
@@ -88,7 +92,7 @@ export const App: React.FC = () => {
               }
             >
               <Route index element={<AdminIndexRedirect />} />
-              {/* Báo cáo: Chỉ ADMIN có quyền */}
+              {/* Báo cáo tài chính (Yêu cầu riêng quyền ADMIN) */}
               <Route
                 path="reports"
                 element={

@@ -1,4 +1,5 @@
-import { getPool, sql } from '../../config/db.js'
+import { sql } from '../../config/db.js'
+import { executeQuery, executeSP } from '../../database/query.js'
 import type {
 	AdminUserResponseDto,
 	CreateAdminUserData,
@@ -6,19 +7,8 @@ import type {
 } from '../../types/index.js'
 import { AppError } from '../../utils/app-error.js'
 
-function isSqlUniqueViolation(err: unknown): boolean {
-	if (typeof err === 'object' && err !== null && 'number' in err) {
-		const errNumber = (err as { number: unknown }).number
-		return errNumber === 2627 || errNumber === 2601
-	}
-	return false
-}
-
 export async function findAll(): Promise<AdminUserResponseDto[]> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	const result = await request.query<AdminUserResponseDto>(
+	return executeQuery<AdminUserResponseDto>(
 		`SELECT user_id AS userId,
 		        full_name AS fullName,
 		        email,
@@ -29,17 +19,12 @@ export async function findAll(): Promise<AdminUserResponseDto[]> {
 		 FROM users
 		 ORDER BY user_id DESC`
 	)
-	return result.recordset
 }
 
 export async function findById(
 	userId: string
 ): Promise<AdminUserResponseDto | null> {
-	const pool = await getPool()
-	const request = pool.request()
-	request.input('userId', sql.VarChar(50), userId)
-
-	const result = await request.query<AdminUserResponseDto>(
+	const rows = await executeQuery<AdminUserResponseDto>(
 		`SELECT user_id AS userId,
 		        full_name AS fullName,
 		        email,
@@ -48,124 +33,77 @@ export async function findById(
 		        loyalty_points AS loyaltyPoints,
 		        is_active AS isActive
 		 FROM users
-		 WHERE user_id = @userId`
+		 WHERE user_id = @userId`,
+		{ userId: { type: sql.VarChar(50), value: userId } }
 	)
-	const row = result.recordset[0]
-	return row ?? null
+	return rows[0] ?? null
 }
 
 export async function create(data: CreateAdminUserData): Promise<void> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), data.userId)
-	request.input('fullName', sql.NVarChar(100), data.fullName)
-	request.input('email', sql.VarChar(100), data.email)
-	request.input('phone', sql.VarChar(20), data.phone)
-	request.input('passwordHash', sql.VarChar(255), data.passwordHash)
-	request.input('role', sql.VarChar(20), data.role)
-
-	try {
-		await request.query(
-			`INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active)
-			 VALUES (@userId, @fullName, @email, @phone, @passwordHash, @role, 0, 1)`
-		)
-	} catch (err: unknown) {
-		if (isSqlUniqueViolation(err)) {
-			const errMsg = err instanceof Error ? err.message.toLowerCase() : ''
-			if (errMsg.includes('uq_user_phone')) {
-				throw new AppError(
-					409,
-					'Số điện thoại này đã được đăng ký trong hệ thống!'
-				)
-			}
-			if (errMsg.includes('uq_user_email')) {
-				throw new AppError(
-					409,
-					'Email này đã được đăng ký trong hệ thống!'
-				)
-			}
-			throw new AppError(
-				409,
-				'Số điện thoại hoặc email đã tồn tại trong hệ thống!'
-			)
-		}
-		throw err
-	}
+	await executeSP('dbo.sp_TaoNguoiDung', {
+		user_id: { type: sql.VarChar(50), value: data.userId },
+		full_name: { type: sql.NVarChar(100), value: data.fullName },
+		email: { type: sql.VarChar(100), value: data.email },
+		phone: { type: sql.VarChar(20), value: data.phone },
+		password_hash: { type: sql.VarChar(255), value: data.passwordHash },
+		role: { type: sql.VarChar(20), value: data.role },
+		license_number: { type: sql.VarChar(50), value: null },
+		license_expiry: { type: sql.Date, value: null },
+	})
 }
 
 export async function update(
 	userId: string,
 	data: UpdateAdminUserData
 ): Promise<void> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), userId)
-	request.input('fullName', sql.NVarChar(100), data.fullName)
-	request.input('email', sql.VarChar(100), data.email)
-	request.input('phone', sql.VarChar(20), data.phone)
-	request.input('role', sql.VarChar(20), data.role)
-
-	try {
-		const result = await request.query(
-			`UPDATE users
-			 SET full_name = @fullName,
-			     email = @email,
-			     phone = @phone,
-			     role = @role
-			 WHERE user_id = @userId`
-		)
-		const affected = result.rowsAffected[0]
-		if (affected === undefined || affected === 0) {
-			throw new AppError(404, 'Không tìm thấy người dùng!')
-		}
-	} catch (err: unknown) {
-		if (err instanceof AppError) {
-			throw err
-		}
-		if (isSqlUniqueViolation(err)) {
-			const errMsg = err instanceof Error ? err.message.toLowerCase() : ''
-			if (errMsg.includes('uq_user_phone')) {
-				throw new AppError(
-					409,
-					'Số điện thoại này đã được đăng ký cho người dùng khác!'
-				)
-			}
-			if (errMsg.includes('uq_user_email')) {
-				throw new AppError(
-					409,
-					'Email này đã được đăng ký cho người dùng khác!'
-				)
-			}
-			throw new AppError(
-				409,
-				'Số điện thoại hoặc email đã tồn tại trong hệ thống!'
-			)
-		}
-		throw err
-	}
+	await executeSP('dbo.sp_CapNhatNguoiDung', {
+		user_id: { type: sql.VarChar(50), value: userId },
+		full_name: { type: sql.NVarChar(100), value: data.fullName },
+		email: { type: sql.VarChar(100), value: data.email },
+		phone: { type: sql.VarChar(20), value: data.phone },
+		role: { type: sql.VarChar(20), value: data.role },
+	})
 }
 
 export async function updateStatus(
 	userId: string,
 	isActive: boolean
 ): Promise<void> {
-	const pool = await getPool()
-	const request = pool.request()
-
-	request.input('userId', sql.VarChar(50), userId)
-	request.input('isActive', sql.Bit, isActive ? 1 : 0)
-
-	const result = await request.query(
+	const rows = await executeQuery<{ user_id: string }>(
 		`UPDATE users
 		 SET is_active = @isActive
-		 WHERE user_id = @userId`
+		 OUTPUT inserted.user_id
+		 WHERE user_id = @userId`,
+		{
+			userId: { type: sql.VarChar(50), value: userId },
+			isActive: { type: sql.Bit, value: isActive ? 1 : 0 },
+		}
 	)
-	const affected = result.rowsAffected[0]
-	if (affected === undefined || affected === 0) {
+	if (rows.length === 0) {
 		throw new AppError(404, 'Không tìm thấy người dùng!')
 	}
+}
+
+export async function listDrivers(): Promise<
+	{
+		driverId: string
+		userId: string
+		fullName: string
+		phone: string
+		licenseNumber: string
+	}[]
+> {
+	return executeQuery(
+		`SELECT d.driver_id AS driverId,
+		        d.user_id AS userId,
+		        u.full_name AS fullName,
+		        u.phone,
+		        d.license_number AS licenseNumber
+		 FROM drivers d
+		 JOIN users u ON u.user_id = d.user_id
+		 WHERE u.is_active = 1
+		 ORDER BY u.full_name ASC`
+	)
 }
 
 export const adminRepository = {
@@ -174,4 +112,5 @@ export const adminRepository = {
 	create,
 	update,
 	updateStatus,
+	listDrivers,
 }

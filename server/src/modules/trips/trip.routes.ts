@@ -15,20 +15,21 @@ import {
 
 const router = Router()
 
-// Public search endpoints
+// Tra cứu danh sách chuyến xe công khai (gọi sp_TraCuuChuyenDi)
 router.get(
 	'/search',
 	validateRequest({ query: searchTripsQuerySchema }),
 	tripController.searchTrips.bind(tripController)
 )
 
+// Lấy sơ đồ ghế và trạng thái giữ chỗ của chuyến xe (gọi fn_LaySoDoGhe)
 router.get(
 	'/:tripId/seats',
 	validateRequest({ params: tripSeatsParamsSchema }),
 	tripController.getTripSeats.bind(tripController)
 )
 
-// Driver portal endpoint (must precede /:tripId to prevent collision)
+// Lịch trình phân công của tài xế (yêu cầu quyền DRIVER - gọi vw_DriverTrips)
 router.get(
 	'/driver',
 	verifyJWT,
@@ -37,7 +38,8 @@ router.get(
 	tripController.getDriverTrips.bind(tripController)
 )
 
-// Admin & Staff management endpoints
+// Quản trị chuyến xe (yêu cầu quyền ADMIN hoặc STAFF)
+// Tạo mới chuyến xe (gọi sp_TaoChuyen)
 router.post(
 	'/',
 	verifyJWT,
@@ -46,6 +48,7 @@ router.post(
 	tripController.createTrip.bind(tripController)
 )
 
+// Lấy danh sách chuyến xe quản trị kèm phân trang (gọi sp_LayDanhSachChuyenAdmin)
 router.get(
 	'/',
 	verifyJWT,
@@ -54,12 +57,14 @@ router.get(
 	tripController.getAdminTrips.bind(tripController)
 )
 
+// Chi tiết chuyến xe (gọi vw_ChiTietChuyenDi)
 router.get(
 	'/:tripId',
 	validateRequest({ params: tripIdParamsSchema }),
 	tripController.getTripDetail.bind(tripController)
 )
 
+// Cập nhật thông tin chuyến xe (gọi sp_SuaChuyen)
 router.put(
 	'/:tripId',
 	verifyJWT,
@@ -68,6 +73,7 @@ router.put(
 	tripController.updateTrip.bind(tripController)
 )
 
+// Hủy chuyến xe và tự động hoàn vé/booking (gọi sp_HuyChuyen)
 router.post(
 	'/:tripId/cancel',
 	verifyJWT,
@@ -76,6 +82,7 @@ router.post(
 	tripController.cancelTrip.bind(tripController)
 )
 
+// Chuyển đổi trạng thái chuyến xe (gọi sp_DoiTrangThaiChuyen)
 router.patch(
 	'/:tripId/status',
 	verifyJWT,

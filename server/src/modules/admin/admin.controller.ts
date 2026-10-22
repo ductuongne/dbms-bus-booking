@@ -89,9 +89,26 @@ export const updateUserStatus: RequestHandler = async (
 	}
 }
 
+export const listDrivers: RequestHandler = async (
+	_req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	try {
+		const drivers = await adminService.listDrivers()
+		res.status(200).json({
+			success: true,
+			data: drivers,
+		})
+	} catch (err: unknown) {
+		next(err)
+	}
+}
+
 export const adminController = {
 	listUsers,
 	createUser,
 	updateUser,
 	updateUserStatus,
+	listDrivers,
 }

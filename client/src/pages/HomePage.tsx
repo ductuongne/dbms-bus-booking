@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Bus,
   ArrowLeftRight,
@@ -18,16 +18,49 @@ import { stationService } from '../services/station.service';
 import { routeService, type RouteListItem } from '../services/route.service';
 import type { Province } from '../types';
 
+const DEFAULT_ROUTE_IMAGE = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&q=80';
+
+const PROVINCE_IMAGES: Record<string, string> = {
+  'Hà Nội': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80',
+  'Hồ Chí Minh': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&q=80',
+  'Đà Nẵng': 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&q=80',
+  'Lâm Đồng': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80',
+  'Đà Lạt': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80',
+  'Ninh Bình': 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80',
+  'Hải Phòng': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&q=80',
+  'Khánh Hòa': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
+  'Nha Trang': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
+  'Lào Cai': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&q=80',
+  'Sa Pa': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&q=80',
+  'Bà Rịa - Vũng Tàu': 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80',
+  'Vũng Tàu': 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80',
+  'Cần Thơ': 'https://images.unsplash.com/photo-1508873696983-2df5293cb325?w=600&q=80',
+  'Thừa Thiên Huế': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=600&q=80',
+  'Huế': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=600&q=80',
+  'Quảng Ninh': 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80',
+  'Hạ Long': 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80',
+};
+
+function getRouteImage(destination: string): string {
+  for (const [key, url] of Object.entries(PROVINCE_IMAGES)) {
+    if (destination.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(destination.toLowerCase())) {
+      return url;
+    }
+  }
+  return DEFAULT_ROUTE_IMAGE;
+}
+
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Khởi tạo ngày theo giờ địa phương (ERR-05)
   const todayStr = toLocalISODate(new Date());
   const [provinces, setProvinces] = useState<Province[]>(mockProvinces);
   const [realRoutes, setRealRoutes] = useState<RouteListItem[]>([]);
-  const [origin, setOrigin] = useState('Hà Nội');
-  const [destination, setDestination] = useState('Ninh Bình');
-  const [travelDate, setTravelDate] = useState(todayStr);
+  const [origin, setOrigin] = useState(() => searchParams.get('from') || 'Hà Nội');
+  const [destination, setDestination] = useState(() => searchParams.get('to') || 'Hải Phòng');
+  const [travelDate, setTravelDate] = useState(() => searchParams.get('date') || todayStr);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,6 +72,13 @@ export const HomePage: React.FC = () => {
         ]);
         if (provList.length > 0) {
           setProvinces(provList);
+          // Đảm bảo state origin & destination luôn khớp với các option thực tế, tránh lỗi lệch DOM vs state
+          setOrigin((prev) => (provList.some((p) => p.name === prev) ? prev : provList[0].name));
+          setDestination((prev) => {
+            if (provList.some((p) => p.name === prev)) return prev;
+            const diff = provList.find((p) => p.name !== provList[0].name) || provList[1] || provList[0];
+            return diff.name;
+          });
         }
         setRealRoutes(routeList);
       } catch {
@@ -47,7 +87,6 @@ export const HomePage: React.FC = () => {
     }
     loadRealData();
   }, []);
-
 
   const handleSwap = () => {
     setOrigin(destination);
@@ -81,10 +120,10 @@ export const HomePage: React.FC = () => {
   };
 
   const popularRoutes = [
-    { from: 'Hà Nội', to: 'Ninh Bình', price: 150000, duration: '1g 15ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
-    { from: 'Hà Nội', to: 'Hải Phòng', price: 120000, duration: '1g 30ph', image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80' },
-    { from: 'TP. Hồ Chí Minh', to: 'Lâm Đồng', price: 280000, duration: '7g 30ph', image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&q=80' },
-    { from: 'Đà Nẵng', to: 'Quảng Ninh', price: 350000, duration: '12g 00ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Hải Phòng', price: 110000, duration: '1g 50ph', image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Lào Cai', price: 280000, duration: '5g 30ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
+    { from: 'Hồ Chí Minh', to: 'Lâm Đồng', price: 220000, duration: '8g 00ph', image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&q=80' },
+    { from: 'Hà Nội', to: 'Đà Nẵng', price: 450000, duration: '14g 00ph', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&q=80' },
   ];
 
   return (
@@ -190,12 +229,13 @@ export const HomePage: React.FC = () => {
                   type="date"
                   value={travelDate}
                   min={todayStr}
+                  onKeyDown={(e) => e.preventDefault()}
                   onChange={(e) => setTravelDate(e.target.value)}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleOpenDatePicker();
                   }}
-                  className="w-full bg-transparent font-bold text-slate-900 text-sm focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent font-bold text-slate-900 text-sm focus:outline-none cursor-pointer select-none"
                 />
               </div>
 
@@ -257,46 +297,65 @@ export const HomePage: React.FC = () => {
 
         {realRoutes.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {realRoutes.slice(0, 4).map((r) => (
-              <div
-                key={r.id}
-                onClick={() => {
-                  setOrigin(r.departureProvince);
-                  setDestination(r.arrivalProvince);
-                  navigate(
-                    `/search?from=${encodeURIComponent(r.departureProvince)}&to=${encodeURIComponent(r.arrivalProvince)}&date=${encodeURIComponent(travelDate)}`
-                  );
-                }}
-                className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-between group cursor-pointer"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs text-slate-400 font-medium mb-2">
-                    <span className="font-mono text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+            {realRoutes.slice(0, 4).map((r) => {
+              const routeImg = getRouteImage(r.arrivalProvince);
+              const approxPrice = Math.max(100000, Math.round((r.distanceKm * 650) / 10000) * 10000);
+              return (
+                <div
+                  key={r.id}
+                  onClick={() => {
+                    setOrigin(r.departureProvince);
+                    setDestination(r.arrivalProvince);
+                    navigate(
+                      `/search?from=${encodeURIComponent(r.departureProvince)}&to=${encodeURIComponent(r.arrivalProvince)}&date=${encodeURIComponent(travelDate)}`
+                    );
+                  }}
+                  className="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col"
+                >
+                  <div className="h-32 w-full overflow-hidden relative">
+                    <img
+                      src={routeImg}
+                      alt={`${r.departureProvince} - ${r.arrivalProvince}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        if (e.currentTarget.src !== DEFAULT_ROUTE_IMAGE) {
+                          e.currentTarget.src = DEFAULT_ROUTE_IMAGE;
+                        }
+                      }}
+                    />
+                    <div className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-md text-[11px] font-bold text-slate-900 shadow-xs">
+                      Từ {new Intl.NumberFormat('vi-VN').format(approxPrice)} đ
+                    </div>
+                    <div className="absolute bottom-2 left-2.5 bg-slate-900/70 backdrop-blur-xs text-white px-2 py-0.5 rounded text-[10px] font-mono font-bold">
                       {r.id}
-                    </span>
-                    <span className="flex items-center gap-1 text-[11px] text-[#C2410C] font-semibold">
-                      <Clock className="w-3 h-3" />
-                      {Math.round(r.estimatedDuration / 60)}h
-                    </span>
+                    </div>
                   </div>
 
-                  <h4 className="font-bold text-slate-900 text-sm group-hover:text-[#C2410C] transition-colors">
-                    {r.departureProvince} → {r.arrivalProvince}
-                  </h4>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm group-hover:text-[#C2410C] transition-colors flex items-center justify-between">
+                        <span>{r.departureProvince} → {r.arrivalProvince}</span>
+                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#C2410C]" />
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#C2410C]" />
+                        <span>Khoảng {Math.round(r.estimatedDuration / 60)}h ({r.distanceKm} km)</span>
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
+                        Xuất phát: {r.departureStationName}
+                      </p>
+                    </div>
 
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">
-                    {r.departureStationName}
-                  </p>
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#1E3A5F]">
+                      <span className="group-hover:text-[#C2410C] flex items-center gap-1">
+                        Đặt vé ngay <ArrowRight className="w-3 h-3" />
+                      </span>
+                      <span className="text-slate-400 text-[11px] font-normal">{formatDateVN(travelDate)}</span>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
-                  <span>{r.distanceKm} km</span>
-                  <span className="text-[#1E3A5F] group-hover:text-[#C2410C] text-[11px] flex items-center gap-0.5">
-                    Đặt vé ngay <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -347,7 +406,6 @@ export const HomePage: React.FC = () => {
 
       {/* Cam kết dịch vụ (3 cột, B6.1.A) */}
       <section className="bg-slate-100/60 border-t border-slate-200 py-14 mt-auto">
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-10">
             <h2 className="text-xl font-bold text-slate-900">Tại sao nên đặt vé tại Daisy Booking?</h2>

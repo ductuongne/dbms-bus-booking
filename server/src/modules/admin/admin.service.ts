@@ -54,7 +54,7 @@ export async function updateUserStatus(
 	isActive: boolean,
 	currentAdminId?: string
 ): Promise<void> {
-	// GUARD: CHỐNG TỰ KHOÁ TÀI KHOẢN (SELF-LOCKOUT PREVENTION)
+	// Ngăn chặn admin tự khóa tài khoản của chính mình (Self-lockout Prevention)
 	if (currentAdminId === userId && !isActive) {
 		throw new AppError(
 			400,
@@ -65,9 +65,22 @@ export async function updateUserStatus(
 	await adminRepository.updateStatus(userId, isActive)
 }
 
+export async function listDrivers(): Promise<
+	{
+		driverId: string
+		userId: string
+		fullName: string
+		phone: string
+		licenseNumber: string
+	}[]
+> {
+	return await adminRepository.listDrivers()
+}
+
 export const adminService = {
 	listUsers,
 	createUser,
 	updateUser,
 	updateUserStatus,
+	listDrivers,
 }

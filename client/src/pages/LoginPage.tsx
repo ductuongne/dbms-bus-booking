@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Input, Alert } from '../components/common';
 import { BRAND_INFO } from '../constants';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { authService } from '../services/auth.service';
 
 const loginSchema = z.object({
@@ -28,6 +29,7 @@ interface LocationState {
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated, user, logout } = useAuth();
+  const { info: toastInfo } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -93,7 +95,7 @@ export const LoginPage: React.FC = () => {
               <Bus className="w-6 h-6" />
             </div>
             <span>
-              Xe<span className="text-action">Viet</span>
+              Daisy <span className="text-action">Booking</span>
             </span>
           </Link>
           <h1 className="mt-4 text-xl font-bold text-slate-900">
@@ -175,12 +177,17 @@ export const LoginPage: React.FC = () => {
                 />
                 <span>Ghi nhớ đăng nhập</span>
               </label>
-              <Link
-                to="/forgot-password"
-                className="text-brand hover:underline font-medium"
+              <button
+                type="button"
+                onClick={() =>
+                  toastInfo(
+                    'Vui lòng liên hệ tổng đài hỗ trợ 1900 6868 hoặc quản trị viên để được cấp lại mật khẩu.'
+                  )
+                }
+                className="text-brand hover:underline font-medium cursor-pointer"
               >
                 Quên mật khẩu?
-              </Link>
+              </button>
             </div>
 
             <button

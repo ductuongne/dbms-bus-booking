@@ -25,8 +25,10 @@ import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
+import { useToast } from '../../hooks/useToast';
 
 export const AdminRoutesPage: React.FC = () => {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [routes, setRoutes] = useState<RouteListItem[]>([]);
   const [stations, setStations] = useState<StationDetailView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +127,7 @@ export const AdminRoutesPage: React.FC = () => {
       setIntermediateStops(intermediate);
       setShowModal(true);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể tải thông tin chỉnh sửa tuyến');
+      toastError(err instanceof Error ? err.message : 'Không thể tải thông tin chỉnh sửa tuyến');
     }
   };
 
@@ -134,7 +136,7 @@ export const AdminRoutesPage: React.FC = () => {
       const detail = await routeService.getRouteById(routeId);
       setViewingDetail(detail);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xem chi tiết tuyến');
+      toastError(err instanceof Error ? err.message : 'Không thể xem chi tiết tuyến');
     }
   };
 
@@ -142,9 +144,10 @@ export const AdminRoutesPage: React.FC = () => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa tuyến đường ${routeId}?`)) return;
     try {
       await routeService.deleteRoute(routeId);
+      toastSuccess('Đã xóa tuyến đường thành công');
       setReloadKey((k) => k + 1);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể xóa tuyến (có thể đã có chuyến xe vận hành)');
+      toastError(err instanceof Error ? err.message : 'Không thể xóa tuyến (có thể đã có chuyến xe vận hành)');
     }
   };
 
@@ -194,15 +197,33 @@ export const AdminRoutesPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!departureStationId || !arrivalStationId) {
-      alert('Vui lòng chọn bến xuất phát và bến đến');
+      toastError('Vui lòng chọn bến xuất phát và bến đến');
       return;
     }
     if (departureStationId === arrivalStationId) {
-      alert('Bến xuất phát và bến đến không được trùng nhau');
+      toastError('Bến xuất phát và bến đến không được trùng nhau');
       return;
     }
-    if (distanceKm <= 0 || estimatedDuration <= 0) {
-      alert('Khoảng cách và thời gian ước tính phải lớn hơn 0');
+    if (!distanceKm || isNaN(distanceKm) || distanceKm <= 0 || !estimatedDuration || isNaN(estimatedDuration) || estimatedDuration <= 0) {
+      toastError('Khoảng cách và thời gian ước tính phải là số hợp lệ lớn hơn 0');
+      return;
+    }
+
+    // Validate intermediate stops uniqueness and validity
+    for (let i = 0; i < intermediateStops.length; i++) {
+      const stop = intermediateStops[i];
+      if (!stop.stationId) {
+        toastError(`Vui lòng chọn trạm cho điểm dừng thứ ${i + 1}`);
+        return;
+      }
+      if (stop.stationId === departureStationId || stop.stationId === arrivalStationId) {
+        toastError('Trạm dừng trung gian không được trùng với bến xuất phát hoặc bến đến');
+        return;
+      }
+    }
+    const intermediateStationIds = intermediateStops.map((s) => s.stationId);
+    if (new Set(intermediateStationIds).size !== intermediateStationIds.length) {
+      toastError('Các trạm dừng trung gian không được trùng lặp nhau');
       return;
     }
 
@@ -240,9 +261,9 @@ export const AdminRoutesPage: React.FC = () => {
 
       setShowModal(false);
       setReloadKey((k) => k + 1);
-      alert('Lưu tuyến đường và danh sách trạm dừng thành công!');
+      toastSuccess('Lưu tuyến đường và danh sách trạm dừng thành công!');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi lưu tuyến đường');
+      toastError(err instanceof Error ? err.message : 'Lỗi khi lưu tuyến đường');
     } finally {
       setIsSubmitting(false);
     }
@@ -408,7 +429,7 @@ export const AdminRoutesPage: React.FC = () => {
             <div>
               <h4 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#1E3A5F]" />
-                <span>Trình tự trạm dừng (SQL Server Ordered Stops)</span>
+                <span>Trình tự các trạm dừng đón/trả khách</span>
               </h4>
 
               <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200">
@@ -469,7 +490,7 @@ export const AdminRoutesPage: React.FC = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editingRoute ? `Chỉnh Sửa Tuyến: ${editingRoute.id}` : 'Thêm Tuyến Đường Mới'}
-        description="Lưu tuyến đường và danh sách trạm dừng theo thứ tự vào SQL Server"
+        description="Thiết lập hành trình và danh sách trạm dừng theo thứ tự đón/trả"
         maxWidth="xl"
       >
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -506,8 +527,11 @@ export const AdminRoutesPage: React.FC = () => {
               step="0.1"
               min="1"
               required
-              value={distanceKm}
-              onChange={(e) => setDistanceKm(Number(e.target.value))}
+              value={isNaN(distanceKm) || distanceKm === 0 ? '' : distanceKm}
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                setDistanceKm(isNaN(val) ? 0 : val);
+              }}
             />
 
             <div>
@@ -516,9 +540,12 @@ export const AdminRoutesPage: React.FC = () => {
                 type="number"
                 min="10"
                 required
-                value={estimatedDuration}
-                onChange={(e) => setEstimatedDuration(Number(e.target.value))}
-                helperText={`≈ ${formatDuration(estimatedDuration)}`}
+                value={isNaN(estimatedDuration) || estimatedDuration === 0 ? '' : estimatedDuration}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                  setEstimatedDuration(isNaN(val) ? 0 : val);
+                }}
+                helperText={`≈ ${formatDuration(estimatedDuration || 0)}`}
               />
             </div>
           </div>

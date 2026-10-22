@@ -21,6 +21,10 @@ function isSqlError(error: unknown): error is { number: number } {
 	return typeof error === 'object' && error !== null && 'number' in error && typeof error.number === 'number'
 }
 
+/**
+ * Thực thi Stored Procedure với cơ chế tự động thử lại khi gặp Deadlock (SQL Error 1205)
+ * Tự động chọn Connection Pool tương ứng với UserRole của request hiện tại
+ */
 export async function executeSP<T = Record<string, unknown>>(
 	procedureName: string,
 	params: Record<string, QueryParam> = {}
@@ -65,6 +69,10 @@ export async function executeSP<T = Record<string, unknown>>(
 	throw new Error(`Execution of ${procedureName} failed after ${maxRetries} deadlock retries.`)
 }
 
+/**
+ * Thực thi câu truy vấn SQL tham số hóa (Parameterized Query)
+ * Tự động chọn Connection Pool tương ứng với UserRole của request hiện tại
+ */
 export async function executeQuery<T = Record<string, unknown>>(
 	queryText: string,
 	params: Record<string, QueryParam> = {}
@@ -79,4 +87,3 @@ export async function executeQuery<T = Record<string, unknown>>(
 	const result = await request.query<T>(queryText)
 	return result.recordset ?? []
 }
-

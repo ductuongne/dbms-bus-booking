@@ -9,9 +9,15 @@ export const AdminBookingsPage: React.FC = () => {
   const {
     activeTab,
     setActiveTab,
+    searchMode,
+    setSearchMode,
     bookingCodeInput,
     setBookingCodeInput,
-    lookupResult,
+    phoneInput,
+    setPhoneInput,
+    lookupResults,
+    selectedBookingCode,
+    setSelectedBookingCode,
     isSearchingCode,
     handleLookupBooking,
     ticketCodeInput,
@@ -19,6 +25,9 @@ export const AdminBookingsPage: React.FC = () => {
     isCheckingIn,
     handleCheckIn,
     trips,
+    tripDate,
+    setTripDate,
+    loadingTrips,
     selectedTripId,
     setSelectedTripId,
     tripTickets,
@@ -36,7 +45,7 @@ export const AdminBookingsPage: React.FC = () => {
             Quản lý Đặt vé &amp; Check-in
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Tra cứu đơn đặt vé, danh sách hành khách theo chuyến và xác nhận check-in lên xe
+            Tra cứu đơn đặt vé qua mã hoặc số điện thoại, danh sách hành khách theo chuyến và xác nhận check-in lên xe
           </p>
         </div>
       </div>
@@ -78,22 +87,31 @@ export const AdminBookingsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* TAB 1: TRA CỨU ĐƠN ĐẶT VÉ */}
+      {/* TAB 1: TRA CỨU ĐƠN ĐẶT VÉ (Theo Mã hoặc Số điện thoại) */}
       {activeTab === 'lookup' && (
         <BookingLookupSection
+          searchMode={searchMode}
+          onSearchModeChange={setSearchMode}
           bookingCodeInput={bookingCodeInput}
           onBookingCodeChange={setBookingCodeInput}
+          phoneInput={phoneInput}
+          onPhoneChange={setPhoneInput}
           onSearch={handleLookupBooking}
           isSearching={isSearchingCode}
-          lookupResult={lookupResult}
+          lookupResults={lookupResults}
+          selectedBookingCode={selectedBookingCode}
+          onSelectBookingCode={setSelectedBookingCode}
           onCheckIn={handleCheckIn}
         />
       )}
 
-      {/* TAB 2: DANH SÁCH VÉ THEO CHUYẾN XE */}
+      {/* TAB 2: DANH SÁCH VÉ THEO CHUYẾN XE (Có bộ lọc ngày) */}
       {activeTab === 'trip_manifest' && (
         <TripManifestSection
           trips={trips}
+          tripDate={tripDate}
+          onTripDateChange={setTripDate}
+          loadingTrips={loadingTrips}
           selectedTripId={selectedTripId}
           onSelectedTripIdChange={setSelectedTripId}
           tripTickets={tripTickets}

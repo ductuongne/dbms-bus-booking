@@ -120,11 +120,11 @@ export const BUS_LAYOUT_CONFIGS = {
   },
 } as const;
 
-// Thông tin cổng thanh toán VietQR lấy từ biến môi trường (.env)
+// Thông tin cổng thanh toán VietQR lấy từ biến môi trường (.env) kèm fallback an toàn
 export const VIETQR_CONFIG = {
-  DEFAULT_BANK: import.meta.env.VITE_VIETQR_DEFAULT_BANK ?? '',
-  BANK_BIN: import.meta.env.VITE_VIETQR_BANK_BIN ?? '',
-  ACCOUNT_NUMBER: import.meta.env.VITE_VIETQR_ACCOUNT_NUMBER ?? '',
-  ACCOUNT_NAME: import.meta.env.VITE_VIETQR_ACCOUNT_NAME ?? '',
-  DEFAULT_COUNTDOWN_SECONDS: Number(import.meta.env.VITE_VIETQR_COUNTDOWN_SECONDS ?? 0),
+  DEFAULT_BANK: import.meta.env.VITE_VIETQR_DEFAULT_BANK || 'MB Bank',
+  BANK_BIN: import.meta.env.VITE_VIETQR_BANK_BIN || '970422',
+  ACCOUNT_NUMBER: import.meta.env.VITE_VIETQR_ACCOUNT_NUMBER || '0901234567',
+  ACCOUNT_NAME: import.meta.env.VITE_VIETQR_ACCOUNT_NAME || 'CONG TY CP DAISY BOOKING',
+  DEFAULT_COUNTDOWN_SECONDS: Number(import.meta.env.VITE_VIETQR_COUNTDOWN_SECONDS || 900),
 } as const;

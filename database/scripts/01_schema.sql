@@ -6,7 +6,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255),
     role VARCHAR(20) NOT NULL,
     loyalty_points INT DEFAULT 0,
-    is_active BIT DEFAULT 1 -- Đổi BOOLEAN -> BIT, TRUE -> 1
+    is_active BIT DEFAULT 1 -- Trạng thái hoạt động (1: Active, 0: Inactive)
 );
 GO
 

@@ -58,7 +58,7 @@ GO
 
 -- Concurrency & Business Indexes (GĐ1)
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'uq_tickets_trip_seat_active' AND object_id = OBJECT_ID('tickets'))
-    CREATE UNIQUE INDEX uq_tickets_trip_seat_active ON tickets(trip_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED');
+    CREATE UNIQUE INDEX uq_tickets_trip_seat_active ON tickets(trip_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN');
 GO
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_bookings_pending_expired' AND object_id = OBJECT_ID('bookings'))
     CREATE INDEX idx_bookings_pending_expired ON bookings(expired_at) WHERE status = 'PENDING';
@@ -73,7 +73,7 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_trips_driver_time' AN
     CREATE INDEX idx_trips_driver_time ON trips(driver_id, departure_time, arrival_time);
 GO
 
--- Financial & Reporting Indexes (Người 4)
+-- Chỉ mục tối ưu hóa truy vấn Báo cáo & Doanh thu (Reporting & Analytics Indexes)
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_payments_status_paid_at' AND object_id = OBJECT_ID('payments'))
     CREATE NONCLUSTERED INDEX idx_payments_status_paid_at
     ON payments(status, paid_at) INCLUDE (booking_id, method, amount);

@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
                 <Bus className="w-5 h-5" />
               </div>
               <span className="text-xl font-black text-[#1E3A5F]">
-                Xe<span className="text-[#C2410C]">Viet</span>
+                Daisy <span className="text-[#C2410C]">Booking</span>
               </span>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed mb-3">

@@ -78,11 +78,11 @@ BEGIN
         UPDATE tickets SET status = 'EXPIRED'
         WHERE booking_id IN (SELECT booking_id FROM @Stale) AND status = 'PENDING';
 
-        -- Khóa chống phantom và kiểm tra ghế bận
+        -- Khóa chống phantom và kiểm tra ghế bận (PENDING, CONFIRMED hoặc đã lên xe CHECKED_IN)
         IF EXISTS (
             SELECT 1 FROM tickets WITH (UPDLOCK, HOLDLOCK)
             WHERE trip_id = @trip_id AND seat_id IN (SELECT seat_id FROM @P)
-              AND status IN ('PENDING', 'CONFIRMED')
+              AND status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
         )
             THROW 50030, N'Ghế đã được giữ hoặc đã bán', 1;
 
@@ -368,6 +368,10 @@ BEGIN
         FROM tickets t JOIN @Expired e ON e.booking_id = t.booking_id
         WHERE t.status = 'PENDING';
 
+        UPDATE p SET p.status = 'FAILED'
+        FROM payments p JOIN @Expired e ON e.booking_id = p.booking_id
+        WHERE p.status = 'PENDING';
+
         COMMIT TRANSACTION;
 
         SELECT COUNT(*) AS released FROM @Expired;
@@ -414,7 +418,7 @@ BEGIN
                 - (SELECT COUNT(DISTINCT tk.seat_id)
                    FROM tickets tk JOIN bookings bk ON bk.booking_id = tk.booking_id
                    WHERE tk.trip_id = v.trip_id
-                     AND (tk.status = 'CONFIRMED'
+                     AND (tk.status IN ('CONFIRMED', 'CHECKED_IN')
                           OR (tk.status = 'PENDING' AND bk.expired_at > SYSDATETIME())))
             ) AS availableSeats
         FROM dbo.vw_ChiTietChuyenDi v
@@ -461,7 +465,7 @@ BEGIN
            OR NOT EXISTS (SELECT 1 FROM buses WHERE bus_id = @bus_id AND status = 'ACTIVE')
            OR NOT EXISTS (SELECT 1 FROM drivers WHERE driver_id = @driver_id)
            OR @price <= 0 OR @departure_time <= SYSDATETIME() OR @arrival_time <= @departure_time
-            THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+            THROW 50061, N'Thông tin chuyến xe không hợp lệ (kiểm tra xe, tài xế, thời gian hoặc giá vé)', 1;
 
         SET @trip_id = 'TRP-' + UPPER(SUBSTRING(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 1, 8));
 
@@ -583,7 +587,7 @@ BEGIN
            OR NOT EXISTS (SELECT 1 FROM drivers WHERE driver_id = @newDriverId)
            OR @newPrice <= 0 OR @newArrivalTime <= @newDepartureTime
            OR ((@departure_time IS NOT NULL OR @arrival_time IS NOT NULL) AND @newDepartureTime <= SYSDATETIME())
-            THROW 50061, N'Dữ liệu đặt vé không hợp lệ', 1;
+            THROW 50061, N'Thông tin cập nhật chuyến xe không hợp lệ (kiểm tra xe, tài xế, thời gian hoặc giá vé)', 1;
 
         UPDATE trips
         SET bus_id = @newBusId, driver_id = @newDriverId, departure_time = @newDepartureTime,
@@ -667,8 +671,8 @@ BEGIN
         SELECT @trip_id = trip_id FROM tickets WHERE ticket_code = @ticket_code;
         IF @trip_id IS NULL THROW 50074, N'Vé không tồn tại', 1;
 
-        IF NOT EXISTS (SELECT 1 FROM trips WITH (HOLDLOCK) WHERE trip_id = @trip_id AND status = 'SCHEDULED')
-            THROW 50073, N'Vé không check-in được', 1;
+        IF NOT EXISTS (SELECT 1 FROM trips WITH (HOLDLOCK) WHERE trip_id = @trip_id AND status IN ('SCHEDULED', 'DEPARTED'))
+            THROW 50073, N'Vé không check-in được (chuyến xe không ở trạng thái sẵn sàng hoặc đang chạy)', 1;
 
         UPDATE tickets SET status = 'CHECKED_IN'
         WHERE ticket_code = @ticket_code AND status = 'CONFIRMED';
@@ -686,7 +690,7 @@ END;
 GO
 
 -- ==============================================================================
--- FLEET, ROUTE & STATION MANAGEMENT STORED PROCEDURES
+-- QUẢN TRỊ PHƯƠNG TIỆN, TUYẾN ĐƯỜNG & BẾN XE (FLEET, ROUTE & STATION MANAGEMENT)
 -- ==============================================================================
 
 -- 11. sp_LayChiTietXe
@@ -1077,7 +1081,7 @@ END;
 GO
 
 -- ==============================================================================
--- FINANCIAL & REPORTING STORED PROCEDURES (Người 4)
+-- BÁO CÁO TÀI CHÍNH & THỐNG KÊ DOANH THU (FINANCIAL & REPORTING PROCEDURES)
 -- ==============================================================================
 
 -- 24. sp_TraCuuThanhToan: tra cứu các giao dịch thanh toán của booking (xác thực bằng mã booking + SĐT)
@@ -1131,21 +1135,25 @@ BEGIN
 
         IF @group_by = 'DAY'
             SELECT
-                CAST(paid_at AS DATE) AS period,
+                CAST(p.paid_at AS DATE) AS period,
                 COUNT(*) AS payment_count,
-                SUM(amount) AS total_revenue
-            FROM payments
-            WHERE status = 'SUCCESS' AND paid_at >= @fromTime AND paid_at < @toTime
-            GROUP BY CAST(paid_at AS DATE)
+                SUM(p.amount) AS total_revenue
+            FROM payments p
+            JOIN bookings bk ON bk.booking_id = p.booking_id
+            WHERE p.status = 'SUCCESS' AND bk.status <> 'CANCELLED'
+              AND p.paid_at >= @fromTime AND p.paid_at < @toTime
+            GROUP BY CAST(p.paid_at AS DATE)
             ORDER BY period;
         ELSE
             SELECT
-                DATEFROMPARTS(YEAR(paid_at), MONTH(paid_at), 1) AS period,
+                DATEFROMPARTS(YEAR(p.paid_at), MONTH(p.paid_at), 1) AS period,
                 COUNT(*) AS payment_count,
-                SUM(amount) AS total_revenue
-            FROM payments
-            WHERE status = 'SUCCESS' AND paid_at >= @fromTime AND paid_at < @toTime
-            GROUP BY DATEFROMPARTS(YEAR(paid_at), MONTH(paid_at), 1)
+                SUM(p.amount) AS total_revenue
+            FROM payments p
+            JOIN bookings bk ON bk.booking_id = p.booking_id
+            WHERE p.status = 'SUCCESS' AND bk.status <> 'CANCELLED'
+              AND p.paid_at >= @fromTime AND p.paid_at < @toTime
+            GROUP BY DATEFROMPARTS(YEAR(p.paid_at), MONTH(p.paid_at), 1)
             ORDER BY period;
     END TRY
     BEGIN CATCH
@@ -1211,3 +1219,314 @@ END;
 GO
 
 
+
+-- 28. sp_LayDanhSachChuyenAdmin: danh sách chuyến quản trị kèm thông tin ghế và phân trang
+CREATE OR ALTER PROCEDURE dbo.sp_LayDanhSachChuyenAdmin
+    @date VARCHAR(10) = NULL,
+    @status VARCHAR(20) = NULL,
+    @routeId VARCHAR(50) = NULL,
+    @offset INT = 0,
+    @limit INT = 10
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @offset < 0 SET @offset = 0;
+    IF @limit < 1 SET @limit = 10;
+
+    SELECT
+        t.trip_id,
+        t.route_id,
+        t.bus_id,
+        t.driver_id,
+        t.departure_time,
+        t.arrival_time,
+        t.price,
+        t.status,
+        (SELECT COUNT(*) FROM seats s WHERE s.bus_id = t.bus_id) AS total_seats,
+        (SELECT COUNT(DISTINCT tk.seat_id)
+         FROM tickets tk
+         WHERE tk.trip_id = t.trip_id AND tk.status IN ('CONFIRMED', 'CHECKED_IN')
+        ) AS booked_seats,
+        (SELECT COUNT(DISTINCT tk.seat_id)
+         FROM tickets tk
+         JOIN bookings b ON b.booking_id = tk.booking_id
+         WHERE tk.trip_id = t.trip_id AND tk.status = 'PENDING' AND b.expired_at > SYSDATETIME()
+        ) AS pending_seats,
+        COUNT(*) OVER() AS totalCount
+    FROM trips t
+    WHERE (@date IS NULL OR CAST(t.departure_time AS DATE) = TRY_CAST(@date AS DATE))
+      AND (@status IS NULL OR t.status = @status)
+      AND (@routeId IS NULL OR t.route_id = @routeId)
+    ORDER BY t.departure_time ASC, t.trip_id ASC
+    OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;
+END;
+GO
+
+-- 29. sp_LayThongTinVe: Tra cứu thông tin đơn đặt vé và danh sách vé theo mã booking hoặc số điện thoại
+CREATE OR ALTER PROCEDURE dbo.sp_LayThongTinVe
+    @booking_code VARCHAR(20) = NULL,
+    @phone VARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Bảng tạm lưu danh sách booking_id tìm được
+    DECLARE @MatchedBookings TABLE (
+        booking_id VARCHAR(50) PRIMARY KEY
+    );
+
+    IF @booking_code IS NOT NULL AND LTRIM(RTRIM(@booking_code)) <> ''
+    BEGIN
+        INSERT INTO @MatchedBookings (booking_id)
+        SELECT booking_id
+        FROM bookings
+        WHERE booking_code = LTRIM(RTRIM(@booking_code));
+    END
+    ELSE IF @phone IS NOT NULL AND LTRIM(RTRIM(@phone)) <> ''
+    BEGIN
+        DECLARE @CleanPhone VARCHAR(20) = LTRIM(RTRIM(@phone));
+        DECLARE @NormPhone VARCHAR(20) = REPLACE(REPLACE(@CleanPhone, '+84', '0'), ' ', '');
+
+        INSERT INTO @MatchedBookings (booking_id)
+        SELECT DISTINCT b.booking_id
+        FROM bookings b
+        JOIN users u ON u.user_id = b.customer_id
+        LEFT JOIN tickets tk ON tk.booking_id = b.booking_id
+        WHERE u.phone = @CleanPhone
+           OR tk.passenger_phone = @CleanPhone
+           OR REPLACE(REPLACE(u.phone, '+84', '0'), ' ', '') = @NormPhone
+           OR REPLACE(REPLACE(tk.passenger_phone, '+84', '0'), ' ', '') = @NormPhone;
+    END
+
+    -- Recordset 1: Thông tin booking (kèm thông tin khách hàng)
+    SELECT
+        b.booking_id,
+        b.booking_code,
+        b.customer_id,
+        b.channel,
+        b.created_at,
+        b.expired_at,
+        b.total_amount,
+        b.status,
+        u.full_name AS customer_name,
+        u.phone AS customer_phone
+    FROM bookings b
+    JOIN @MatchedBookings mb ON mb.booking_id = b.booking_id
+    JOIN users u ON u.user_id = b.customer_id
+    ORDER BY b.created_at DESC;
+
+    -- Recordset 2: Danh sách vé chi tiết từ view vw_ChiTietVe
+    SELECT
+        v.ticket_id,
+        v.ticket_code,
+        v.booking_id,
+        v.trip_id,
+        v.seat_id,
+        v.seat_number,
+        v.passenger_name,
+        v.passenger_phone,
+        v.price,
+        v.status,
+        v.departure_time,
+        v.arrival_time,
+        v.route_id,
+        v.departure_station,
+        v.arrival_station,
+        v.departure_province,
+        v.arrival_province
+    FROM dbo.vw_ChiTietVe v
+    JOIN @MatchedBookings mb ON mb.booking_id = v.booking_id
+    ORDER BY v.booking_id, v.seat_number ASC;
+END;
+GO
+
+-- ==============================================================================
+-- QUẢN LÝ NGƯỜI DÙNG & TÀI KHOẢN (USER & IDENTITY MANAGEMENT)
+-- ==============================================================================
+
+-- 30. sp_TaoNguoiDung: Tạo người dùng hệ thống (Admin, Staff, Driver, Customer)
+-- Đảm bảo tính nguyên tử: nếu là DRIVER thì tự động tạo hồ sơ bằng lái trong bảng drivers
+CREATE OR ALTER PROCEDURE dbo.sp_TaoNguoiDung
+    @user_id VARCHAR(50),
+    @full_name NVARCHAR(100),
+    @email VARCHAR(100),
+    @phone VARCHAR(20),
+    @password_hash VARCHAR(255) = NULL,
+    @role VARCHAR(20) = 'CUSTOMER',
+    @license_number VARCHAR(50) = NULL,
+    @license_expiry DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @user_id IS NULL OR LTRIM(RTRIM(@user_id)) = ''
+        THROW 50010, N'Mã người dùng không được để trống', 1;
+    IF @full_name IS NULL OR LTRIM(RTRIM(@full_name)) = ''
+        THROW 50061, N'Họ tên không được để trống', 1;
+    IF @phone IS NULL OR LTRIM(RTRIM(@phone)) = ''
+        THROW 50061, N'Số điện thoại không được để trống', 1;
+    IF @email IS NULL OR LTRIM(RTRIM(@email)) = ''
+        THROW 50061, N'Email không được để trống', 1;
+
+    IF EXISTS (SELECT 1 FROM users WHERE phone = @phone)
+        THROW 50011, N'Số điện thoại này đã được đăng ký trong hệ thống', 1;
+    IF EXISTS (SELECT 1 FROM users WHERE email = @email)
+        THROW 50012, N'Email này đã được đăng ký trong hệ thống', 1;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active)
+        VALUES (@user_id, @full_name, @email, @phone, @password_hash, @role, 0, 1);
+
+        IF @role = 'DRIVER'
+        BEGIN
+            DECLARE @driverId VARCHAR(50) = 'DRV-' + REPLACE(@user_id, 'USR-', '');
+            DECLARE @licNum VARCHAR(50) = COALESCE(@license_number, 'B2-' + RIGHT(CAST(DATEDIFF_BIG(MILLISECOND, '1970-01-01', SYSDATETIME()) AS VARCHAR(30)), 8));
+            DECLARE @licExp DATE = COALESCE(@license_expiry, DATEADD(YEAR, 5, CAST(SYSDATETIME() AS DATE)));
+
+            INSERT INTO drivers (driver_id, user_id, license_number, license_expiry)
+            VALUES (@driverId, @user_id, @licNum, @licExp);
+        END
+
+        COMMIT TRANSACTION;
+        SELECT * FROM users WHERE user_id = @user_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 31. sp_CapNhatNguoiDung: Cập nhật thông tin người dùng
+CREATE OR ALTER PROCEDURE dbo.sp_CapNhatNguoiDung
+    @user_id VARCHAR(50),
+    @full_name NVARCHAR(100),
+    @email VARCHAR(100),
+    @phone VARCHAR(20),
+    @role VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM users WHERE user_id = @user_id)
+        THROW 50010, N'Người dùng không tồn tại', 1;
+
+    IF EXISTS (SELECT 1 FROM users WHERE phone = @phone AND user_id <> @user_id)
+        THROW 50011, N'Số điện thoại này đã được đăng ký cho người dùng khác', 1;
+    IF EXISTS (SELECT 1 FROM users WHERE email = @email AND user_id <> @user_id)
+        THROW 50012, N'Email này đã được đăng ký cho người dùng khác', 1;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE users
+        SET full_name = @full_name,
+            email = @email,
+            phone = @phone,
+            role = @role
+        WHERE user_id = @user_id;
+
+        -- Nếu chuyển thành DRIVER mà chưa có hồ sơ drivers thì tự bổ sung
+        IF @role = 'DRIVER' AND NOT EXISTS (SELECT 1 FROM drivers WHERE user_id = @user_id)
+        BEGIN
+            DECLARE @driverId VARCHAR(50) = 'DRV-' + REPLACE(@user_id, 'USR-', '');
+            DECLARE @licNum VARCHAR(50) = 'B2-' + RIGHT(CAST(DATEDIFF_BIG(MILLISECOND, '1970-01-01', SYSDATETIME()) AS VARCHAR(30)), 8);
+            INSERT INTO drivers (driver_id, user_id, license_number, license_expiry)
+            VALUES (@driverId, @user_id, @licNum, DATEADD(YEAR, 5, CAST(SYSDATETIME() AS DATE)));
+        END
+
+        COMMIT TRANSACTION;
+        SELECT * FROM users WHERE user_id = @user_id;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 32. sp_XoaNguoiDung: Xóa hoặc vô hiệu hóa người dùng
+CREATE OR ALTER PROCEDURE dbo.sp_XoaNguoiDung
+    @user_id VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM users WHERE user_id = @user_id)
+        THROW 50010, N'Người dùng không tồn tại', 1;
+
+    -- Kiểm tra nếu người dùng có booking
+    IF EXISTS (SELECT 1 FROM bookings WHERE customer_id = @user_id)
+        THROW 50013, N'Người dùng đã có lịch sử đặt vé, không thể xóa vật lý (chỉ có thể khóa tài khoản)', 1;
+
+    -- Kiểm tra nếu tài xế đang được phân công chuyến
+    IF EXISTS (
+        SELECT 1 FROM trips t
+        JOIN drivers d ON d.driver_id = t.driver_id
+        WHERE d.user_id = @user_id AND t.status IN ('SCHEDULED', 'DEPARTED')
+    )
+        THROW 50014, N'Tài xế đang được phân công chuyến xe hoạt động, không thể xóa', 1;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        DELETE FROM drivers WHERE user_id = @user_id;
+        DELETE FROM users WHERE user_id = @user_id;
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- 33. sp_DangKyKhachHang: Đăng ký khách hàng mới
+CREATE OR ALTER PROCEDURE dbo.sp_DangKyKhachHang
+    @user_id VARCHAR(50),
+    @full_name NVARCHAR(100),
+    @email VARCHAR(100),
+    @phone VARCHAR(20),
+    @password_hash VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM users WHERE phone = @phone)
+        THROW 50011, N'Số điện thoại này đã được đăng ký trong hệ thống', 1;
+    IF EXISTS (SELECT 1 FROM users WHERE email = @email)
+        THROW 50012, N'Email này đã được đăng ký trong hệ thống', 1;
+
+    INSERT INTO users (user_id, full_name, email, phone, password_hash, role, loyalty_points, is_active)
+    VALUES (@user_id, @full_name, @email, @phone, @password_hash, 'CUSTOMER', 0, 1);
+
+    SELECT * FROM users WHERE user_id = @user_id;
+END;
+GO
+
+-- 34. sp_CapNhatGuestThanhKhachHang: Chuyển đổi khách vãng lai sang khách hàng chính thức
+CREATE OR ALTER PROCEDURE dbo.sp_CapNhatGuestThanhKhachHang
+    @phone VARCHAR(20),
+    @full_name NVARCHAR(100),
+    @password_hash VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM users WHERE phone = @phone AND role = 'GUEST')
+        THROW 50010, N'Không tìm thấy thông tin khách vãng lai tương ứng', 1;
+
+    UPDATE users
+    SET full_name = @full_name,
+        password_hash = @password_hash,
+        role = 'CUSTOMER'
+    WHERE phone = @phone AND role = 'GUEST';
+
+    SELECT * FROM users WHERE phone = @phone;
+END;
+GO
