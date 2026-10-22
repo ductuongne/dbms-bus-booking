@@ -48,7 +48,7 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <span className="text-2xl font-black tracking-tight text-[#1E3A5F]">
-              Xe<span className="text-[#C2410C]">Viet</span>
+              Daisy <span className="text-[#C2410C]">Booking</span>
             </span>
           </div>
         </Link>

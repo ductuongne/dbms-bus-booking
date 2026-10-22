@@ -95,7 +95,7 @@ export const LoginPage: React.FC = () => {
               <Bus className="w-6 h-6" />
             </div>
             <span>
-              Xe<span className="text-action">Viet</span>
+              Daisy <span className="text-action">Booking</span>
             </span>
           </Link>
           <h1 className="mt-4 text-xl font-bold text-slate-900">

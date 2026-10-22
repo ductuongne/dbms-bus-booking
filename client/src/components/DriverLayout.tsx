@@ -28,7 +28,7 @@ export const DriverLayout: React.FC = () => {
               <Bus className="w-4 h-4" />
             </div>
             <span>
-              Xe<span className="text-action">Viet</span>
+              Daisy <span className="text-action">Booking</span>
             </span>
           </Link>
           <Badge variant="warning" className="hidden sm:inline-flex items-center gap-1">
