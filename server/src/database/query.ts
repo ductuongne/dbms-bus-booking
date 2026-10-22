@@ -81,6 +81,3 @@ export async function executeQuery<T = Record<string, unknown>>(
 	const result = await request.query<T>(queryText)
 	return result.recordset ?? []
 }
-
-
-

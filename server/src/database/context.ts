@@ -18,30 +18,6 @@ interface JwtPayload {
 
 export const securityContext = new AsyncLocalStorage<RequestSecurityContext>()
 
-/**
- * Ánh xạ UserRole trong JWT sang Database User tương ứng trong SQL Server:
- * - ADMIN    => user_admin
- * - STAFF    => user_nhanvien
- * - DRIVER   => user_taixe
- * - CUSTOMER => user_khachhang
- */
-export function getCurrentDbUser(): string | null {
-	const store = securityContext.getStore()
-	if (!store?.role) return null
-
-	switch (store.role) {
-		case 'ADMIN':
-			return 'user_admin'
-		case 'STAFF':
-			return 'user_nhanvien'
-		case 'DRIVER':
-			return 'user_taixe'
-		case 'CUSTOMER':
-			return 'user_khachhang'
-		default:
-			return null
-	}
-}
 
 /**
  * Global middleware gắn Request Security Context vào AsyncLocalStorage.

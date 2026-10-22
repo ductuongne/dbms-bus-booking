@@ -5,12 +5,12 @@ import type { UserRole } from '../types/index.js'
 import { securityContext } from '../database/context.js'
 
 export const DB_ROLE_CREDENTIALS: Record<UserRole | 'DEFAULT', { user: string; password: string }> = {
-	ADMIN: { user: 'login_admin', password: 'AdminStrongPassword@2026' },
-	STAFF: { user: 'login_nhanvien', password: 'StaffStrongPassword@2026' },
-	DRIVER: { user: 'login_taixe', password: 'DriverStrongPassword@2026' },
-	CUSTOMER: { user: 'login_khachhang', password: 'CustomerStrongPassword@2026' },
-	GUEST: { user: 'login_khachhang', password: 'CustomerStrongPassword@2026' },
-	DEFAULT: { user: env.DB_USER || 'bus_admin', password: env.DB_PASSWORD || 'BusBooking@2026' },
+	ADMIN: { user: env.dbAdminUser, password: env.dbAdminPassword },
+	STAFF: { user: env.dbStaffUser, password: env.dbStaffPassword },
+	DRIVER: { user: env.dbDriverUser, password: env.dbDriverPassword },
+	CUSTOMER: { user: env.dbCustomerUser, password: env.dbCustomerPassword },
+	GUEST: { user: env.dbCustomerUser, password: env.dbCustomerPassword },
+	DEFAULT: { user: env.DB_USER, password: env.DB_PASSWORD },
 }
 
 const poolMap = new Map<string, sql.ConnectionPool>()
