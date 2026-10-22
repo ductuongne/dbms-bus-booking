@@ -28,6 +28,14 @@ export interface EnvConfig {
 	DB_ENCRYPT: boolean
 	CRON_ENABLED: boolean
 	db: DatabaseConfig
+	dbAdminUser: string
+	dbAdminPassword: string
+	dbStaffUser: string
+	dbStaffPassword: string
+	dbDriverUser: string
+	dbDriverPassword: string
+	dbCustomerUser: string
+	dbCustomerPassword: string
 }
 
 function getRequiredEnv(name: string): string {
@@ -71,4 +79,12 @@ export const env: EnvConfig = {
 		port: dbPort,
 		encrypt: dbEncrypt,
 	},
+	dbAdminUser: process.env.DB_ADMIN_USER ?? 'login_admin',
+	dbAdminPassword: process.env.DB_ADMIN_PASSWORD ?? 'AdminStrongPassword@2026',
+	dbStaffUser: process.env.DB_STAFF_USER ?? 'login_nhanvien',
+	dbStaffPassword: process.env.DB_STAFF_PASSWORD ?? 'StaffStrongPassword@2026',
+	dbDriverUser: process.env.DB_DRIVER_USER ?? 'login_taixe',
+	dbDriverPassword: process.env.DB_DRIVER_PASSWORD ?? 'DriverStrongPassword@2026',
+	dbCustomerUser: process.env.DB_CUSTOMER_USER ?? 'login_khachhang',
+	dbCustomerPassword: process.env.DB_CUSTOMER_PASSWORD ?? 'CustomerStrongPassword@2026',
 }

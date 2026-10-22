@@ -11,28 +11,27 @@ interface JwtPayload {
 	exp: number
 }
 
+/**
+ * Middleware xác thực JSON Web Token (JWT) từ Authorization header
+ */
 export const verifyJWT: RequestHandler = (
 	req: Request,
 	_res: Response,
 	next: NextFunction
 ): void => {
-	// BƯỚC 1: Extract Authorization header
 	const authHeader = req.headers['authorization']
 
-	// BƯỚC 2: Validate header format "Bearer <token>"
+	// Kiểm tra định dạng Bearer token
 	if (authHeader === undefined || !authHeader.startsWith('Bearer ')) {
 		next(new AppError(401, 'Vui lòng đăng nhập để truy cập!'))
 		return
 	}
 
-	// BƯỚC 3: Extract token (bỏ prefix "Bearer ")
 	const token = authHeader.slice(7)
 
-	// BƯỚC 4: Xác minh token toán học (sync — không cần await)
+	// Xác thực chữ ký và giải mã payload
 	try {
 		const decoded = jwt.verify(token, env.jwtSecret) as unknown as JwtPayload
-
-		// BƯỚC 5: Gán req.user (strongly typed nhờ Task 1)
 		req.user = { userId: decoded.userId, role: decoded.role }
 		next()
 	} catch (_err: unknown) {
@@ -45,9 +44,12 @@ export const verifyJWT: RequestHandler = (
 	}
 }
 
+/**
+ * Middleware kiểm tra quyền truy cập theo vai trò (Role-Based Access Control)
+ */
 export function checkRole(allowedRoles: UserRole[]): RequestHandler {
 	return (req: Request, _res: Response, next: NextFunction): void => {
-		// Guard: req.user phải được gán bởi verifyJWT trước đó
+		// Yêu cầu request đã được xác thực qua verifyJWT
 		if (req.user === undefined) {
 			next(new AppError(401, 'Vui lòng đăng nhập để truy cập!'))
 			return

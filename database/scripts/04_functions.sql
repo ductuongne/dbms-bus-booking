@@ -48,7 +48,7 @@ RETURN
 GO
 
 -- ==============================================================================
--- FINANCIAL & REPORTING FUNCTIONS (Người 4)
+-- HÀM THỐNG KÊ & BÁO CÁO TÀI CHÍNH (FINANCIAL & REPORTING FUNCTIONS)
 -- ==============================================================================
 
 -- 3. fn_TongTienDaThanhToan: tổng tiền các giao dịch SUCCESS của một booking
