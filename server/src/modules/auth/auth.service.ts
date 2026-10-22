@@ -26,15 +26,15 @@ export async function login(dto: LoginDto): Promise<{
 		email: string
 	}
 }> {
-	// BƯỚC 1: Truy vấn user theo SĐT
+	// Tìm tài khoản theo số điện thoại
 	const user = await authRepository.findByPhone(dto.phone)
 
-	// ──── GUARD 1: ANTI-ENUMERATION GUARD ────
+	// Guard 1: Chống user enumeration (trả 401 chung nếu không tìm thấy user)
 	if (user === null) {
 		throw new AppError(401, 'Số điện thoại hoặc mật khẩu không chính xác.')
 	}
 
-	// ──── GUARD 2: GUEST ACCOUNT GUARD ────
+	// Guard 2: Chặn tài khoản GUEST chưa thiết lập mật khẩu
 	if (user.role === 'GUEST' || user.password_hash === null) {
 		throw new AppError(
 			403,
@@ -42,7 +42,7 @@ export async function login(dto: LoginDto): Promise<{
 		)
 	}
 
-	// ──── GUARD 3: ACTIVE GUARD ────
+	// Guard 3: Kiểm tra trạng thái tài khoản đang hoạt động (active)
 	if (user.is_active === false || (user.is_active as unknown) === 0) {
 		throw new AppError(
 			403,
@@ -50,13 +50,13 @@ export async function login(dto: LoginDto): Promise<{
 		)
 	}
 
-	// ──── GUARD 4: PASSWORD GUARD ────
+	// Guard 4: So khớp mật khẩu với hash (bcrypt)
 	const passwordMatch = await bcrypt.compare(dto.password, user.password_hash)
 	if (!passwordMatch) {
 		throw new AppError(401, 'Số điện thoại hoặc mật khẩu không chính xác.')
 	}
 
-	// ──── SUCCESS ────
+	// Xác thực thành công: Cấp phát Access Token & Refresh Token
 	const accessToken = signAccessToken({ userId: user.user_id, role: user.role })
 	const refreshToken = signRefreshToken({ userId: user.user_id, role: user.role })
 	return {
@@ -76,12 +76,11 @@ export async function login(dto: LoginDto): Promise<{
 export async function register(
 	dto: RegisterDto
 ): Promise<{ token: string; accessToken: string; refreshToken: string; isUpgrade: boolean }> {
-	// BƯỚC 1: Tìm user theo phone (Anchor Identity)
+	// Tìm tài khoản theo số điện thoại (Anchor Identity)
 	const existingUser = await authRepository.findByPhone(dto.phone)
 
-	// BƯỚC 2: PHÂN NHÁNH STATE MACHINE
+	// Nhánh 1: Khách hàng mới hoàn toàn -> Tạo mới tài khoản CUSTOMER
 	if (existingUser === null) {
-		// ──── NHÁNH A: KHÁCH MỚI HOÀN TOÀN ────
 		const passwordHash = await bcrypt.hash(dto.password, 12)
 		const userId = `USR-${crypto.randomUUID()}`
 
@@ -98,16 +97,16 @@ export async function register(
 		return { token: accessToken, accessToken, refreshToken, isUpgrade: false }
 	}
 
+	// Nhánh 2: Số điện thoại đã được đăng ký tài khoản chính thức
 	if (existingUser.role !== 'GUEST') {
-		// ──── NHÁNH B: SĐT ĐÃ CÓ TÀI KHOẢN (CUSTOMER/ADMIN/DRIVER...) ────
 		throw new AppError(
 			409,
 			'Số điện thoại đã được đăng ký tài khoản. Vui lòng đăng nhập!'
 		)
 	}
 
-	// ──── NHÁNH C: KHÁCH VÃNG LAI (GUEST) → IN-PLACE UPGRADE ────
-	// BƯỚC 2c-1: CROSS-IDENTITY EMAIL CHECK (Security Gate)
+	// Nhánh 3: Khách vãng lai (GUEST) nâng cấp thành tài khoản chính thức (In-place Upgrade)
+	// Xác thực quyền sở hữu: Email đăng ký phải trùng khớp với email đã dùng khi đặt vé
 	if (dto.email.toLowerCase() !== existingUser.email.toLowerCase()) {
 		throw new AppError(
 			409,
@@ -115,7 +114,7 @@ export async function register(
 		)
 	}
 
-	// BƯỚC 2c-2: Tiến hành In-place Upgrade
+	// Cập nhật thông tin và mật khẩu cho tài khoản GUEST
 	const passwordHash = await bcrypt.hash(dto.password, 12)
 	await authRepository.updateGuestToCustomer({
 		phone: dto.phone,
@@ -123,7 +122,7 @@ export async function register(
 		passwordHash,
 	})
 
-	// BƯỚC 2c-3: Ký JWT với user_id của bản ghi CŨ (bảo toàn foreign key reference)
+	// Ký token với user_id hiện có để bảo toàn foreign key references của các vé đã đặt
 	const accessToken = signAccessToken({ userId: existingUser.user_id, role: 'CUSTOMER' })
 	const refreshToken = signRefreshToken({ userId: existingUser.user_id, role: 'CUSTOMER' })
 	return { token: accessToken, accessToken, refreshToken, isUpgrade: true }

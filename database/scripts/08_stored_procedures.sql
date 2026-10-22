@@ -690,7 +690,7 @@ END;
 GO
 
 -- ==============================================================================
--- FLEET, ROUTE & STATION MANAGEMENT STORED PROCEDURES
+-- QUẢN TRỊ PHƯƠNG TIỆN, TUYẾN ĐƯỜNG & BẾN XE (FLEET, ROUTE & STATION MANAGEMENT)
 -- ==============================================================================
 
 -- 11. sp_LayChiTietXe
@@ -1081,7 +1081,7 @@ END;
 GO
 
 -- ==============================================================================
--- FINANCIAL & REPORTING STORED PROCEDURES (Người 4)
+-- BÁO CÁO TÀI CHÍNH & THỐNG KÊ DOANH THU (FINANCIAL & REPORTING PROCEDURES)
 -- ==============================================================================
 
 -- 24. sp_TraCuuThanhToan: tra cứu các giao dịch thanh toán của booking (xác thực bằng mã booking + SĐT)
@@ -1342,7 +1342,7 @@ END;
 GO
 
 -- ==============================================================================
--- USER & IDENTITY MANAGEMENT STORED PROCEDURES (Người 1)
+-- QUẢN LÝ NGƯỜI DÙNG & TÀI KHOẢN (USER & IDENTITY MANAGEMENT)
 -- ==============================================================================
 
 -- 30. sp_TaoNguoiDung: Tạo người dùng hệ thống (Admin, Staff, Driver, Customer)

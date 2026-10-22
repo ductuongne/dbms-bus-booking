@@ -17,6 +17,7 @@ import {
 
 const router = Router()
 
+// Giữ chỗ vé xe tạm thời (gọi sp_GiuCho)
 router.post(
 	'/hold',
 	bookingRateLimiter,
@@ -24,6 +25,7 @@ router.post(
 	bookingController.holdBooking.bind(bookingController)
 )
 
+// Xác nhận đơn đặt vé (gọi sp_DatVe)
 router.post(
 	'/:bookingId/confirm',
 	bookingRateLimiter,
@@ -31,6 +33,7 @@ router.post(
 	bookingController.confirmBooking.bind(bookingController)
 )
 
+// Hủy giữ chỗ vé xe (gọi sp_HuyGiuCho)
 router.post(
 	'/:bookingId/cancel',
 	bookingRateLimiter,
@@ -38,14 +41,14 @@ router.post(
 	bookingController.cancelBooking.bind(bookingController)
 )
 
-// Tra cứu thông tin vé và booking (công khai cho hành khách tra cứu qua mã đơn)
+// Tra cứu thông tin vé qua mã booking (Booking Code - gọi sp_LayThongTinVe)
 router.get(
 	'/lookup/:bookingCode',
 	validateRequest({ params: bookingCodeParamsSchema }),
 	bookingController.getBookingByCode.bind(bookingController)
 )
 
-// Tra cứu danh sách đơn đặt vé theo số điện thoại (cho nhân viên, admin, tài xế)
+// Tra cứu danh sách đơn đặt vé theo số điện thoại (yêu cầu quyền STAFF, ADMIN hoặc DRIVER)
 router.get(
 	'/by-phone/:phone',
 	verifyJWT,
@@ -54,6 +57,7 @@ router.get(
 	bookingController.getBookingsByPhone.bind(bookingController)
 )
 
+// Danh sách vé theo chuyến xe (gọi fn_LayVeTheoChuyen)
 router.get(
 	'/trips/:tripId/tickets',
 	verifyJWT,
@@ -62,6 +66,7 @@ router.get(
 	bookingController.getTripTickets.bind(bookingController)
 )
 
+// Soát vé và check-in hành khách lên xe (gọi sp_CheckIn)
 router.post(
 	'/check-in',
 	verifyJWT,

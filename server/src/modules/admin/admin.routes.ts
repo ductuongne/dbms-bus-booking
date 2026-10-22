@@ -10,31 +10,30 @@ import {
 
 export const adminRouter = Router()
 
-// BẢO VỆ TẦNG ROUTER (ROUTER-LEVEL RBAC GUARD):
-// Áp dụng verifyJWT và checkRole(['ADMIN']) cho TOÀN BỘ routes của adminRouter
+// RBAC middleware: Yêu cầu quyền ADMIN cho toàn bộ các route quản trị
 adminRouter.use(verifyJWT, checkRole(['ADMIN']))
 
-// ENDPOINT 1: GET /users → List users
+// Danh sách người dùng hệ thống
 adminRouter.get('/users', adminController.listUsers)
 
-// ENDPOINT: GET /drivers → List drivers for assignment
+// Danh sách tài xế phục vụ phân công chuyến
 adminRouter.get('/drivers', adminController.listDrivers)
 
-// ENDPOINT 2: POST /users → Create user
+// Tạo tài khoản người dùng mới
 adminRouter.post(
 	'/users',
 	validateBody(createUserSchema),
 	adminController.createUser
 )
 
-// ENDPOINT 3: PUT /users/:id → Update user info
+// Cập nhật thông tin người dùng
 adminRouter.put(
 	'/users/:id',
 	validateBody(updateUserSchema),
 	adminController.updateUser
 )
 
-// ENDPOINT 4: PATCH /users/:id/status → Soft-delete / Toggle active status
+// Cập nhật trạng thái người dùng (kích hoạt / vô hiệu hóa)
 adminRouter.patch(
 	'/users/:id/status',
 	validateBody(updateUserStatusSchema),

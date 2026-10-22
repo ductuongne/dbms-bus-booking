@@ -16,12 +16,12 @@ interface JwtPayload {
 	exp: number
 }
 
+// Quản lý ngữ cảnh bảo mật của từng request thông qua AsyncLocalStorage
 export const securityContext = new AsyncLocalStorage<RequestSecurityContext>()
 
-
 /**
- * Global middleware gắn Request Security Context vào AsyncLocalStorage.
- * Tự động trích xuất token Bearer nếu có để truyền ngữ cảnh vai trò xuống SQL Server.
+ * Middleware trích xuất UserRole từ JWT token vào AsyncLocalStorage
+ * Giúp tầng Database tự động nhận diện Role để cấp phát Connection Pool tương ứng
  */
 export const requestContextMiddleware: RequestHandler = (
 	req: Request,

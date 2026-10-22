@@ -44,23 +44,22 @@ app.get('/api/health', (_request, response) => {
 	response.json({ status: 'ok', service: 'bus-management-api' })
 })
 
-// Trips & Bookings API từ dev:
+// Routes nghiệp vụ chung (Trips, Bookings, Payments, Routes, Stations, Buses)
 app.use('/api', appRouter)
 
-// Core Auth & Management API:
-// Dual-routing: Public (không cần JWT)
+// Public Auth API (không yêu cầu JWT token)
 app.use('/api/public', publicRouter)
 
-// Dual-routing: Private (bắt buộc JWT)
+// Private Auth API (yêu cầu JWT token)
 app.use('/api/private', verifyJWT, privateRouter)
 
-// Admin Management Router (bảo vệ bởi verifyJWT + checkRole(['ADMIN']))
+// Admin Management API (yêu cầu quyền ADMIN)
 app.use('/api/private/admin', adminRouter)
 
-// Driver Portal Router (bảo vệ bởi verifyJWT + checkRole(['DRIVER']))
+// Driver Portal API (yêu cầu quyền DRIVER)
 app.use('/api/private/driver', driverRouter)
 
-// Error Handler: PHẢI đặt CUỐI CÙNG sau tất cả routes
+// Global Error Handler middleware (đặt cuối pipeline để bắt unhandled errors)
 app.use(errorHandler)
 
 app.listen(env.PORT, () => {

@@ -186,7 +186,7 @@ AS
 GO
 
 -- ==============================================================================
--- FINANCIAL & REPORTING VIEWS (Người 4)
+-- VIEWS BÁO CÁO & THỐNG KÊ DOANH THU (FINANCIAL & REPORTING VIEWS)
 -- ==============================================================================
 
 -- 8. vw_LichSuThanhToan: lịch sử thanh toán kèm thông tin booking và khách hàng
