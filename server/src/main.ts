@@ -11,6 +11,7 @@ import { driverRouter } from './modules/driver/driver.routes.js'
 import appRouter from './modules/index.js'
 import { verifyJWT } from './middlewares/auth.middleware.js'
 import { errorHandler } from './middlewares/error-handler.js'
+import { requestContextMiddleware } from './database/context.js'
 
 dotenv.config()
 
@@ -37,6 +38,7 @@ app.use(
 	})
 )
 app.use(express.json())
+app.use(requestContextMiddleware)
 
 app.get('/api/health', (_request, response) => {
 	response.json({ status: 'ok', service: 'bus-management-api' })

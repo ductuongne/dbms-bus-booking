@@ -45,9 +45,12 @@ GO
 GRANT SELECT ON buses TO Role_TaiXe;
 GRANT SELECT ON routes TO Role_TaiXe;
 GRANT SELECT ON stations TO Role_TaiXe;
+GRANT SELECT ON route_stations TO Role_TaiXe;
+GRANT SELECT ON provinces TO Role_TaiXe;
 GRANT SELECT ON trips TO Role_TaiXe;
 GRANT SELECT ON tickets TO Role_TaiXe;
 GRANT SELECT ON seats TO Role_TaiXe;
+GRANT SELECT ON drivers TO Role_TaiXe;
 GO
 
 IF OBJECT_ID('dbo.sp_CheckIn', 'P') IS NOT NULL
@@ -67,43 +70,75 @@ GRANT SELECT ON trips TO Role_NhanVien;
 GRANT SELECT ON buses TO Role_NhanVien;
 GRANT SELECT ON routes TO Role_NhanVien;
 GRANT SELECT ON stations TO Role_NhanVien;
+GRANT SELECT ON route_stations TO Role_NhanVien;
+GRANT SELECT ON provinces TO Role_NhanVien;
 GRANT SELECT ON seats TO Role_NhanVien;
+GRANT SELECT ON bus_types TO Role_NhanVien;
+GRANT SELECT ON drivers TO Role_NhanVien;
+GRANT SELECT ON users TO Role_NhanVien;
 GRANT SELECT, INSERT ON payments TO Role_NhanVien;
 DENY DELETE ON bookings TO Role_NhanVien;
 DENY DELETE ON tickets TO Role_NhanVien;
 GO
 
+IF OBJECT_ID('dbo.sp_GiuCho', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_GiuCho TO Role_NhanVien;
+IF OBJECT_ID('dbo.sp_DatVe', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_DatVe TO Role_NhanVien;
+IF OBJECT_ID('dbo.sp_HuyGiuCho', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_HuyGiuCho TO Role_NhanVien;
 IF OBJECT_ID('dbo.sp_ThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_ThanhToan TO Role_NhanVien;
 IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_NhanVien;
+IF OBJECT_ID('dbo.sp_LayThongTinVe', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_LayThongTinVe TO Role_NhanVien;
+IF OBJECT_ID('dbo.sp_CheckIn', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_CheckIn TO Role_NhanVien;
 IF OBJECT_ID('dbo.vw_LichSuThanhToan', 'V') IS NOT NULL
     GRANT SELECT ON dbo.vw_LichSuThanhToan TO Role_NhanVien;
+IF OBJECT_ID('dbo.fn_LaySoDoGhe', 'IF') IS NOT NULL
+    GRANT SELECT ON dbo.fn_LaySoDoGhe TO Role_NhanVien;
+IF OBJECT_ID('dbo.fn_TinhGiaVe', 'FN') IS NOT NULL
+    GRANT EXECUTE ON dbo.fn_TinhGiaVe TO Role_NhanVien;
 GO
 
 -- 5. PHÂN QUYỀN Role_KhachHang (Khách hàng đặt vé và xem chuyến)
 GRANT SELECT ON trips TO Role_KhachHang;
 GRANT SELECT ON routes TO Role_KhachHang;
 GRANT SELECT ON stations TO Role_KhachHang;
+GRANT SELECT ON route_stations TO Role_KhachHang;
+GRANT SELECT ON provinces TO Role_KhachHang;
 GRANT SELECT ON bus_types TO Role_KhachHang;
+GRANT SELECT ON buses TO Role_KhachHang;
 GRANT SELECT ON seats TO Role_KhachHang;
-GRANT SELECT, INSERT ON bookings TO Role_KhachHang;
-GRANT SELECT, INSERT ON tickets TO Role_KhachHang;
+GRANT SELECT, INSERT, UPDATE ON bookings TO Role_KhachHang;
+GRANT SELECT, INSERT, UPDATE ON tickets TO Role_KhachHang;
 GRANT SELECT, INSERT ON payments TO Role_KhachHang;
 DENY DELETE ON bookings TO Role_KhachHang;
 DENY DELETE ON tickets TO Role_KhachHang;
 GO
 
+IF OBJECT_ID('dbo.sp_GiuCho', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_GiuCho TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_DatVe', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_DatVe TO Role_KhachHang;
+IF OBJECT_ID('dbo.sp_HuyGiuCho', 'P') IS NOT NULL
+    GRANT EXECUTE ON dbo.sp_HuyGiuCho TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_ThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_ThanhToan TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_TraCuuThanhToan', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_TraCuuThanhToan TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_LayThongTinVe', 'P') IS NOT NULL
-    GRANT EXECUTE ON dbo.sp_LayThongTinVe TO Role_KhachHang, Role_NhanVien;
+    GRANT EXECUTE ON dbo.sp_LayThongTinVe TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_DangKyKhachHang', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_DangKyKhachHang TO Role_KhachHang;
 IF OBJECT_ID('dbo.sp_CapNhatGuestThanhKhachHang', 'P') IS NOT NULL
     GRANT EXECUTE ON dbo.sp_CapNhatGuestThanhKhachHang TO Role_KhachHang;
+IF OBJECT_ID('dbo.fn_LaySoDoGhe', 'IF') IS NOT NULL
+    GRANT SELECT ON dbo.fn_LaySoDoGhe TO Role_KhachHang;
+IF OBJECT_ID('dbo.fn_TinhGiaVe', 'FN') IS NOT NULL
+    GRANT EXECUTE ON dbo.fn_TinhGiaVe TO Role_KhachHang;
 GO
 
 -- ==============================================================================
